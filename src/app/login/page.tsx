@@ -85,6 +85,7 @@ export default function LoginPage() {
         });
         router.push('/pos');
     } catch (error: any) {
+        console.log(error)
         toast({
             variant: "destructive",
             title: "Registration Failed",
