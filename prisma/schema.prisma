@@ -17,11 +17,13 @@ model Product {
   barcode   String     @unique
   price     Float
   stock     Int
-  saleItems SaleItem[]
+  SaleItem  SaleItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Sale {
-  id          Int        @id @default(autoincrement())
+  id          Int        @id @default(autoinormal())
   totalAmount Float
   saleDate    DateTime   @default(now())
   items       SaleItem[]
@@ -29,13 +31,10 @@ model Sale {
 
 model SaleItem {
   id        Int      @id @default(autoincrement())
+  sale      Sale     @relation(fields: [saleId], references: [id])
   saleId    Int
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
   quantity  Int
-  price     Float
-  sale      Sale     @relation(fields: [saleId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-
-  @@index([saleId])
-  @@index([productId])
+  price     Float // Price at the time of sale
 }
