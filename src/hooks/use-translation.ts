@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from '@/app/layout'; // Updated import path
+import { useLanguage } from '@/context/language-context';
 import en from '@/locales/en.json';
 import ar from '@/locales/ar.json';
 
@@ -18,7 +18,8 @@ export const useTranslation = () => {
 
   const t = (key: TranslationKey, substitutions?: Record<string, string | number>) => {
     let translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations[language]);
-    
+
+
     if (!translation) {
       translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations['en']);
     }
@@ -28,7 +29,6 @@ export const useTranslation = () => {
             translation = translation.replace(`{{${k}}}`, String(v));
         });
     }
-
     return translation || key;
   };
 

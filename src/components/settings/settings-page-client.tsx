@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useLanguage } from '@/app/layout'; // Updated import path
+import { useLanguage } from '@/context/language-context';
 import {
   Select,
   SelectContent,
