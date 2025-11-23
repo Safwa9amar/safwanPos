@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from '@/context/language-context';
+import { useMemo } from 'react';
 import en from '@/locales/en.json';
 import ar from '@/locales/ar.json';
 
@@ -16,22 +17,35 @@ type TranslationKey = Paths<typeof en>;
 export const useTranslation = () => {
   const { language } = useLanguage();
 
-  const t = (key: TranslationKey, substitutions?: Record<string, string | number>) => {
-    let translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations[language]);
-    
-    if (!translation) {
-      translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations['en']);
-    }
-    
-    if (translation && substitutions) {
-      let tempTranslation = translation;
-      Object.entries(substitutions).forEach(([k, v]) => {
-          tempTranslation = tempTranslation.replace(`{{${k}}}`, String(v));
-      });
-      return tempTranslation;
-    }
-    return translation || key;
-  };
+  const t = useMemo(() => {
+    return (key: TranslationKey, substitutions?: Record<string, string | number>): string => {
+      // Function to get a nested property from an object
+      const getNested = (obj: any, path: string): string | undefined => 
+        path.split('.').reduce((acc, part) => acc?.[part], obj);
+
+      // Attempt to get the translation from the current language
+      let translation = getNested(translations[language], key);
+
+      // Fallback to English if the translation is not found
+      if (translation === undefined) {
+        translation = getNested(translations['en'], key);
+      }
+
+      // If still not found, return the key itself
+      if (translation === undefined) {
+        return key;
+      }
+      
+      // Handle substitutions
+      if (substitutions) {
+        Object.entries(substitutions).forEach(([subKey, value]) => {
+          translation = translation!.replace(new RegExp(`{{${subKey}}}`, 'g'), String(value));
+        });
+      }
+
+      return translation;
+    };
+  }, [language]);
 
   return { t, language };
 };
