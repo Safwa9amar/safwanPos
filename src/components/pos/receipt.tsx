@@ -6,28 +6,16 @@ import { Separator } from "@/components/ui/separator";
 import { Icons } from "../icons";
 import { useEffect } from "react";
 import { Printer, CheckCircle } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
-
-type CompletedSale = {
-  id: number;
-  saleDate: Date;
-  totalAmount: number;
-  items: {
-    quantity: number;
-    price: number;
-    product: {
-      name: string;
-    }
-  }[];
-}
+import { useTranslation } from "react-i18next";
+import { Sale } from "@/types";
 
 type ReceiptProps = {
-  sale: CompletedSale;
+  sale: Sale;
   onDone: () => void;
 };
 
 export function Receipt({ sale, onDone }: ReceiptProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
   
   useEffect(() => {
     const handlePrint = () => {
@@ -55,7 +43,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="flex justify-between text-sm text-muted-foreground mb-4">
-                        <span>{t('receipt.saleId')}: #{sale.id}</span>
+                        <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
                         <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
                     </div>
                     <Separator />
@@ -63,6 +51,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                         {sale.items.map((item, index) => (
                             <div key={index} className="flex justify-between items-baseline text-sm">
                                 <div>
+                                    {/* @ts-ignore */}
                                     <p>{item.product.name}</p>
                                     <p className="text-muted-foreground">
                                         {item.quantity} x ${item.price.toFixed(2)}

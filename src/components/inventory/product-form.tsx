@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { addProduct, updateProduct } from "@/app/inventory/actions";
 import { Loader2 } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
+import { useTranslation } from "react-i18next";
 
 const ProductSchema = z.object({
-  id: z.coerce.number().optional(),
+  id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   barcode: z.string().min(1, "Barcode is required"),
   price: z.coerce.number().min(0.01, "Price must be greater than 0"),
@@ -23,7 +23,7 @@ const ProductSchema = z.object({
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
 export function ProductForm({ product, onFinished }: { product: Product | null, onFinished: () => void }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
   const { toast } = useToast();
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),

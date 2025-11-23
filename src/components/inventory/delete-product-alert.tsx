@@ -25,7 +25,7 @@ export function DeleteProductAlert({
   onConfirm,
   isDeleting,
 }: DeleteProductAlertProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>

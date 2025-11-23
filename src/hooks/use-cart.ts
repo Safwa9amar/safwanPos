@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useCallback, useMemo } from 'react';
-import { CartItem, Product } from '@/types';
+import { CartItem } from '@/types';
+import { Product } from '@prisma/client';
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from './use-translation';
+import { useTranslation } from 'react-i18next';
 
 export const useCart = () => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
 
   const addItem = useCallback((product: Product) => {
     setItems((prevItems) => {
@@ -42,7 +43,7 @@ export const useCart = () => {
     });
   }, [toast, t]);
 
-  const updateQuantity = useCallback((productId: number, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     setItems((prevItems) => {
       if (quantity <= 0) {
         return prevItems.filter((item) => item.productId !== productId);
@@ -53,7 +54,7 @@ export const useCart = () => {
     });
   }, []);
 
-  const removeItem = useCallback((productId: number) => {
+  const removeItem = useCallback((productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.productId !== productId));
   }, []);
 

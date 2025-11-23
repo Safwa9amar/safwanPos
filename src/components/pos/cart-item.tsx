@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from 'react-i18next';
 
 export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<typeof useCart> }) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
 
   const handleQuantityChange = (newQuantityStr: string) => {
     const newQuantity = parseInt(newQuantityStr);

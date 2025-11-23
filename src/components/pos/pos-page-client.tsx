@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useCart } from '@/hooks/use-cart';
-import { Product } from '@/types';
+import { Product } from '@prisma/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,29 +12,17 @@ import { CompleteSaleDialog } from './complete-sale-dialog';
 import { completeSale } from '@/app/pos/actions';
 import { Receipt } from './receipt';
 import { Loader2, Scan } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-
-type CompletedSale = {
-  id: number;
-  saleDate: Date;
-  totalAmount: number;
-  items: {
-    quantity: number;
-    price: number;
-    product: {
-      name: string;
-    }
-  }[];
-}
+import { useTranslation } from 'react-i18next';
+import { Sale } from '@/types';
 
 export function PosPageClient() {
   const cart = useCart();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
   const [barcode, setBarcode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [lastSale, setLastSale] = useState<CompletedSale | null>(null);
+  const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +62,7 @@ export function PosPageClient() {
     try {
       const result = await completeSale(cart.items);
       if (result.success && result.sale) {
+        // @ts-ignore
         setLastSale(result.sale);
         setShowReceipt(true);
         cart.clearCart();

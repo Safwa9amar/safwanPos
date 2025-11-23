@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const ProductSchema = z.object({
-  id: z.coerce.number().optional(),
+  id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   barcode: z.string().min(1, "Barcode is required"),
   price: z.coerce.number().min(0.01, "Price must be greater than 0"),
@@ -109,7 +109,7 @@ export async function updateProduct(formData: FormData) {
     }
 }
 
-export async function deleteProduct(productId: number) {
+export async function deleteProduct(productId: string) {
     try {
         await prisma.product.delete({
             where: { id: productId }
@@ -117,8 +117,8 @@ export async function deleteProduct(productId: number) {
         revalidatePath('/inventory');
         return { success: true }
     } catch (error: any) {
-        if (error.code === 'P2003') { // Foreign key constraint failed
-            return { error: "Cannot delete this product because it is part of a past sale." };
+        if (error.code === 'P2003' || error.code === 'P2025') { // Foreign key constraint or record not found
+            return { error: "Cannot delete this product because it is part of a past sale or doesn't exist." };
         }
         console.error(error);
         return { error: 'Failed to delete product.' }

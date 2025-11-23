@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
+import { useTranslation } from "react-i18next";
 import { DeleteProductAlert } from "./delete-product-alert";
 import { deleteProduct } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
 
 export function ProductTable({ products, onEdit }: { products: Product[], onEdit: (product: Product) => void }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("translation");
   const { toast } = useToast();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -55,6 +55,7 @@ export function ProductTable({ products, onEdit }: { products: Product[], onEdit
         title: t("inventory.deleteFailed"),
         description: result.error || t("inventory.deleteFailedDescription"),
       });
+      setIsAlertOpen(false);
     }
   };
 

@@ -56,6 +56,7 @@ export async function completeSale(items: CartItem[]) {
 
     revalidatePath('/pos');
     revalidatePath('/reports');
+    revalidatePath('/inventory');
 
     const saleForClient = await prisma.sale.findUnique({
       where: { id: newSale.id },
