@@ -176,6 +176,16 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const [effectiveSide, setEffectiveSide] = React.useState(side);
+
+    React.useEffect(() => {
+      const dir = document.documentElement.dir;
+      if (dir === 'rtl') {
+        setEffectiveSide('right');
+      } else {
+        setEffectiveSide('left');
+      }
+    }, []);
 
     if (collapsible === "none") {
       return (
@@ -204,7 +214,7 @@ const Sidebar = React.forwardRef<
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               } as React.CSSProperties
             }
-            side={side}
+            side={effectiveSide}
           >
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
@@ -219,7 +229,7 @@ const Sidebar = React.forwardRef<
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
-        data-side={side}
+        data-side={effectiveSide}
       >
         {/* This is what handles the sidebar gap on desktop */}
         <div
@@ -235,7 +245,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
-            side === "left"
+            effectiveSide === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.
