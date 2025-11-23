@@ -20,8 +20,17 @@ export const useTranslation = () => {
   const t = useMemo(() => {
     return (key: TranslationKey, substitutions?: Record<string, string | number>): string => {
       // Function to get a nested property from an object
-      const getNested = (obj: any, path: string): string | undefined => 
-        path.split('.').reduce((acc, part) => acc?.[part], obj);
+      const getNested = (obj: any, path: string): string | undefined => {
+        const parts = path.split('.');
+        let current = obj;
+        for (let i = 0; i < parts.length; i++) {
+          if (current === null || typeof current !== 'object') {
+            return undefined;
+          }
+          current = current[parts[i]];
+        }
+        return typeof current === 'string' ? current : undefined;
+      };
 
       // Attempt to get the translation from the current language
       let translation = getNested(translations[language], key);
@@ -30,8 +39,8 @@ export const useTranslation = () => {
       if (translation === undefined) {
         translation = getNested(translations['en'], key);
       }
-
-      // If still not found, return the key itself
+      
+      // If still not found, return the key itself as a last resort
       if (translation === undefined) {
         return key;
       }
