@@ -34,23 +34,23 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
-    document.documentElement.lang = language;
-    document.documentElement.dir = dir;
-    if (language === 'ar') {
-        document.body.classList.add('font-cairo');
-        document.body.classList.remove('font-inter');
-    } else {
-        document.body.classList.add('font-inter');
-        document.body.classList.remove('font-cairo');
+    if (isMounted) {
+        document.documentElement.lang = language;
+        document.documentElement.dir = dir;
+        if (language === 'ar') {
+            document.body.classList.add('font-cairo');
+            document.body.classList.remove('font-inter');
+        } else {
+            document.body.classList.add('font-inter');
+            document.body.classList.remove('font-cairo');
+        }
     }
-  }, [language, dir]);
+  }, [language, dir, isMounted]);
 
-  if (!isMounted) {
-    return null; 
-  }
+  const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, dir }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
