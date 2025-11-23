@@ -19,15 +19,16 @@ export const useTranslation = () => {
   const t = (key: TranslationKey, substitutions?: Record<string, string | number>) => {
     let translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations[language]);
 
-
     if (!translation) {
       translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations['en']);
     }
-
+    
     if (translation && substitutions) {
-        Object.entries(substitutions).forEach(([k, v]) => {
-            translation = translation.replace(`{{${k}}}`, String(v));
-        });
+      let tempTranslation = translation;
+      Object.entries(substitutions).forEach(([k, v]) => {
+          tempTranslation = tempTranslation.replace(`{{${k}}}`, String(v));
+      });
+      return tempTranslation;
     }
     return translation || key;
   };
