@@ -1,10 +1,13 @@
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Product {
@@ -13,6 +16,8 @@ model Product {
   barcode   String   @unique
   price     Float
   stock     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   saleItems SaleItem[]
 }
 
@@ -25,10 +30,10 @@ model Sale {
 
 model SaleItem {
   id        Int      @id @default(autoincrement())
-  sale      Sale     @relation(fields: [saleId], references: [id])
   saleId    Int
-  product   Product  @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id])
   productId Int
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float // price at the time of sale
+  price     Float
 }
