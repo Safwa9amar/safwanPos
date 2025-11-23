@@ -18,7 +18,7 @@ export const useTranslation = () => {
 
   const t = (key: TranslationKey, substitutions?: Record<string, string | number>) => {
     let translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations[language]);
-
+    
     if (!translation) {
       translation = key.split('.').reduce((obj: any, k) => obj?.[k], translations['en']);
     }
