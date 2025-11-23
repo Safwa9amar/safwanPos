@@ -177,15 +177,19 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     const [effectiveSide, setEffectiveSide] = React.useState(side);
+    const [isMounted, setIsMounted] = React.useState(false);
 
     React.useEffect(() => {
-      const dir = document.documentElement.dir;
-      if (dir === 'rtl') {
-        setEffectiveSide('right');
-      } else {
-        setEffectiveSide('left');
-      }
+        setIsMounted(true);
     }, []);
+
+    React.useEffect(() => {
+      if (isMounted) {
+        const dir = document.documentElement.dir;
+        setEffectiveSide(dir === 'rtl' ? 'right' : 'left');
+      }
+    }, [isMounted, (typeof document !== 'undefined' && document.documentElement.dir)]);
+
 
     if (collapsible === "none") {
       return (
@@ -236,7 +240,7 @@ const Sidebar = React.forwardRef<
           className={cn(
             "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
             "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
+            
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
