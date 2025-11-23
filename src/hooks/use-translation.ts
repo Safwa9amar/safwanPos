@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from '@/context/language-context';
+import { useLanguage } from '@/app/layout'; // Updated import path
 import en from '@/locales/en.json';
 import ar from '@/locales/ar.json';
 
