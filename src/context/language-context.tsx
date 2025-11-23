@@ -3,17 +3,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'ar';
+type Direction = 'ltr' | 'rtl';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  dir: 'ltr' | 'rtl';
+  dir: Direction;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
+  const [dir, setDir] = useState<Direction>('ltr');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -31,12 +33,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
   useEffect(() => {
+    const newDir = language === 'ar' ? 'rtl' : 'ltr';
+    setDir(newDir);
     if (isMounted) {
         document.documentElement.lang = language;
-        document.documentElement.dir = dir;
+        document.documentElement.dir = newDir;
         if (language === 'ar') {
             document.body.classList.add('font-cairo');
             document.body.classList.remove('font-inter');
@@ -45,7 +47,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
             document.body.classList.remove('font-cairo');
         }
     }
-  }, [language, dir, isMounted]);
+  }, [language, isMounted]);
 
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
