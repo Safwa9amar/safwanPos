@@ -28,12 +28,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useTranslation } from "@/hooks/use-translation";
 
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -57,26 +59,26 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/pos'} tooltip="Point of Sale">
+              <SidebarMenuButton asChild isActive={pathname === '/pos'} tooltip={t('sidebar.pos')}>
                 <Link href="/pos">
                   <CreditCard />
-                  Point of Sale
+                  {t('sidebar.pos')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/reports'} tooltip="Sales Reports">
+              <SidebarMenuButton asChild isActive={pathname === '/reports'} tooltip={t('sidebar.reports')}>
                 <Link href="/reports">
                   <FileText />
-                  Sales Reports
+                  {t('sidebar.reports')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip="Settings">
+                <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip={t('sidebar.settings')}>
                     <Link href="/settings">
                         <Settings />
-                        Settings
+                        {t('sidebar.settings')}
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -92,16 +94,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Avatar>
                 <div className="flex flex-col text-sm text-left overflow-hidden">
                     <span className="font-medium truncate">{user?.displayName || user?.email}</span>
-                    <span className="text-muted-foreground text-xs">Store Manager</span>
+                    <span className="text-muted-foreground text-xs">{t('user.role')}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('user.myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('user.logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,0 +1,14 @@
+{
+    "sidebar.pos": "نقطة البيع",
+    "sidebar.reports": "تقارير المبيعات",
+    "sidebar.settings": "الإعدادات",
+    "user.role": "مدير المتجر",
+    "user.myAccount": "حسابي",
+    "user.logout": "تسجيل الخروج",
+    "settings.title": "الإعدادات",
+    "settings.description": "إدارة حسابك وإعدادات التطبيق.",
+    "settings.darkMode": "الوضع الداكن",
+    "settings.darkModeDescription": "تبديل مظهر التطبيق.",
+    "settings.language": "اللغة",
+    "settings.languageDescription": "تغيير لغة عرض التطبيق."
+}

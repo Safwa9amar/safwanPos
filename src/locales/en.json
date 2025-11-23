@@ -1,0 +1,14 @@
+{
+    "sidebar.pos": "Point of Sale",
+    "sidebar.reports": "Sales Reports",
+    "sidebar.settings": "Settings",
+    "user.role": "Store Manager",
+    "user.myAccount": "My Account",
+    "user.logout": "Log out",
+    "settings.title": "Settings",
+    "settings.description": "Manage your account and application settings.",
+    "settings.darkMode": "Dark Mode",
+    "settings.darkModeDescription": "Toggle the application's theme.",
+    "settings.language": "Language",
+    "settings.languageDescription": "Change the application's display language."
+}

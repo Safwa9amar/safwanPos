@@ -10,7 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
+        body: ['Inter', 'Cairo', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+        cairo: ['Cairo', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
       },
