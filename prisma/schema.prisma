@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -11,13 +12,11 @@ datasource db {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  barcode   String   @unique
+  barcode   String     @unique
   price     Float
   stock     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   saleItems SaleItem[]
 }
 
@@ -31,9 +30,12 @@ model Sale {
 model SaleItem {
   id        Int      @id @default(autoincrement())
   saleId    Int
-  sale      Sale     @relation(fields: [saleId], references: [id])
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   price     Float
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([saleId])
+  @@index([productId])
 }
