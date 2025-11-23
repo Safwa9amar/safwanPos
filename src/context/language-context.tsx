@@ -13,23 +13,6 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// A client component to handle side effects on the document
-function LanguageEffects({ language }: { language: Language }) {
-  useEffect(() => {
-    const newDir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-    document.documentElement.dir = newDir;
-    if (language === 'ar') {
-      document.body.classList.add('font-cairo');
-      document.body.classList.remove('font-inter');
-    } else {
-      document.body.classList.add('font-inter');
-      document.body.classList.remove('font-cairo');
-    }
-  }, [language]);
-  return null;
-}
-
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
   const [isMounted, setIsMounted] = useState(false);
@@ -41,6 +24,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       setLanguage(storedLanguage);
     }
   }, []);
+  
+  useEffect(() => {
+    if (isMounted) {
+      const newDir = language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = language;
+      document.documentElement.dir = newDir;
+    }
+  }, [language, isMounted]);
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
@@ -51,11 +42,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
+  if (!isMounted) {
+    return null;
+  }
+
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
   return (
     <LanguageContext.Provider value={contextValue}>
-      {isMounted && <LanguageEffects language={language} />}
       {children}
     </LanguageContext.Provider>
   );
