@@ -25,13 +25,15 @@ export const useLanguage = () => {
 // --- Language Provider Component ---
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en'); // Default to 'en'
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client
+    // This effect runs once on the client after initial render
     const storedLanguage = localStorage.getItem('language') as Language;
     if (storedLanguage && ['en', 'ar'].includes(storedLanguage)) {
       setLanguage(storedLanguage);
     }
+    setIsClient(true);
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
@@ -42,11 +44,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
-    // This effect also runs only on the client
-    document.documentElement.lang = language;
-    document.documentElement.dir = dir;
-    document.body.className = `font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
-  }, [language, dir]);
+    // This effect runs only on the client, after the first one.
+    // It prevents hydration mismatch by ensuring attributes are set after the initial render.
+    if (isClient) {
+      document.documentElement.lang = language;
+      document.documentElement.dir = dir;
+      document.body.className = `font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
+    }
+  }, [language, dir, isClient]);
 
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
