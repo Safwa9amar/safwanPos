@@ -24,11 +24,10 @@ export const useLanguage = () => {
 
 // --- Language Provider Component ---
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>('en');
-  const [isMounted, setIsMounted] = useState(false);
+  const [language, setLanguage] = useState<Language>('en'); // Default to 'en'
 
   useEffect(() => {
-    setIsMounted(true);
+    // This effect runs only on the client
     const storedLanguage = localStorage.getItem('language') as Language;
     if (storedLanguage && ['en', 'ar'].includes(storedLanguage)) {
       setLanguage(storedLanguage);
@@ -37,25 +36,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
-    if(isMounted) {
-      localStorage.setItem('language', lang);
-    }
+    localStorage.setItem('language', lang);
   };
 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
-    if (isMounted) {
-      document.documentElement.lang = language;
-      document.documentElement.dir = dir;
-      document.body.className = `font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
-    }
-  }, [language, dir, isMounted]);
-
-  if (!isMounted) {
-    // Avoid rendering mismatch on server and client
-    return null;
-  }
+    // This effect also runs only on the client
+    document.documentElement.lang = language;
+    document.documentElement.dir = dir;
+    document.body.className = `font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
+  }, [language, dir]);
 
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
