@@ -41,7 +41,6 @@
     "pos.processing": "Processing...",
     "pos.completeSaleButton": "Complete Sale",
     "pos.confirmSaleTitle": "Confirm Sale",
-    "pos A.confirmSaleDescription": "You are about to complete the transaction. Please confirm the total amount.",
     "pos.confirmSaleDescription": "You are about to complete the transaction. Please confirm the total amount.",
     "pos.totalItems": "Total Items",
     "pos.cancelButton": "Cancel",
