@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icons } from '@/components/icons';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!loading) {
@@ -24,7 +26,7 @@ export default function Home() {
      <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
            <Icons.logo className="h-16 w-16 animate-pulse text-primary"/>
-           <p className="text-muted-foreground">Loading PrismaPOS...</p>
+           <p className="text-muted-foreground">{t('home.loading')}</p>
         </div>
       </div>
   );

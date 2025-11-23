@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<typeof useCart> }) {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleQuantityChange = (newQuantityStr: string) => {
     const newQuantity = parseInt(newQuantityStr);
@@ -22,8 +24,8 @@ export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<
         cart.updateQuantity(item.productId, item.stock);
         toast({
           variant: "destructive",
-          title: "Stock limit reached",
-          description: `Only ${item.stock} of ${item.name} available.`,
+          title: t('cart.stockLimitReachedTitle'),
+          description: t('cart.stockLimitReachedDescription', { stock: item.stock, itemName: item.name }),
         });
     } else {
         cart.updateQuantity(item.productId, newQuantity);

@@ -3,10 +3,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { CartItem, Product } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from './use-translation';
 
 export const useCart = () => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const addItem = useCallback((product: Product) => {
     setItems((prevItems) => {
@@ -21,8 +23,8 @@ export const useCart = () => {
         } else {
           toast({
             variant: "destructive",
-            title: "Out of stock",
-            description: `Cannot add more ${product.name}.`,
+            title: t('cart.outOfStockTitle'),
+            description: t('cart.cannotAddMore', { productName: product.name }),
           });
           return prevItems;
         }
@@ -32,13 +34,13 @@ export const useCart = () => {
       } else {
         toast({
             variant: "destructive",
-            title: "Out of stock",
-            description: `${product.name} is out of stock.`,
+            title: t('cart.outOfStockTitle'),
+            description: t('cart.isOutOfStock', { productName: product.name }),
         });
         return prevItems;
       }
     });
-  }, [toast]);
+  }, [toast, t]);
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {
     setItems((prevItems) => {

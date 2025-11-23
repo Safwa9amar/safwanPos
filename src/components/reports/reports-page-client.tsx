@@ -7,11 +7,13 @@ import { getSalesReport } from '@/app/reports/actions';
 import { FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function ReportsPageClient() {
     const [report, setReport] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const { t } = useTranslation();
 
     const handleGenerateReport = async () => {
         setIsLoading(true);
@@ -25,7 +27,7 @@ export function ReportsPageClient() {
         } catch (error: any) {
             toast({
                 variant: 'destructive',
-                title: 'Report Generation Failed',
+                title: t('reports.generationFailedTitle'),
                 description: error.message,
             });
         } finally {
@@ -37,9 +39,9 @@ export function ReportsPageClient() {
         <div className="p-4 md:p-6 space-y-6">
             <Card className="shadow-lg">
                 <CardHeader>
-                    <CardTitle>AI-Powered Sales Analysis</CardTitle>
+                    <CardTitle>{t('reports.title')}</CardTitle>
                     <CardDescription>
-                        Generate a summary of recent sales to identify trends and potential stock shortages.
+                        {t('reports.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -49,7 +51,7 @@ export function ReportsPageClient() {
                         ) : (
                             <FileText className="mr-2 h-4 w-4" />
                         )}
-                        Generate Report
+                        {t('reports.generateButton')}
                     </Button>
                 </CardContent>
             </Card>
@@ -61,8 +63,8 @@ export function ReportsPageClient() {
                             <div className="flex items-center space-x-4">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                 <div>
-                                    <p className="font-semibold">Analyzing Sales Data...</p>
-                                    <p className="text-sm text-muted-foreground">The AI is processing recent transactions. This may take a moment.</p>
+                                    <p className="font-semibold">{t('reports.loadingTitle')}</p>
+                                    <p className="text-sm text-muted-foreground">{t('reports.loadingDescription')}</p>
                                 </div>
                             </div>
                             <Skeleton className="h-4 w-full" />
@@ -76,7 +78,7 @@ export function ReportsPageClient() {
             {report && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Sales Report Summary</CardTitle>
+                        <CardTitle>{t('reports.summaryTitle')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">

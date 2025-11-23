@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Icons } from "../icons";
 import { useEffect } from "react";
 import { Printer, CheckCircle } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
 type CompletedSale = {
   id: number;
@@ -26,6 +27,7 @@ type ReceiptProps = {
 };
 
 export function Receipt({ sale, onDone }: ReceiptProps) {
+  const { t } = useTranslation();
   
   useEffect(() => {
     const handlePrint = () => {
@@ -38,8 +40,8 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
         <div className="absolute top-4 right-4 no-print space-x-2">
-            <Button onClick={onDone}><CheckCircle className="mr-2 h-4 w-4"/> New Sale</Button>
-            <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4"/> Print</Button>
+            <Button onClick={onDone}><CheckCircle className="mr-2 h-4 w-4"/> {t('receipt.newSaleButton')}</Button>
+            <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4"/> {t('receipt.printButton')}</Button>
         </div>
 
         <div className="w-full max-w-sm mx-auto print-only">
@@ -49,12 +51,12 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                         <Icons.logo className="h-12 w-12 text-primary" />
                     </div>
                     <CardTitle>PrismaPOS</CardTitle>
-                    <CardDescription>Sale Receipt</CardDescription>
+                    <CardDescription>{t('receipt.title')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex justify-between text-sm text-muted-foreground mb-4">
-                        <span>Sale ID: #{sale.id}</span>
-                        <span>Date: {new Date(sale.saleDate).toLocaleString()}</span>
+                        <span>{t('receipt.saleId')}: #{sale.id}</span>
+                        <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
                     </div>
                     <Separator />
                     <div className="my-4 space-y-2">
@@ -73,13 +75,13 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                     <Separator />
                     <div className="my-4 space-y-2">
                         <div className="flex justify-between font-semibold text-lg">
-                            <span>Total</span>
+                            <span>{t('pos.total')}</span>
                             <span>${sale.totalAmount.toFixed(2)}</span>
                         </div>
                     </div>
                     <Separator />
                     <p className="text-center text-sm text-muted-foreground mt-6">
-                        Thank you for your purchase!
+                        {t('receipt.thankYou')}
                     </p>
                 </CardContent>
             </Card>

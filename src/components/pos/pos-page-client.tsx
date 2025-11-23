@@ -12,6 +12,7 @@ import { CompleteSaleDialog } from './complete-sale-dialog';
 import { completeSale } from '@/app/pos/actions';
 import { Receipt } from './receipt';
 import { Loader2, Scan } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 type CompletedSale = {
   id: number;
@@ -29,6 +30,7 @@ type CompletedSale = {
 export function PosPageClient() {
   const cart = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [barcode, setBarcode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -42,7 +44,7 @@ export function PosPageClient() {
     try {
       const response = await fetch(`/api/products/${barcode}`);
       if (!response.ok) {
-        throw new Error('Product not found');
+        throw new Error(t('pos.productNotFound'));
       }
       const product: Product = await response.json();
       cart.addItem(product);
@@ -50,20 +52,20 @@ export function PosPageClient() {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Scan Error",
-        description: "Product with this barcode not found.",
+        title: t('pos.scanError'),
+        description: t('pos.productNotFound'),
       });
     } finally {
       setIsSearching(false);
       barcodeInputRef.current?.focus();
     }
-  }, [barcode, cart, toast]);
+  }, [barcode, cart, toast, t]);
 
   const handleCompleteSale = async () => {
     if (cart.items.length === 0) {
       toast({
-        title: "Empty Cart",
-        description: "Add items to the cart before completing a sale.",
+        title: t('pos.emptyCartTitle'),
+        description: t('pos.emptyCartDescription'),
       });
       return;
     }
@@ -76,8 +78,8 @@ export function PosPageClient() {
         setShowReceipt(true);
         cart.clearCart();
         toast({
-          title: "Sale Completed",
-          description: `Sale #${result.sale.id} has been recorded.`,
+          title: t('pos.saleCompletedTitle'),
+          description: `${t('pos.saleCompletedDescription')} #${result.sale.id}`,
         });
       } else {
         throw new Error(result.error || "An unknown error occurred.");
@@ -85,7 +87,7 @@ export function PosPageClient() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Sale Failed",
+        title: t('pos.saleFailedTitle'),
         description: error.message,
       });
     } finally {
@@ -109,22 +111,22 @@ export function PosPageClient() {
       <div className="lg:col-span-2 flex flex-col gap-4">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Scan Product</CardTitle>
-            <CardDescription>Enter a product barcode to add it to the sale.</CardDescription>
+            <CardTitle>{t('pos.scanProductTitle')}</CardTitle>
+            <CardDescription>{t('pos.scanProductDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={(e) => { e.preventDefault(); handleBarcodeScan(); }}>
               <div className="flex gap-2">
                 <Input
                   ref={barcodeInputRef}
-                  placeholder="Enter or scan barcode..."
+                  placeholder={t('pos.scanPlaceholder')}
                   value={barcode}
                   onChange={(e) => setBarcode(e.target.value)}
                   disabled={isSearching}
                 />
                 <Button type="submit" disabled={isSearching || !barcode} className="min-w-[100px]">
                   {isSearching ? <Loader2 className="h-4 w-4 animate-spin"/> : <Scan className="mr-2 h-4 w-4" />}
-                  {isSearching ? '' : 'Add'}
+                  {isSearching ? '' : t('pos.addButton')}
                 </Button>
               </div>
             </form>
