@@ -8,7 +8,8 @@ const ProductSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   barcode: z.string().min(1, "Barcode is required"),
-  price: z.coerce.number().min(0.01, "Price must be greater than 0"),
+  price: z.coerce.number().min(0, "Price cannot be negative"),
+  costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
 });
 
@@ -34,7 +35,7 @@ export async function addProduct(formData: FormData) {
     };
   }
   
-  const { name, barcode, price, stock } = validatedFields.data;
+  const { name, barcode, price, stock, costPrice } = validatedFields.data;
 
   try {
     const existingProduct = await prisma.product.findUnique({ where: { barcode } });
@@ -47,11 +48,12 @@ export async function addProduct(formData: FormData) {
     }
 
     await prisma.product.create({
-      data: { name, barcode, price, stock },
+      data: { name, barcode, price, stock, costPrice },
     });
 
     revalidatePath("/inventory");
     revalidatePath("/pos");
+    revalidatePath("/suppliers");
     return { success: true };
   } catch (error) {
     console.error(error);
@@ -70,7 +72,7 @@ export async function updateProduct(formData: FormData) {
         };
     }
     
-    const { id, name, barcode, price, stock } = validatedFields.data;
+    const { id, name, barcode, price, stock, costPrice } = validatedFields.data;
 
     if (!id) {
         return { message: "Product ID is missing." };
@@ -96,11 +98,12 @@ export async function updateProduct(formData: FormData) {
 
         await prisma.product.update({
             where: { id },
-            data: { name, barcode, price, stock },
+            data: { name, barcode, price, stock, costPrice },
         });
 
         revalidatePath("/inventory");
         revalidatePath("/pos");
+        revalidatePath("/suppliers");
         return { success: true };
 
     } catch (error) {

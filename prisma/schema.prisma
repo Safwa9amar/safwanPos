@@ -1,21 +1,26 @@
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
 }
 
 model Product {
-  id        String    @id @default(uuid())
-  name      String
-  barcode   String    @unique
-  price     Float
-  stock     Int
-  saleItems SaleItem[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                String            @id @default(uuid())
+  name              String
+  barcode           String            @unique
+  price             Float
+  costPrice         Float             @default(0)
+  stock             Int
+  saleItems         SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model Sale {
@@ -27,10 +32,45 @@ model Sale {
 
 model SaleItem {
   id        String  @id @default(uuid())
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent deleting product if in a sale
   productId String
   quantity  Int
   price     Float // Price at the time of sale
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String
+  contactName    String?
+  email          String?         @unique
+  phone          String?
+  address        String?
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(uuid())
+  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierId           String
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime?
+  status               String              @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  items                PurchaseOrderItem[]
+  totalCost            Float               @default(0)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId String
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId       String
+  quantity        Int
+  costPrice       Float // Cost at the time of purchase
 }

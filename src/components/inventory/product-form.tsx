@@ -16,7 +16,8 @@ const ProductSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   barcode: z.string().min(1, "Barcode is required"),
-  price: z.coerce.number().min(0.01, "Price must be greater than 0"),
+  price: z.coerce.number().min(0, "Price cannot be negative"),
+  costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
 });
 
@@ -32,6 +33,7 @@ export function ProductForm({ product, onFinished }: { product: Product | null, 
       name: product?.name || "",
       barcode: product?.barcode || "",
       price: product?.price || 0,
+      costPrice: product?.costPrice || 0,
       stock: product?.stock || 0,
     },
   });
@@ -90,11 +92,16 @@ export function ProductForm({ product, onFinished }: { product: Product | null, 
           {formState.errors.price && <p className="text-sm text-destructive">{formState.errors.price.message}</p>}
         </div>
         <div className="space-y-2">
+            <Label htmlFor="costPrice">{t("inventory.costPrice")}</Label>
+            <Input id="costPrice" type="number" step="0.01" {...form.register("costPrice")} />
+            {formState.errors.costPrice && <p className="text-sm text-destructive">{formState.errors.costPrice.message}</p>}
+        </div>
+      </div>
+       <div className="space-y-2">
           <Label htmlFor="stock">{t("inventory.stock")}</Label>
           <Input id="stock" type="number" step="1" {...form.register("stock")} />
           {formState.errors.stock && <p className="text-sm text-destructive">{formState.errors.stock.message}</p>}
         </div>
-      </div>
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {formState.isSubmitting ? t("inventory.saving") : t("inventory.save")}

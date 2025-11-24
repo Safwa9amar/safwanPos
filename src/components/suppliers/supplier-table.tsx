@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "@prisma/client";
+import { Supplier } from "@prisma/client";
 import {
   Table,
   TableBody,
@@ -17,52 +17,58 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { DeleteProductAlert } from "./delete-product-alert";
-import { deleteProduct } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
+import { deleteSupplier } from "@/app/suppliers/actions";
+import { DeleteProductAlert } from "../inventory/delete-product-alert";
 
-export function ProductTable({ products, onEdit }: { products: Product[], onEdit: (product: Product) => void }) {
+interface SupplierTableProps {
+    suppliers: Supplier[], 
+    onEdit: (supplier: Supplier) => void;
+    onView: (supplierId: string) => void;
+}
+
+export function SupplierTable({ suppliers, onEdit, onView }: SupplierTableProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
-  const handleDeleteClick = (product: Product) => {
-    setSelectedProduct(product);
+  const handleDeleteClick = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
     setIsAlertOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedProduct) return;
+    if (!selectedSupplier) return;
 
     setIsDeleting(true);
-    const result = await deleteProduct(selectedProduct.id);
+    const result = await deleteSupplier(selectedSupplier.id);
     setIsDeleting(false);
 
     if (result.success) {
       toast({
-        title: "Product Deleted",
-        description: `${selectedProduct.name} has been removed.`,
+        title: "Supplier Deleted",
+        description: `${selectedSupplier.name} has been removed.`,
       });
       setIsAlertOpen(false);
-      setSelectedProduct(null);
+      setSelectedSupplier(null);
     } else {
       toast({
         variant: "destructive",
-        title: t("inventory.deleteFailed"),
-        description: result.error || t("inventory.deleteFailedDescription"),
+        title: t("suppliers.deleteFailed"),
+        description: result.error || t("suppliers.deleteFailedDescription"),
       });
       setIsAlertOpen(false);
     }
   };
 
-  if (products.length === 0) {
+  if (suppliers.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-12">
-        {t("inventory.noProducts")}
+        {t("suppliers.noSuppliers")}
       </div>
     );
   }
@@ -72,22 +78,20 @@ export function ProductTable({ products, onEdit }: { products: Product[], onEdit
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t("inventory.productName")}</TableHead>
-            <TableHead>{t("inventory.barcode")}</TableHead>
-            <TableHead className="text-right">{t("inventory.price")}</TableHead>
-            <TableHead className="text-right">{t("inventory.costPrice")}</TableHead>
-            <TableHead className="text-right">{t("inventory.stock")}</TableHead>
+            <TableHead>{t("suppliers.name")}</TableHead>
+            <TableHead>{t("suppliers.contactName")}</TableHead>
+            <TableHead>{t("suppliers.email")}</TableHead>
+            <TableHead>{t("suppliers.phone")}</TableHead>
             <TableHead className="w-[80px] text-right">{t("inventory.actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{product.barcode}</TableCell>
-              <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-              <TableCell className="text-right">${product.costPrice.toFixed(2)}</TableCell>
-              <TableCell className="text-right">{product.stock}</TableCell>
+          {suppliers.map((supplier) => (
+            <TableRow key={supplier.id}>
+              <TableCell className="font-medium">{supplier.name}</TableCell>
+              <TableCell>{supplier.contactName || 'N/A'}</TableCell>
+              <TableCell>{supplier.email || 'N/A'}</TableCell>
+              <TableCell>{supplier.phone || 'N/A'}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -97,11 +101,15 @@ export function ProductTable({ products, onEdit }: { products: Product[], onEdit
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(product)}>
+                    <DropdownMenuItem onClick={() => onView(supplier.id)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(supplier)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       {t("inventory.edit")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDeleteClick(product)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <DropdownMenuItem onClick={() => handleDeleteClick(supplier)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       {t("inventory.delete")}
                     </DropdownMenuItem>

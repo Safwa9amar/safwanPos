@@ -1,12 +1,6 @@
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct } from '@prisma/client';
 
-export type Product = {
-  id: string;
-  name: string;
-  barcode: string;
-  price: number;
-  stock: number;
-};
+export type Product = PrismaProduct;
 
 export type CartItem = {
   productId: string;
@@ -24,4 +18,15 @@ export interface SaleItem extends PrismaSaleItem {
 
 export interface Sale extends PrismaSale {
     items: SaleItem[];
+}
+
+export type Supplier = PrismaSupplier;
+
+export interface PurchaseOrderItem extends PrismaPurchaseOrderItem {
+    product: Product;
+}
+
+export interface PurchaseOrder extends PrismaPurchaseOrder {
+    items: PurchaseOrderItem[];
+    supplier: Supplier;
 }
