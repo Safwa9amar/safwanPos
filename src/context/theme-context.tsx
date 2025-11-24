@@ -21,31 +21,39 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>('light');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const storedTheme = localStorage.getItem('theme') as Theme;
-    if (storedTheme) {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (storedTheme && ['light', 'dark'].includes(storedTheme)) {
       setTheme(storedTheme);
     } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setTheme(prefersDark ? 'dark' : 'light');
+      setTheme(prefersDark ? 'dark' : 'light');
     }
   }, []);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    document.documentElement.className = newTheme;
   };
-
+  
   useEffect(() => {
-    document.documentElement.className = theme;
-  }, [theme]);
+    if (isMounted) {
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(theme);
+    }
+  }, [theme, isMounted]);
 
   const contextValue = {
     theme,
     setTheme: handleSetTheme,
   };
+  
+  if (!isMounted) {
+      return null;
+  }
 
   return (
     <ThemeContext.Provider value={contextValue}>
