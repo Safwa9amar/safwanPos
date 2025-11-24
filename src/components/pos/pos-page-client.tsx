@@ -212,10 +212,11 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
                                 key={index} 
                                 variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
                                 size="sm"
-                                className="relative"
+                                className="relative pr-2"
                                 onClick={() => cart.switchCart(index)}
                             >
                                 Cart {index + 1}
+                                {index < 9 && <Badge variant="outline" className="ml-2 px-1.5 text-xs">F{index + 1}</Badge>}
                                 {cart.carts.length > 1 && (
                                      <X 
                                         className="h-3 w-3 text-muted-foreground absolute -top-1 -right-1"
