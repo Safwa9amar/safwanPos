@@ -1,9 +1,10 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
-import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
+import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -15,30 +16,56 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { getStatsData } from "@/app/stats/actions";
+import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, endOfISOWeek, endOfMonth, endOfYear } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type StatsData = {
   totalRevenue: number;
   totalSales: number;
   totalItemsSold: number;
-  salesLast7Days: { date: string; total: number }[];
+  salesChartData: { date: string; total: number }[];
   topProducts: { name: string; quantity: number }[];
   error?: string;
 };
 
+const dateRanges = {
+    'today': { name: 'Today', from: startOfDay(new Date()), to: endOfDay(new Date()) },
+    '7d': { name: 'Last 7 days', from: subDays(startOfDay(new Date()), 6), to: endOfDay(new Date()) },
+    '30d': { name: 'Last 30 days', from: subDays(startOfDay(new Date()), 29), to: endOfDay(new Date()) },
+    'this-month': { name: 'This Month', from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
+    'this-year': { name: 'This Year', from: startOfYear(new Date()), to: endOfYear(new Date()) },
+};
+
 export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
   const { t } = useTranslation();
+  const [stats, setStats] = useState<StatsData>(initialStats);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<string>('7d');
 
-  if (initialStats.error) {
-    return <div className="p-4">{initialStats.error}</div>;
+  const fetchStats = async (rangeKey: string) => {
+    setIsLoading(true);
+    const range = dateRanges[rangeKey as keyof typeof dateRanges];
+    const data = await getStatsData(range);
+    setStats(data);
+    setIsLoading(false);
+  };
+  
+  useEffect(() => {
+    fetchStats(selectedRange);
+  }, [selectedRange]);
+
+  if (stats.error) {
+    return <div className="p-4">{stats.error}</div>;
   }
 
   const {
     totalRevenue,
     totalSales,
     totalItemsSold,
-    salesLast7Days,
+    salesChartData,
     topProducts,
-  } = initialStats;
+  } = stats;
   
   const salesChartConfig = {
     total: {
@@ -54,12 +81,36 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
       },
   };
 
+  const salesTickFormatter = (value: string) => {
+    const date = new Date(value);
+    const rangeKey = selectedRange;
+    if (rangeKey === 'this-year') return date.toLocaleDateString('en-US', { month: 'short' });
+    if (rangeKey === '30d' || rangeKey === 'this-month') return date.toLocaleDateString('en-US', { day: 'numeric' });
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <CardHeader className="p-0 mb-4">
-        <CardTitle className="text-3xl font-bold tracking-tight">{t('stats.title')}</CardTitle>
-      </CardHeader>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <CardHeader className="p-0">
+          <CardTitle className="text-3xl font-bold tracking-tight">{t('stats.title')}</CardTitle>
+          <CardDescription>View sales statistics for different periods.</CardDescription>
+        </CardHeader>
+        <div className="flex items-center gap-2">
+            <Select value={selectedRange} onValueChange={setSelectedRange} disabled={isLoading}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select date range" />
+                </SelectTrigger>
+                <SelectContent>
+                    {Object.entries(dateRanges).map(([key, {name}]) => (
+                        <SelectItem key={key} value={key}>{name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+        </div>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-lg">
@@ -99,14 +150,14 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
           <CardContent>
             <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesLast7Days}>
+                <BarChart data={salesChartData}>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
                     tickMargin={10}
                     axisLine={false}
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { weekday: 'short' })}
+                    tickFormatter={salesTickFormatter}
                   />
                   <YAxis />
                   <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
@@ -126,7 +177,7 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
                     <BarChart data={topProducts} layout="vertical">
                         <CartesianGrid horizontal={false} />
                         <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={80} tickLine={false} axisLine={false} />
+                        <YAxis dataKey="name" type="category" width={80} tickLine={false} axisLine={false} tick={{fontSize: 12}} />
                         <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                         <Bar dataKey="quantity" fill="var(--color-quantity)" radius={4} layout="vertical" />
                     </BarChart>
