@@ -38,15 +38,15 @@ export function CartSummary({ cart }: { cart: ReturnType<typeof useMultiCart> })
         </div>
       </CardContent>
       {activeCart.items.length > 0 && (
-        <CardFooter className="flex-col items-start gap-4 p-6 border-t bg-slate-50/50 dark:bg-card">
+        <CardFooter className="flex-col items-stretch gap-4 p-6 border-t bg-slate-50/50 dark:bg-card">
             <div className="flex justify-between w-full text-muted-foreground">
               <span>{t('pos.subtotal')}</span>
               <span>{formatCurrency(activeCart.subtotal)}</span>
             </div>
             <Separator />
-            <div className="flex justify-between w-full font-bold text-lg">
-              <span>{t('pos.total')}</span>
-              <span>{formatCurrency(activeCart.totalAmount)}</span>
+            <div className="flex justify-between w-full font-bold items-center text-3xl">
+              <span className="text-lg font-medium">{t('pos.total')}</span>
+              <span className="text-primary">{formatCurrency(activeCart.totalAmount)}</span>
             </div>
         </CardFooter>
       )}
