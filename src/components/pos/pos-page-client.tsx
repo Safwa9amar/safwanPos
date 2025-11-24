@@ -18,8 +18,7 @@ import { Sale, ProductWithCategory } from '@/types';
 import { ProductGrid } from './product-grid';
 import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function PosPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
   const cart = useMultiCart();
@@ -208,22 +207,29 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         {cart.carts.map((_, index) => (
-                            <Button 
-                                key={index} 
-                                variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
-                                size="sm"
-                                className="relative pr-2"
-                                onClick={() => cart.switchCart(index)}
-                            >
-                                Cart {index + 1}
-                                {index < 9 && <Badge variant="outline" className="ml-2 px-1.5 text-xs">F{index + 1}</Badge>}
-                                {cart.carts.length > 1 && (
-                                     <X 
-                                        className="h-3 w-3 text-muted-foreground absolute -top-1 -right-1"
-                                        onClick={(e) => { e.stopPropagation(); cart.removeCart(index); }}
-                                     />
+                            <Tooltip key={index}>
+                                <TooltipTrigger asChild>
+                                    <Button 
+                                        variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
+                                        size="sm"
+                                        className="relative pr-2"
+                                        onClick={() => cart.switchCart(index)}
+                                    >
+                                        Cart {index + 1}
+                                        {cart.carts.length > 1 && (
+                                            <X 
+                                                className="h-3 w-3 text-muted-foreground absolute -top-1 -right-1"
+                                                onClick={(e) => { e.stopPropagation(); cart.removeCart(index); }}
+                                            />
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                {index < 9 && (
+                                    <TooltipContent>
+                                        <p>Shortcut: F{index + 1}</p>
+                                    </TooltipContent>
                                 )}
-                            </Button>
+                            </Tooltip>
                         ))}
                         {cart.carts.length < 9 && (
                             <Button variant="outline" size="icon" className="h-8 w-8" onClick={cart.addCart}>
