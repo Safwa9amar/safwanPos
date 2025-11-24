@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, Suspense } from 'react';
 import { I18nextProvider, useTranslation as useI18nextTranslation } from 'react-i18next';
 import i18n from '@/lib/i18n';
+import { useTheme } from './theme-context';
 
 // --- Language Context ---
 type Language = 'en' | 'ar';
@@ -26,6 +27,7 @@ export const useLanguage = () => {
 
 // --- Language Provider Component ---
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  const { theme } = useTheme();
   const { i18n: i18nInstance } = useI18nextTranslation();
   const [isClient, setIsClient] = useState(false);
   const [language, setLanguageState] = useState<Language>(i18n.language as Language || 'en');
@@ -59,9 +61,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     if (isClient) {
       document.documentElement.lang = language;
       document.documentElement.dir = dir;
-      document.body.className = `font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
+      document.body.className = `${theme} font-body antialiased h-full bg-background ${language === 'ar' ? 'font-cairo' : 'font-inter'}`;
     }
-  }, [language, dir, isClient]);
+  }, [language, dir, theme, isClient]);
 
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
@@ -85,7 +87,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
                         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
                         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet" />
                     </head>
-                    <body className={`h-full ${language === 'ar' ? 'font-cairo' : 'font-inter'}`}>
+                    <body className={`${theme} h-full ${language === 'ar' ? 'font-cairo' : 'font-inter'}`}>
                         {children}
                     </body>
                 </html>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/context/language-context';
+import { useTheme } from '@/context/theme-context';
 import {
   Select,
   SelectContent,
@@ -12,10 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from '@/hooks/use-translation';
+import { Moon, Sun } from 'lucide-react';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
+    const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
+
+    const handleThemeChange = (isChecked: boolean) => {
+        setTheme(isChecked ? 'dark' : 'light');
+    }
 
     return (
         <div className="p-4 md:p-6 space-y-6">
@@ -27,12 +34,19 @@ export function SettingsPageClient() {
                 <CardContent className="space-y-6">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                            <Label htmlFor="dark-mode" className="text-base">{t('settings.darkMode')}</Label>
+                            <Label htmlFor="dark-mode" className="text-base flex items-center">
+                                {theme === 'dark' ? <Moon className="mr-2 h-5 w-5" /> : <Sun className="mr-2 h-5 w-5" />}
+                                {t('settings.darkMode')}
+                            </Label>
                             <p className="text-sm text-muted-foreground">
                                 {t('settings.darkModeDescription')}
                             </p>
                         </div>
-                        <Switch id="dark-mode" disabled />
+                        <Switch 
+                            id="dark-mode" 
+                            checked={theme === 'dark'}
+                            onCheckedChange={handleThemeChange}
+                        />
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">

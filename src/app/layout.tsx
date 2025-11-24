@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/context/language-context';
 import React from 'react';
+import { ThemeProvider } from '@/context/theme-context';
 
 
 // --- Root Layout ---
@@ -15,12 +16,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <LanguageProvider>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-        <Toaster />
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+          <Toaster />
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 
