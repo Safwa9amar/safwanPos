@@ -19,6 +19,7 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { getStatsData } from "@/app/stats/actions";
 import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, endOfISOWeek, endOfMonth, endOfYear } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCurrency } from "@/hooks/use-currency";
 
 type StatsData = {
   totalRevenue: number;
@@ -39,6 +40,7 @@ const dateRanges = {
 
 export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [stats, setStats] = useState<StatsData>(initialStats);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>('7d');
@@ -119,7 +121,7 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -159,8 +161,15 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
                     axisLine={false}
                     tickFormatter={salesTickFormatter}
                   />
-                  <YAxis />
-                  <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                  <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })} />
+                  <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" formatter={(value, name, props) => {
+                      return (
+                        <div className="flex flex-col">
+                            <span>{props.payload.date}</span>
+                            <span className="font-bold">{formatCurrency(value as number)}</span>
+                        </div>
+                      )
+                  }} />} />
                   <Bar dataKey="total" fill="var(--color-total)" radius={4} />
                 </BarChart>
               </ResponsiveContainer>

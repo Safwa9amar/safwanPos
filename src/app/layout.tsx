@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/context/language-context';
 import React from 'react';
 import { ThemeProvider } from '@/context/theme-context';
+import { CurrencyProvider } from '@/context/currency-context';
 
 
 // --- Root Layout ---
@@ -18,10 +19,12 @@ export default function RootLayout({
   return (
     <ThemeProvider>
       <LanguageProvider>
+        <CurrencyProvider>
           <AuthProvider>
             {children}
           </AuthProvider>
           <Toaster />
+        </CurrencyProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

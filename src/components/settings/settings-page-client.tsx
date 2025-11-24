@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/context/language-context';
 import { useTheme } from '@/context/theme-context';
+import { useCurrency } from '@/context/currency-context';
 import {
   Select,
   SelectContent,
@@ -13,11 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from '@/hooks/use-translation';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Languages, Milestone } from 'lucide-react';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
+    const { currency, setCurrency } = useCurrency();
     const { t } = useTranslation();
 
     const handleThemeChange = (isChecked: boolean) => {
@@ -50,7 +52,10 @@ export function SettingsPageClient() {
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                            <Label htmlFor="language" className="text-base">{t('settings.language')}</Label>
+                            <Label htmlFor="language" className="text-base flex items-center">
+                                <Languages className="mr-2 h-5 w-5" />
+                                {t('settings.language')}
+                            </Label>
                             <p className="text-sm text-muted-foreground">
                                 {t('settings.languageDescription')}
                             </p>
@@ -62,6 +67,26 @@ export function SettingsPageClient() {
                           <SelectContent>
                             <SelectItem value="en">English</SelectItem>
                             <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="currency" className="text-base flex items-center">
+                                <Milestone className="mr-2 h-5 w-5" />
+                                {t('settings.currency')}
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                {t('settings.currencyDescription')}
+                            </p>
+                        </div>
+                        <Select onValueChange={(value) => setCurrency(value as 'USD' | 'DZD')} defaultValue={currency}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">USD ($)</SelectItem>
+                            <SelectItem value="DZD">DZD (DA)</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>

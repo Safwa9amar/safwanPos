@@ -14,6 +14,8 @@
     "settings.darkModeDescription": "تبديل مظهر التطبيق.",
     "settings.language": "اللغة",
     "settings.languageDescription": "تغيير لغة عرض التطبيق.",
+    "settings.currency": "العملة",
+    "settings.currencyDescription": "تحديد العملة لجميع الأسعار.",
     "login.tab": "تسجيل الدخول",
     "login.title": "تسجيل الدخول",
     "login.description": "أدخل بريدك الإلكتروني أدناه لتسجيل الدخول إلى حسابك.",

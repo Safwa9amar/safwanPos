@@ -8,9 +8,11 @@ import { CartItem as CartItemType } from '@/types';
 import { CartItem } from './cart-item';
 import { PackageOpen } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
+import { useCurrency } from '@/hooks/use-currency';
 
 export function CartSummary({ cart }: { cart: ReturnType<typeof useCart> }) {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   
   return (
     <Card className="flex flex-col h-full shadow-lg">
@@ -40,12 +42,12 @@ export function CartSummary({ cart }: { cart: ReturnType<typeof useCart> }) {
         <CardFooter className="flex-col items-start gap-4 p-6 border-t bg-slate-50/50 dark:bg-card">
             <div className="flex justify-between w-full text-muted-foreground">
               <span>{t('pos.subtotal')}</span>
-              <span>${cart.subtotal.toFixed(2)}</span>
+              <span>{formatCurrency(cart.subtotal)}</span>
             </div>
             <Separator />
             <div className="flex justify-between w-full font-bold text-lg">
               <span>{t('pos.total')}</span>
-              <span>${cart.totalAmount.toFixed(2)}</span>
+              <span>{formatCurrency(cart.totalAmount)}</span>
             </div>
         </CardFooter>
       )}

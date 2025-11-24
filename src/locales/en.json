@@ -14,6 +14,8 @@
     "settings.darkModeDescription": "Toggle the application's theme.",
     "settings.language": "Language",
     "settings.languageDescription": "Change the application's display language.",
+    "settings.currency": "Currency",
+    "settings.currencyDescription": "Set the currency for all prices.",
     "login.tab": "Login",
     "login.title": "Login",
     "login.description": "Enter your email below to login to your account.",

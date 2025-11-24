@@ -9,6 +9,7 @@ import { completePurchaseOrder } from "@/app/suppliers/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { Button } from '../ui/button';
+import { useCurrency } from '@/hooks/use-currency';
 
 interface PurchaseOrderListProps {
     purchaseOrders: PurchaseOrder[];
@@ -17,6 +18,7 @@ interface PurchaseOrderListProps {
 export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { formatCurrency } = useCurrency();
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
 
     const handleCompleteOrder = async (orderId: string) => {
@@ -63,7 +65,7 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                     <CardContent>
                         <div className="flex justify-between text-sm">
                             <p>{t('po.expectedDelivery')}: {order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</p>
-                            <p className="font-semibold">{t('po.totalCost')}: ${order.totalCost.toFixed(2)}</p>
+                            <p className="font-semibold">{t('po.totalCost')}: {formatCurrency(order.totalCost)}</p>
                         </div>
                     </CardContent>
                     {order.status === 'PENDING' && (

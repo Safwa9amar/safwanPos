@@ -25,10 +25,12 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductWithCategory } from "@/types";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
+import { useCurrency } from "@/hooks/use-currency";
 
 export function ProductTable({ products, onEdit }: { products: ProductWithCategory[], onEdit: (product: Product) => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -106,8 +108,8 @@ export function ProductTable({ products, onEdit }: { products: ProductWithCatego
                 )}
               </TableCell>
               <TableCell>{product.barcode}</TableCell>
-              <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-              <TableCell className="text-right">${product.costPrice.toFixed(2)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(product.costPrice)}</TableCell>
               <TableCell className="text-right">{product.stock} {t(`units.${product.unit}`)}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

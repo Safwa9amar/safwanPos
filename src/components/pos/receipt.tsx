@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Printer, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Sale } from "@/types";
+import { useCurrency } from "@/hooks/use-currency";
 
 type ReceiptProps = {
   sale: Sale;
@@ -16,6 +17,7 @@ type ReceiptProps = {
 
 export function Receipt({ sale, onDone }: ReceiptProps) {
   const { t } = useTranslation("translation");
+  const { formatCurrency } = useCurrency();
   
   useEffect(() => {
     const handlePrint = () => {
@@ -54,10 +56,10 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                                     {/* @ts-ignore */}
                                     <p>{item.product.name}</p>
                                     <p className="text-muted-foreground">
-                                        {item.quantity} x ${item.price.toFixed(2)}
+                                        {item.quantity} x {formatCurrency(item.price)}
                                     </p>
                                 </div>
-                                <p>${(item.quantity * item.price).toFixed(2)}</p>
+                                <p>{formatCurrency(item.quantity * item.price)}</p>
                             </div>
                         ))}
                     </div>
@@ -65,7 +67,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                     <div className="my-4 space-y-2">
                         <div className="flex justify-between font-semibold text-lg">
                             <span>{t('pos.total')}</span>
-                            <span>${sale.totalAmount.toFixed(2)}</span>
+                            <span>{formatCurrency(sale.totalAmount)}</span>
                         </div>
                     </div>
                     <Separator />

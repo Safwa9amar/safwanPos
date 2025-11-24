@@ -10,6 +10,7 @@ import { ChevronsUpDown, PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { POItem } from "./purchase-order-sheet";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface PurchaseOrderFormProps {
     products: Product[];
@@ -19,6 +20,7 @@ interface PurchaseOrderFormProps {
 
 export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFormProps) {
     const { t } = useTranslation();
+    const { formatCurrency } = useCurrency();
     const [open, setOpen] = useState(false);
     
     const handleSelectProduct = (productId: string) => {
@@ -118,7 +120,7 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
                                     />
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    ${(Number(item.quantity) * Number(item.costPrice)).toFixed(2)}
+                                    {formatCurrency(Number(item.quantity) * Number(item.costPrice))}
                                 </TableCell>
                                 <TableCell>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveItem(item.productId)}>
@@ -131,7 +133,7 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
                     <TableFooter>
                         <TableRow>
                             <TableCell colSpan={3} className="text-right font-bold">{t('po.totalCost')}</TableCell>
-                            <TableCell className="text-right font-bold">${totalCost.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-bold">{formatCurrency(totalCost)}</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                     </TableFooter>

@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '@/hooks/use-currency';
 
 export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<typeof useCart> }) {
   const { toast } = useToast();
   const { t } = useTranslation("translation");
+  const { formatCurrency } = useCurrency();
 
   const handleQuantityChange = (newQuantityStr: string) => {
     const newQuantity = parseInt(newQuantityStr);
@@ -46,7 +48,7 @@ export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<
     <div className="flex items-center gap-4">
       <div className="flex-grow overflow-hidden">
         <p className="font-medium truncate">{item.name}</p>
-        <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+        <p className="text-sm text-muted-foreground">{formatCurrency(item.price)}</p>
       </div>
       <div className="flex items-center gap-1">
         <Button variant="outline" size="icon" className="h-8 w-8" onClick={decrement}>
@@ -63,7 +65,7 @@ export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      <p className="w-16 text-right font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+      <p className="w-24 text-right font-semibold">{formatCurrency(item.price * item.quantity)}</p>
       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => cart.removeItem(item.productId)}>
         <X className="h-4 w-4" />
       </Button>

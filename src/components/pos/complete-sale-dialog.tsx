@@ -14,9 +14,11 @@ import {
 } from '@/components/ui/dialog';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
+import { useCurrency } from '@/hooks/use-currency';
 
 export function CompleteSaleDialog({ onConfirm, cart, isCompleting }: { onConfirm: () => void, cart: ReturnType<typeof useCart>, isCompleting: boolean }) {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   
   return (
     <Dialog>
@@ -40,7 +42,7 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting }: { onConfir
             </div>
             <div className="flex justify-between items-center text-3xl">
                 <span className="text-muted-foreground">{t('pos.total')}</span>
-                <span className="font-bold text-primary">${cart.totalAmount.toFixed(2)}</span>
+                <span className="font-bold text-primary">{formatCurrency(cart.totalAmount)}</span>
             </div>
         </div>
         <DialogFooter>
