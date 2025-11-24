@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "@prisma/client";
+import { Product, Category } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Folder } from "lucide-react";
 import { ProductTable } from "./product-table";
 import { ProductSheet } from "./product-sheet";
 import { useTranslation } from "@/hooks/use-translation";
+import { useRouter } from "next/navigation";
+import { ProductWithCategory } from "@/types";
 
-export function InventoryPageClient({ initialProducts }: { initialProducts: Product[] }) {
+export function InventoryPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
   const { t } = useTranslation();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -38,13 +40,19 @@ export function InventoryPageClient({ initialProducts }: { initialProducts: Prod
             <CardTitle>{t("inventory.title")}</CardTitle>
             <CardDescription>{t("inventory.description")}</CardDescription>
           </div>
-          <Button onClick={handleAddProduct}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {t("inventory.addProduct")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => router.push('/inventory/categories')}>
+                <Folder className="mr-2 h-4 w-4" />
+                {t('inventory.manageCategories')}
+            </Button>
+            <Button onClick={handleAddProduct}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t("inventory.addProduct")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <ProductTable products={products} onEdit={handleEditProduct} />
+          <ProductTable products={initialProducts} onEdit={handleEditProduct} />
         </CardContent>
       </Card>
 
@@ -52,6 +60,7 @@ export function InventoryPageClient({ initialProducts }: { initialProducts: Prod
         isOpen={isSheetOpen}
         onOpenChange={onSheetClose}
         product={editingProduct}
+        categories={categories}
       />
     </div>
   );

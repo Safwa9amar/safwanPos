@@ -8,70 +8,105 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Product {
-  id                String            @id @default(uuid())
-  name              String
-  barcode           String            @unique
-  price             Float
-  costPrice         Float             @default(0)
-  stock             Int
-  saleItems         SaleItem[]
+  id          String   @id @default(uuid())
+  name        String
+  barcode     String   @unique
+  price       Float
+  stock       Float
+  costPrice   Float    @default(0)
+  unit        Unit     @default(EACH)
+  image       String?
+  saleItems   SaleItem[]
   purchaseOrderItems PurchaseOrderItem[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  products  Product[]
 }
 
 model Sale {
   id          String     @id @default(uuid())
-  saleDate    DateTime   @default(now())
   totalAmount Float
+  saleDate    DateTime   @default(now())
   items       SaleItem[]
 }
 
 model SaleItem {
   id        String  @id @default(uuid())
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent deleting product if in a sale
   productId String
   quantity  Int
   price     Float // Price at the time of sale
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onUpdate: Cascade)
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 model Supplier {
-  id             String          @id @default(uuid())
-  name           String
-  contactName    String?
-  email          String?         @unique
-  phone          String?
-  address        String?
+  id            String          @id @default(uuid())
+  name          String
+  contactName   String?
+  email         String?
+  phone         String?
+  address       String?
   purchaseOrders PurchaseOrder[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model PurchaseOrder {
   id                   String              @id @default(uuid())
-  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
   orderDate            DateTime            @default(now())
   expectedDeliveryDate DateTime?
-  status               String              @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  status               PurchaseOrderStatus @default(PENDING)
+  totalCost            Float
   items                PurchaseOrderItem[]
-  totalCost            Float               @default(0)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
+
+  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
   id              String        @id @default(uuid())
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   purchaseOrderId String
-  product         Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   productId       String
+  product         Product       @relation(fields: [productId], references: [id], onUpdate: Cascade)
   quantity        Int
-  costPrice       Float // Cost at the time of purchase
+  costPrice       Float
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum Unit {
+  EACH // Each item
+  KG   // Kilogram
+  G    // Gram
+  L    // Liter
+  ML   // Milliliter
 }

@@ -10,13 +10,17 @@ const ProductSchema = z.object({
   barcode: z.string().min(1, "Barcode is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
-  stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
+  stock: z.coerce.number().min(0, "Stock cannot be negative for items sold by EACH. For weighted items, this can be a decimal."),
+  categoryId: z.string().optional().nullable(),
+  unit: z.enum(["EACH", "KG", "G", "L", "ML"]),
+  image: z.string().url().optional().or(z.literal('')),
 });
 
 export async function getProducts() {
   try {
     const products = await prisma.product.findMany({
       orderBy: { name: "asc" },
+      include: { category: true }
     });
     return { products };
   } catch (error) {
@@ -35,7 +39,7 @@ export async function addProduct(formData: FormData) {
     };
   }
   
-  const { name, barcode, price, stock, costPrice } = validatedFields.data;
+  const { name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
 
   try {
     const existingProduct = await prisma.product.findUnique({ where: { barcode } });
@@ -48,7 +52,16 @@ export async function addProduct(formData: FormData) {
     }
 
     await prisma.product.create({
-      data: { name, barcode, price, stock, costPrice },
+      data: { 
+        name, 
+        barcode, 
+        price, 
+        stock, 
+        costPrice,
+        categoryId: categoryId || null,
+        unit,
+        image: image || null,
+      },
     });
 
     revalidatePath("/inventory");
@@ -72,7 +85,7 @@ export async function updateProduct(formData: FormData) {
         };
     }
     
-    const { id, name, barcode, price, stock, costPrice } = validatedFields.data;
+    const { id, name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
 
     if (!id) {
         return { message: "Product ID is missing." };
@@ -98,7 +111,16 @@ export async function updateProduct(formData: FormData) {
 
         await prisma.product.update({
             where: { id },
-            data: { name, barcode, price, stock, costPrice },
+            data: { 
+                name, 
+                barcode, 
+                price, 
+                stock, 
+                costPrice,
+                categoryId: categoryId || null,
+                unit,
+                image: image || null
+            },
         });
 
         revalidatePath("/inventory");
@@ -125,5 +147,80 @@ export async function deleteProduct(productId: string) {
         }
         console.error(error);
         return { error: 'Failed to delete product.' }
+    }
+}
+
+
+// --- Category Actions ---
+const CategorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Category name is required"),
+});
+
+export async function getCategories() {
+    try {
+        const categories = await prisma.category.findMany({
+            orderBy: { name: 'asc' },
+        });
+        return { categories };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to fetch categories." };
+    }
+}
+
+export async function upsertCategory(formData: FormData) {
+    const values = Object.fromEntries(formData.entries());
+    const validatedFields = CategorySchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        return { errors: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { id, name } = validatedFields.data;
+
+    try {
+        const existingCategory = await prisma.category.findFirst({
+            where: { 
+                name, 
+                NOT: { id: id || undefined }
+            }
+        });
+
+        if (existingCategory) {
+            return { errors: { name: ["A category with this name already exists."] }};
+        }
+
+        await prisma.category.upsert({
+            where: { id: id || '' },
+            create: { name },
+            update: { name }
+        });
+        revalidatePath('/inventory/categories');
+        revalidatePath('/inventory');
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { message: "Failed to save category." };
+    }
+}
+
+export async function deleteCategory(categoryId: string) {
+    try {
+        // We need to un-link products before deleting the category
+        await prisma.product.updateMany({
+            where: { categoryId: categoryId },
+            data: { categoryId: null }
+        });
+
+        await prisma.category.delete({
+            where: { id: categoryId }
+        });
+        revalidatePath('/inventory/categories');
+        revalidatePath('/inventory');
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: 'Failed to delete category.' };
     }
 }

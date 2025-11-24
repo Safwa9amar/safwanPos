@@ -1,6 +1,11 @@
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory } from '@prisma/client';
 
 export type Product = PrismaProduct;
+export type Category = PrismaCategory;
+
+export interface ProductWithCategory extends PrismaProduct {
+    category: PrismaCategory | null;
+}
 
 export type CartItem = {
   productId: string;

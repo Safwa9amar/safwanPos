@@ -22,8 +22,11 @@ import { useTranslation } from "react-i18next";
 import { DeleteProductAlert } from "./delete-product-alert";
 import { deleteProduct } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
+import { ProductWithCategory } from "@/types";
+import { Badge } from "../ui/badge";
+import Image from "next/image";
 
-export function ProductTable({ products, onEdit }: { products: Product[], onEdit: (product: Product) => void }) {
+export function ProductTable({ products, onEdit }: { products: ProductWithCategory[], onEdit: (product: Product) => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -72,7 +75,9 @@ export function ProductTable({ products, onEdit }: { products: Product[], onEdit
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[80px]">Image</TableHead>
             <TableHead>{t("inventory.productName")}</TableHead>
+            <TableHead>{t("inventory.category")}</TableHead>
             <TableHead>{t("inventory.barcode")}</TableHead>
             <TableHead className="text-right">{t("inventory.price")}</TableHead>
             <TableHead className="text-right">{t("inventory.costPrice")}</TableHead>
@@ -83,11 +88,27 @@ export function ProductTable({ products, onEdit }: { products: Product[], onEdit
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
+              <TableCell>
+                {product.image ? (
+                   <Image src={product.image} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                ) : (
+                  <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-muted-foreground text-xs">
+                    No Img
+                  </div>
+                )}
+              </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell>
+                {product.category ? (
+                  <Badge variant="secondary">{product.category.name}</Badge>
+                ) : (
+                  <span className="text-muted-foreground text-xs">N/A</span>
+                )}
+              </TableCell>
               <TableCell>{product.barcode}</TableCell>
               <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
               <TableCell className="text-right">${product.costPrice.toFixed(2)}</TableCell>
-              <TableCell className="text-right">{product.stock}</TableCell>
+              <TableCell className="text-right">{product.stock} {t(`units.${product.unit}`)}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

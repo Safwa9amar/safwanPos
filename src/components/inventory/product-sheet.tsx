@@ -1,6 +1,6 @@
 "use client";
 
-import { Product } from "@prisma/client";
+import { Product, Category } from "@prisma/client";
 import {
   Sheet,
   SheetContent,
@@ -15,22 +15,23 @@ interface ProductSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product | null;
+  categories: Category[];
 }
 
-export function ProductSheet({ isOpen, onOpenChange, product }: ProductSheetProps) {
+export function ProductSheet({ isOpen, onOpenChange, product, categories }: ProductSheetProps) {
   const { t } = useTranslation();
   const title = product ? t("inventory.editTitle") : t("inventory.addProduct");
   const description = product ? t("inventory.editDescription") : t("inventory.addDescription");
   
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="py-4">
-          <ProductForm product={product} onFinished={() => onOpenChange(false)} />
+          <ProductForm product={product} categories={categories} onFinished={() => onOpenChange(false)} />
         </div>
       </SheetContent>
     </Sheet>

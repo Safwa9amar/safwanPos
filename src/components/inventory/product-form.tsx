@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Product } from "@prisma/client";
+import { Product, Category, Unit } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { addProduct, updateProduct } from "@/app/inventory/actions";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "../ui/textarea";
 
 const ProductSchema = z.object({
   id: z.string().optional(),
@@ -18,12 +20,15 @@ const ProductSchema = z.object({
   barcode: z.string().min(1, "Barcode is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
-  stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
+  stock: z.coerce.number().min(0, "Stock cannot be negative"),
+  categoryId: z.string().optional().nullable(),
+  unit: z.nativeEnum(Unit),
+  image: z.string().url("Must be a valid URL").optional().or(z.literal('')),
 });
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
-export function ProductForm({ product, onFinished }: { product: Product | null, onFinished: () => void }) {
+export function ProductForm({ product, categories, onFinished }: { product: Product | null, categories: Category[], onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const form = useForm<ProductFormValues>({
@@ -35,10 +40,13 @@ export function ProductForm({ product, onFinished }: { product: Product | null, 
       price: product?.price || 0,
       costPrice: product?.costPrice || 0,
       stock: product?.stock || 0,
+      categoryId: product?.categoryId || "",
+      unit: product?.unit || "EACH",
+      image: product?.image || "",
     },
   });
 
-  const { formState } = form;
+  const { formState, register, handleSubmit, setValue, watch } = form;
 
   const onSubmit = async (data: ProductFormValues) => {
     const formData = new FormData();
@@ -73,35 +81,77 @@ export function ProductForm({ product, onFinished }: { product: Product | null, 
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <input type="hidden" {...form.register("id")} />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <input type="hidden" {...register("id")} />
+      
       <div className="space-y-2">
         <Label htmlFor="name">{t("inventory.productName")}</Label>
-        <Input id="name" {...form.register("name")} />
+        <Input id="name" {...register("name")} />
         {formState.errors.name && <p className="text-sm text-destructive">{formState.errors.name.message}</p>}
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="barcode">{t("inventory.barcode")}</Label>
-        <Input id="barcode" {...form.register("barcode")} />
+        <Input id="barcode" {...register("barcode")} />
         {formState.errors.barcode && <p className="text-sm text-destructive">{formState.errors.barcode.message}</p>}
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">{t("inventory.price")}</Label>
-          <Input id="price" type="number" step="0.01" {...form.register("price")} />
+          <Input id="price" type="number" step="0.01" {...register("price")} />
           {formState.errors.price && <p className="text-sm text-destructive">{formState.errors.price.message}</p>}
         </div>
         <div className="space-y-2">
             <Label htmlFor="costPrice">{t("inventory.costPrice")}</Label>
-            <Input id="costPrice" type="number" step="0.01" {...form.register("costPrice")} />
+            <Input id="costPrice" type="number" step="0.01" {...register("costPrice")} />
             {formState.errors.costPrice && <p className="text-sm text-destructive">{formState.errors.costPrice.message}</p>}
         </div>
       </div>
-       <div className="space-y-2">
-          <Label htmlFor="stock">{t("inventory.stock")}</Label>
-          <Input id="stock" type="number" step="1" {...form.register("stock")} />
-          {formState.errors.stock && <p className="text-sm text-destructive">{formState.errors.stock.message}</p>}
+      
+       <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+              <Label htmlFor="stock">{t("inventory.stock")}</Label>
+              <Input id="stock" type="number" step={watch('unit') === 'EACH' ? '1' : '0.001'} {...register("stock")} />
+              {formState.errors.stock && <p className="text-sm text-destructive">{formState.errors.stock.message}</p>}
+          </div>
+          <div className="space-y-2">
+             <Label htmlFor="unit">{t('inventory.unit')}</Label>
+             <Select value={watch('unit')} onValueChange={(value: Unit) => setValue('unit', value)}>
+                <SelectTrigger id="unit">
+                    <SelectValue placeholder={t('inventory.selectUnit')} />
+                </SelectTrigger>
+                <SelectContent>
+                    {Object.values(Unit).map(unit => (
+                        <SelectItem key={unit} value={unit}>{t(`units.${unit}`)}</SelectItem>
+                    ))}
+                </SelectContent>
+             </Select>
+             {formState.errors.unit && <p className="text-sm text-destructive">{formState.errors.unit.message}</p>}
+          </div>
+       </div>
+
+        <div className="space-y-2">
+            <Label htmlFor="categoryId">{t('inventory.category')}</Label>
+            <Select value={watch('categoryId') || ''} onValueChange={(value) => setValue('categoryId', value)}>
+                <SelectTrigger id="categoryId">
+                    <SelectValue placeholder={t('inventory.selectCategory')} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">{t('inventory.noCategory')}</SelectItem>
+                    {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
+
+        <div className="space-y-2">
+            <Label htmlFor="image">{t('inventory.imageUrl')}</Label>
+            <Input id="image" {...register("image")} placeholder="https://example.com/image.png"/>
+            {formState.errors.image && <p className="text-sm text-destructive">{formState.errors.image.message}</p>}
+        </div>
+
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {formState.isSubmitting ? t("inventory.saving") : t("inventory.save")}
