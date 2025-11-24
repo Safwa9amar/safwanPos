@@ -1,10 +1,12 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
-import { BarChart, LineChart, TrendingUp, ShoppingCart, DollarSign } from "lucide-react";
+import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
 import {
   Bar,
+  BarChart,
   XAxis,
   YAxis,
   CartesianGrid,
