@@ -1,3 +1,4 @@
+
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -31,6 +32,11 @@ export async function getProducts() {
 
 export async function addProduct(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
+  // Handle empty string for categoryId
+  if (values.categoryId === 'null' || values.categoryId === '') {
+    values.categoryId = null;
+  }
+  
   const validatedFields = ProductSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -77,6 +83,11 @@ export async function addProduct(formData: FormData) {
 
 export async function updateProduct(formData: FormData) {
     const values = Object.fromEntries(formData.entries());
+    // Handle empty string for categoryId
+    if (values.categoryId === 'null' || values.categoryId === '') {
+      values.categoryId = null;
+    }
+
     const validatedFields = ProductSchema.safeParse(values);
 
     if (!validatedFields.success) {

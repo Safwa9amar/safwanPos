@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -42,7 +43,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
       price: product?.price || 0,
       costPrice: product?.costPrice || 0,
       stock: product?.stock || 0,
-      categoryId: product?.categoryId || "",
+      categoryId: product?.categoryId || "__none__",
       unit: (product?.unit as ProductFormValues['unit']) || "EACH",
       image: product?.image || "",
     },
@@ -52,7 +53,13 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
 
   const onSubmit = async (data: ProductFormValues) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    const submissionData = { ...data };
+
+    if (submissionData.categoryId === '__none__') {
+      submissionData.categoryId = null;
+    }
+
+    Object.entries(submissionData).forEach(([key, value]) => {
         if(value !== undefined && value !== null){
             formData.append(key, String(value));
         }
@@ -135,12 +142,12 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
 
         <div className="space-y-2">
             <Label htmlFor="categoryId">{t('inventory.category')}</Label>
-            <Select value={watch('categoryId') || ''} onValueChange={(value) => setValue('categoryId', value)}>
+            <Select value={watch('categoryId') || '__none__'} onValueChange={(value) => setValue('categoryId', value)}>
                 <SelectTrigger id="categoryId">
                     <SelectValue placeholder={t('inventory.selectCategory')} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">{t('inventory.noCategory')}</SelectItem>
+                    <SelectItem value="__none__">{t('inventory.noCategory')}</SelectItem>
                     {categories.map(cat => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
