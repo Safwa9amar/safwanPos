@@ -11,13 +11,48 @@ import { CurrencyProvider } from '@/context/currency-context';
 import { useTranslation } from '@/hooks/use-translation';
 
 
-// This is the main shell for the app that includes the HTML and body tags.
+// This component now only renders the body and its children, allowing it to use hooks.
 const AppShell = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-    // We get language and direction here to apply to the html tag
+    const { language } = useTranslation();
+    return (
+        <body className={`h-full ${language === 'ar' ? 'font-cairo' : 'font-inter'}`}>
+            {children}
+        </body>
+    )
+}
+
+// The RootLayout now correctly renders <html>, <head>, and the providers.
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <CurrencyProvider>
+          <AuthProvider>
+            <AppWithDirection>
+                {children}
+                <Toaster />
+            </AppWithDirection>
+          </AuthProvider>
+        </CurrencyProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  );
+}
+
+// A new component to get language direction and apply it to the <html> tag.
+const AppWithDirection = ({
+    children,
+  }: Readonly<{
+    children: React.ReactNode;
+  }>) => {
     const { language, dir } = useTranslation();
 
     return (
@@ -30,31 +65,9 @@ const AppShell = ({
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
                 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet" />
             </head>
-            <body className={`h-full ${language === 'ar' ? 'font-cairo' : 'font-inter'}`}>
+             <body className={`h-full ${language === 'ar' ? 'font-cairo' : 'font-inter'}`}>
                 {children}
             </body>
         </html>
     )
-}
-
-// This is the root layout where we compose all the providers.
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <CurrencyProvider>
-          <AuthProvider>
-            <AppShell>
-              {children}
-              <Toaster />
-            </AppShell>
-          </AuthProvider>
-        </CurrencyProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  );
 }
