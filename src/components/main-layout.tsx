@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -9,7 +10,8 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarInset,
-  SidebarFooter
+  SidebarFooter,
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Icons } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,7 +51,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="offcanvas">
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Icons.logo className="size-8 text-primary" />
@@ -134,6 +136,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 sticky top-0 z-30">
+          <SidebarTrigger className="md:hidden"/>
+          <div className="flex-1">
+             {/* You can add a page title here if needed */}
+          </div>
+        </header>
         {children}
       </SidebarInset>
     </SidebarProvider>
