@@ -1,7 +1,8 @@
+
 "use client";
 
 import { CartItem as CartItemType } from '@/types';
-import { useCart } from '@/hooks/use-cart';
+import { useMultiCart } from '@/hooks/use-multi-cart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, X } from 'lucide-react';
@@ -9,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '@/hooks/use-currency';
 
-export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<typeof useCart> }) {
+export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<typeof useMultiCart> }) {
   const { toast } = useToast();
   const { t } = useTranslation("translation");
   const { formatCurrency } = useCurrency();

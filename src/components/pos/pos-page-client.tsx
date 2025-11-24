@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useCart } from '@/hooks/use-cart';
+import { useMultiCart } from '@/hooks/use-multi-cart';
 import { Product, Category } from '@prisma/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,15 +12,17 @@ import { CartSummary } from './cart-summary';
 import { CompleteSaleDialog } from './complete-sale-dialog';
 import { completeSale } from '@/app/pos/actions';
 import { Receipt } from './receipt';
-import { Loader2, Scan, PackageSearch, Search, X } from 'lucide-react';
+import { Loader2, Scan, PackageSearch, Search, X, PlusCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Sale, ProductWithCategory } from '@/types';
 import { ProductGrid } from './product-grid';
 import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Badge } from '../ui/badge';
 
 export function PosPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
-  const cart = useCart();
+  const cart = useMultiCart();
   const { toast } = useToast();
   const { t } = useTranslation("translation");
   const [barcode, setBarcode] = useState('');
@@ -58,7 +60,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
   }, [barcode, cart, toast, t]);
 
   const handleCompleteSale = async () => {
-    if (cart.items.length === 0) {
+    if (cart.activeCart.items.length === 0) {
       toast({
         title: t('pos.emptyCartTitle'),
         description: t('pos.emptyCartDescription'),
@@ -68,7 +70,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
     
     setIsCompleting(true);
     try {
-      const result = await completeSale(cart.items);
+      const result = await completeSale(cart.activeCart.items);
       if (result.success && result.sale) {
         // @ts-ignore
         setLastSale(result.sale);
@@ -102,7 +104,29 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
 
   useEffect(() => {
     barcodeInputRef.current?.focus();
-  }, []);
+  }, [cart.activeCartIndex]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // F1-F9 to switch carts
+      if (event.key.startsWith('F') && !isNaN(Number(event.key.substring(1)))) {
+        const keyNumber = parseInt(event.key.substring(1), 10);
+        if (keyNumber >= 1 && keyNumber <= 9) {
+          event.preventDefault();
+          const cartIndex = keyNumber - 1;
+          if(cartIndex < cart.carts.length) {
+            cart.switchCart(cartIndex);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [cart]);
+
 
   if (showReceipt && lastSale) {
     return <Receipt sale={lastSale} onDone={() => {
@@ -112,7 +136,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
   }
   
   return (
-    <div className="grid lg:grid-cols-[1fr_400px] gap-4 p-4 h-[calc(100vh-64px)] max-h-full overflow-hidden">
+    <div className="grid lg:grid-cols-[1fr_480px] gap-4 p-4 h-[calc(100vh-64px)] max-h-full overflow-hidden">
       <div className="flex flex-col gap-4 overflow-hidden">
         <Card>
           <CardHeader>
@@ -180,7 +204,35 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
 
       <div className="flex flex-col gap-4 h-full max-h-full">
         <div className="flex-grow min-h-0">
-          <CartSummary cart={cart} />
+           <Card className="flex flex-col h-full shadow-lg">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        {cart.carts.map((_, index) => (
+                            <Button 
+                                key={index} 
+                                variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
+                                size="sm"
+                                className="relative"
+                                onClick={() => cart.switchCart(index)}
+                            >
+                                Cart {index + 1}
+                                {cart.carts.length > 1 && (
+                                     <X 
+                                        className="h-3 w-3 text-muted-foreground absolute -top-1 -right-1"
+                                        onClick={(e) => { e.stopPropagation(); cart.removeCart(index); }}
+                                     />
+                                )}
+                            </Button>
+                        ))}
+                        {cart.carts.length < 9 && (
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={cart.addCart}>
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                </CardHeader>
+                <CartSummary cart={cart} />
+            </Card>
         </div>
         <div>
           <CompleteSaleDialog onConfirm={handleCompleteSale} cart={cart} isCompleting={isCompleting}/>

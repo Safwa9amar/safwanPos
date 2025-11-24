@@ -1,3 +1,7 @@
+
+// This file is no longer used and has been replaced by use-multi-cart.ts
+// It can be safely deleted, but we will leave it for now to avoid breaking imports in other parts of the app that have not been updated yet.
+
 "use client";
 
 import { useState, useCallback, useMemo } from 'react';
