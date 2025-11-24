@@ -203,7 +203,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
         <div className="flex-grow min-h-0">
            <Card className="flex flex-col h-full shadow-lg">
                 <CardHeader>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <TooltipProvider>
                         {cart.carts.map((_, index) => (
                             <Tooltip key={index}>
