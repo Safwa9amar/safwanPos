@@ -7,6 +7,7 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.openssl.bin
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -21,8 +22,46 @@
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # "vscodevim.vim"
-    ];
+      # --- Essentials ---
+      "ms-ceintl.vscode-language-pack-en-us"
+      "eclipse.typescript-language-features"
+      "vscode.git"
+      "vscode.github"
+      "esbenp.prettier-vscode"
+
+      # --- React / Next.js / TS ---
+      "dbaeumer.vscode-eslint"
+      "xabikos.javascriptsnippets"
+      "dsznajder.es7-react-js-snippets"
+      "bradlc.vscode-tailwindcss"
+
+      # --- Prisma ---
+      "prisma.prisma"
+
+      # --- Supabase (SQL, PostgreSQL) ---
+      "mtxr.sqltools"
+      "mtxr.sqltools-driver-pg"
+
+      # --- REST / API Testing ---
+      "humao.rest-client"
+
+      # --- Git & Diff Tools ---
+      "mhutchie.git-graph"
+      "aaron-bond.better-comments"
+
+      # --- Docker (optional but recommended for DB testing) ---
+      "ms-azuretools.vscode-docker"
+
+      # --- Icons ---
+      "vscode-icons-team.vscode-icons"
+
+      # --- Firebase Tools ---
+      "firebase.firebase-explorer"
+
+      # --- Nix language support ---
+      "jnoortheen.nix-ide"
+];
+
     workspace = {
       onCreate = {
         default.openFiles = [
