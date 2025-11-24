@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const SalesReportInputSchema = z.object({
   salesData: z.string().describe('A JSON string containing the sales data to analyze.'),
+  language: z.string().describe('The language for the report output (e.g., "en", "ar").'),
 });
 export type SalesReportInput = z.infer<typeof SalesReportInputSchema>;
 
@@ -34,6 +35,7 @@ const salesReportPrompt = ai.definePrompt({
   Sales Data: {{{salesData}}}
   Focus on identifying products with high sales volume and suggesting potential reorder quantities.
   Respond in a clear and actionable manner.
+  The entire response must be in the following language: {{{language}}}.
   `,
 });
 

@@ -3,7 +3,7 @@
 import { generateSalesReport } from "@/ai/flows/sales-reporting-tool";
 import prisma from "@/lib/prisma";
 
-export async function getSalesReport() {
+export async function getSalesReport(language: string) {
     try {
         const sales = await prisma.sale.findMany({
             include: {
@@ -38,6 +38,7 @@ export async function getSalesReport() {
 
         const report = await generateSalesReport({
             salesData: JSON.stringify(salesDataForAI, null, 2),
+            language: language,
         });
 
         return report;

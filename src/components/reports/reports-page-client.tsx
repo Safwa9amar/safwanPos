@@ -13,13 +13,13 @@ export function ReportsPageClient() {
     const [report, setReport] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
 
     const handleGenerateReport = async () => {
         setIsLoading(true);
         setReport(null);
         try {
-            const result = await getSalesReport();
+            const result = await getSalesReport(language);
             if (result.error) {
                 throw new Error(result.error);
             }
