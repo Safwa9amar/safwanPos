@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CartItem } from '@/types';
 import { Product } from '@prisma/client';
 import { useToast } from "@/hooks/use-toast";
@@ -27,19 +27,51 @@ const calculateCartTotals = (items: CartItem[]): Partial<Cart> => {
   return { subtotal, totalItems, totalAmount: subtotal };
 };
 
+const getInitialState = () => {
+    if (typeof window === 'undefined') {
+        return { carts: [createEmptyCart()], activeCartIndex: 0 };
+    }
+    try {
+        const storedState = localStorage.getItem('multiCartState');
+        if (storedState) {
+            const parsedState = JSON.parse(storedState);
+            // Basic validation to ensure we don't crash on malformed data
+            if (Array.isArray(parsedState.carts) && typeof parsedState.activeCartIndex === 'number') {
+                if (parsedState.carts.length === 0) {
+                     return { carts: [createEmptyCart()], activeCartIndex: 0 };
+                }
+                return parsedState;
+            }
+        }
+    } catch (error) {
+        console.error("Error reading from localStorage", error);
+    }
+    return { carts: [createEmptyCart()], activeCartIndex: 0 };
+};
+
+
 export const useMultiCart = () => {
-  const [carts, setCarts] = useState<Cart[]>([createEmptyCart()]);
-  const [activeCartIndex, setActiveCartIndex] = useState(0);
+  const [state, setState] = useState(getInitialState);
   const { toast } = useToast();
   const { t } = useTranslation("translation");
 
+  const { carts, activeCartIndex } = state;
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('multiCartState', JSON.stringify(state));
+    } catch (error) {
+        console.error("Error writing to localStorage", error);
+    }
+  }, [state]);
+
   const updateCart = (index: number, newItems: CartItem[]) => {
-    setCarts(prevCarts => {
-      const newCarts = [...prevCarts];
-      const newTotals = calculateCartTotals(newItems);
-      newCarts[index] = { ...newCarts[index], items: newItems, ...newTotals };
-      return newCarts;
-    });
+    setState(prevState => {
+        const newCarts = [...prevState.carts];
+        const newTotals = calculateCartTotals(newItems);
+        newCarts[index] = { ...newCarts[index], items: newItems, ...newTotals };
+        return { ...prevState, carts: newCarts };
+    })
   };
 
   const addItem = useCallback((product: Product) => {
@@ -97,15 +129,19 @@ export const useMultiCart = () => {
   }, [carts, activeCartIndex]);
 
   const clearCart = useCallback(() => {
-    updateCart(activeCartIndex, []);
-  }, [activeCartIndex]);
+    // When a sale is completed, we replace the active cart with an empty one.
+    setState(prevState => {
+        const newCarts = [...prevState.carts];
+        newCarts[prevState.activeCartIndex] = createEmptyCart();
+        return { ...prevState, carts: newCarts };
+    })
+  }, []);
   
   const addCart = useCallback(() => {
     if (carts.length < 9) {
-      setCarts(prev => {
-        const newCarts = [...prev, createEmptyCart()];
-        setActiveCartIndex(newCarts.length - 1);
-        return newCarts;
+      setState(prev => {
+        const newCarts = [...prev.carts, createEmptyCart()];
+        return { ...prev, carts: newCarts, activeCartIndex: newCarts.length - 1 };
       });
     }
   }, [carts.length]);
@@ -113,32 +149,28 @@ export const useMultiCart = () => {
   const removeCart = useCallback((indexToRemove: number) => {
     if (carts.length <= 1) return;
 
-    setCarts(prev => prev.filter((_, index) => index !== indexToRemove));
-
-    if (activeCartIndex >= indexToRemove) {
-      setActiveCartIndex(prev => Math.max(0, prev - 1));
-    }
+    setState(prev => {
+        const newCarts = prev.carts.filter((_, index) => index !== indexToRemove);
+        const newActiveIndex = prev.activeCartIndex >= indexToRemove ? Math.max(0, prev.activeCartIndex - 1) : prev.activeCartIndex;
+        return { carts: newCarts, activeCartIndex: newActiveIndex };
+    });
   }, [carts.length, activeCartIndex]);
 
   const switchCart = useCallback((index: number) => {
     if (index >= 0 && index < carts.length) {
-      setActiveCartIndex(index);
+      setState(prev => ({ ...prev, activeCartIndex: index }));
     }
   }, [carts.length]);
   
   const switchToOrAddCart = useCallback((targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < 9) {
-      setCarts(prevCarts => {
-        if (targetIndex < prevCarts.length) {
-          // If cart exists, just switch
-          setActiveCartIndex(targetIndex);
-          return prevCarts;
+      setState(prev => {
+        if (targetIndex < prev.carts.length) {
+          return { ...prev, activeCartIndex: targetIndex };
         } else {
-          // If cart doesn't exist, create carts up to the target index
-          const newCartsToAdd = targetIndex - prevCarts.length + 1;
+          const newCartsToAdd = targetIndex - prev.carts.length + 1;
           const newEmptyCarts = Array(newCartsToAdd).fill(null).map(() => createEmptyCart());
-          setActiveCartIndex(targetIndex);
-          return [...prevCarts, ...newEmptyCarts];
+          return { ...prev, carts: [...prev.carts, ...newEmptyCarts], activeCartIndex: targetIndex };
         }
       });
     }
