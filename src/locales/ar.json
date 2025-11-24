@@ -45,6 +45,8 @@
     "pos.scanPlaceholder": "أدخل أو امسح الرمز الشريطي...",
     "pos.addButton": "إضافة",
     "pos.productsTitle": "المنتجات",
+    "pos.searchProductsPlaceholder": "البحث عن منتجات...",
+    "pos.allCategories": "جميع الفئات",
     "pos.processing": "جاري المعالجة...",
     "pos.completeSaleButton": "إتمام البيع",
     "pos.confirmSaleTitle": "تأكيد البيع",

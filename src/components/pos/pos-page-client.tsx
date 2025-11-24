@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useCart } from '@/hooks/use-cart';
-import { Product } from '@prisma/client';
+import { Product, Category } from '@prisma/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,13 +12,14 @@ import { CartSummary } from './cart-summary';
 import { CompleteSaleDialog } from './complete-sale-dialog';
 import { completeSale } from '@/app/pos/actions';
 import { Receipt } from './receipt';
-import { Loader2, Scan, PackageSearch } from 'lucide-react';
+import { Loader2, Scan, PackageSearch, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Sale, ProductWithCategory } from '@/types';
 import { ProductGrid } from './product-grid';
 import { ScrollArea } from '../ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-export function PosPageClient({ initialProducts }: { initialProducts: ProductWithCategory[] }) {
+export function PosPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
   const cart = useCart();
   const { toast } = useToast();
   const { t } = useTranslation("translation");
@@ -28,6 +29,10 @@ export function PosPageClient({ initialProducts }: { initialProducts: ProductWit
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
+
+  // State for filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const handleBarcodeScan = useCallback(async () => {
     if (!barcode) return;
@@ -87,6 +92,14 @@ export function PosPageClient({ initialProducts }: { initialProducts: ProductWit
     }
   };
 
+  const filteredProducts = useMemo(() => {
+    return initialProducts.filter(product => {
+        const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+    })
+  }, [initialProducts, searchTerm, selectedCategory]);
+
   useEffect(() => {
     barcodeInputRef.current?.focus();
   }, []);
@@ -127,14 +140,39 @@ export function PosPageClient({ initialProducts }: { initialProducts: ProductWit
         
         <Card className="flex-grow overflow-hidden flex flex-col">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <PackageSearch />
-                    {t('pos.productsTitle')}
-                </CardTitle>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2">
+                        <PackageSearch />
+                        {t('pos.productsTitle')}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                        <div className="relative w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                type="search"
+                                placeholder={t('pos.searchProductsPlaceholder')}
+                                className="pl-9"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder={t('pos.allCategories')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('pos.allCategories')}</SelectItem>
+                                {categories.map(category => (
+                                    <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="flex-grow overflow-hidden p-2">
                 <ScrollArea className="h-full">
-                    <ProductGrid products={initialProducts} onAddToCart={cart.addItem} />
+                    <ProductGrid products={filteredProducts} onAddToCart={cart.addItem} />
                 </ScrollArea>
             </CardContent>
         </Card>

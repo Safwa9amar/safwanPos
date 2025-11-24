@@ -45,6 +45,8 @@
     "pos.scanPlaceholder": "Enter or scan barcode...",
     "pos.addButton": "Add",
     "pos.productsTitle": "Products",
+    "pos.searchProductsPlaceholder": "Search products...",
+    "pos.allCategories": "All Categories",
     "pos.processing": "Processing...",
     "pos.completeSaleButton": "Complete Sale",
     "pos.confirmSaleTitle": "Confirm Sale",
