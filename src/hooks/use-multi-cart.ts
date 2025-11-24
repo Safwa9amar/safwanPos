@@ -102,8 +102,11 @@ export const useMultiCart = () => {
   
   const addCart = useCallback(() => {
     if (carts.length < 9) {
-      setCarts(prev => [...prev, createEmptyCart()]);
-      setActiveCartIndex(carts.length);
+      setCarts(prev => {
+        const newCarts = [...prev, createEmptyCart()];
+        setActiveCartIndex(newCarts.length - 1);
+        return newCarts;
+      });
     }
   }, [carts.length]);
 
@@ -122,6 +125,24 @@ export const useMultiCart = () => {
       setActiveCartIndex(index);
     }
   }, [carts.length]);
+  
+  const switchToOrAddCart = useCallback((targetIndex: number) => {
+    if (targetIndex >= 0 && targetIndex < 9) {
+      setCarts(prevCarts => {
+        if (targetIndex < prevCarts.length) {
+          // If cart exists, just switch
+          setActiveCartIndex(targetIndex);
+          return prevCarts;
+        } else {
+          // If cart doesn't exist, create carts up to the target index
+          const newCartsToAdd = targetIndex - prevCarts.length + 1;
+          const newEmptyCarts = Array(newCartsToAdd).fill(null).map(() => createEmptyCart());
+          setActiveCartIndex(targetIndex);
+          return [...prevCarts, ...newEmptyCarts];
+        }
+      });
+    }
+  }, []);
 
   const activeCart = useMemo(() => {
     return carts[activeCartIndex] || createEmptyCart();
@@ -138,5 +159,6 @@ export const useMultiCart = () => {
     addCart,
     removeCart,
     switchCart,
+    switchToOrAddCart,
   };
 };

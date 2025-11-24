@@ -18,7 +18,7 @@ import { Sale, ProductWithCategory } from '@/types';
 import { ProductGrid } from './product-grid';
 import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function PosPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
   const cart = useMultiCart();
@@ -112,10 +112,8 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
         const keyNumber = parseInt(event.key.substring(1), 10);
         if (keyNumber >= 1 && keyNumber <= 9) {
           event.preventDefault();
-          const cartIndex = keyNumber - 1;
-          if(cartIndex < cart.carts.length) {
-            cart.switchCart(cartIndex);
-          }
+          const targetCartIndex = keyNumber - 1;
+          cart.switchToOrAddCart(targetCartIndex);
         }
       }
     };
@@ -206,6 +204,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
            <Card className="flex flex-col h-full shadow-lg">
                 <CardHeader>
                     <div className="flex items-center gap-2">
+                      <TooltipProvider>
                         {cart.carts.map((_, index) => (
                             <Tooltip key={index}>
                                 <TooltipTrigger asChild>
@@ -236,6 +235,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
                                 <PlusCircle className="h-4 w-4" />
                             </Button>
                         )}
+                      </TooltipProvider>
                     </div>
                 </CardHeader>
                 <CartSummary cart={cart} />
