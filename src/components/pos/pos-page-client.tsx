@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -11,11 +12,13 @@ import { CartSummary } from './cart-summary';
 import { CompleteSaleDialog } from './complete-sale-dialog';
 import { completeSale } from '@/app/pos/actions';
 import { Receipt } from './receipt';
-import { Loader2, Scan } from 'lucide-react';
+import { Loader2, Scan, PackageSearch } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Sale } from '@/types';
+import { Sale, ProductWithCategory } from '@/types';
+import { ProductGrid } from './product-grid';
+import { ScrollArea } from '../ui/scroll-area';
 
-export function PosPageClient() {
+export function PosPageClient({ initialProducts }: { initialProducts: ProductWithCategory[] }) {
   const cart = useCart();
   const { toast } = useToast();
   const { t } = useTranslation("translation");
@@ -96,9 +99,9 @@ export function PosPageClient() {
   }
   
   return (
-    <div className="grid lg:grid-cols-3 gap-4 p-4 h-full max-h-full overflow-hidden">
-      <div className="lg:col-span-2 flex flex-col gap-4">
-        <Card className="shadow-lg">
+    <div className="grid lg:grid-cols-[1fr_400px] gap-4 p-4 h-[calc(100vh-64px)] max-h-full overflow-hidden">
+      <div className="flex flex-col gap-4 overflow-hidden">
+        <Card>
           <CardHeader>
             <CardTitle>{t('pos.scanProductTitle')}</CardTitle>
             <CardDescription>{t('pos.scanProductDescription')}</CardDescription>
@@ -121,9 +124,23 @@ export function PosPageClient() {
             </form>
           </CardContent>
         </Card>
+        
+        <Card className="flex-grow overflow-hidden flex flex-col">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <PackageSearch />
+                    {t('pos.productsTitle')}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-hidden p-2">
+                <ScrollArea className="h-full">
+                    <ProductGrid products={initialProducts} onAddToCart={cart.addItem} />
+                </ScrollArea>
+            </CardContent>
+        </Card>
       </div>
 
-      <div className="lg:col-span-1 flex flex-col gap-4 h-full max-h-full">
+      <div className="flex flex-col gap-4 h-full max-h-full">
         <div className="flex-grow min-h-0">
           <CartSummary cart={cart} />
         </div>

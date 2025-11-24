@@ -1,3 +1,4 @@
+
 {
     "sidebar.pos": "نقطة البيع",
     "sidebar.reports": "تقارير المبيعات",
@@ -43,6 +44,7 @@
     "pos.scanProductDescription": "أدخل الرمز الشريطي للمنتج لإضافته إلى عملية البيع.",
     "pos.scanPlaceholder": "أدخل أو امسح الرمز الشريطي...",
     "pos.addButton": "إضافة",
+    "pos.productsTitle": "المنتجات",
     "pos.processing": "جاري المعالجة...",
     "pos.completeSaleButton": "إتمام البيع",
     "pos.confirmSaleTitle": "تأكيد البيع",
