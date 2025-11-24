@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Product, Category, Unit } from "@prisma/client";
+import { Product, Category } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "../ui/textarea";
 
+const units = ["EACH", "KG", "G", "L", "ML"] as const;
+
 const ProductSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
@@ -22,7 +24,7 @@ const ProductSchema = z.object({
   costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
   categoryId: z.string().optional().nullable(),
-  unit: z.nativeEnum(Unit),
+  unit: z.enum(units),
   image: z.string().url("Must be a valid URL").optional().or(z.literal('')),
 });
 
@@ -41,7 +43,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
       costPrice: product?.costPrice || 0,
       stock: product?.stock || 0,
       categoryId: product?.categoryId || "",
-      unit: product?.unit || "EACH",
+      unit: (product?.unit as ProductFormValues['unit']) || "EACH",
       image: product?.image || "",
     },
   });
@@ -117,12 +119,12 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
           </div>
           <div className="space-y-2">
              <Label htmlFor="unit">{t('inventory.unit')}</Label>
-             <Select value={watch('unit')} onValueChange={(value: Unit) => setValue('unit', value)}>
+             <Select value={watch('unit')} onValueChange={(value: ProductFormValues['unit']) => setValue('unit', value)}>
                 <SelectTrigger id="unit">
                     <SelectValue placeholder={t('inventory.selectUnit')} />
                 </SelectTrigger>
                 <SelectContent>
-                    {Object.values(Unit).map(unit => (
+                    {units.map(unit => (
                         <SelectItem key={unit} value={unit}>{t(`units.${unit}`)}</SelectItem>
                     ))}
                 </SelectContent>

@@ -119,6 +119,7 @@ export async function createPurchaseOrder(
                 supplierId,
                 expectedDeliveryDate: expectedDate,
                 totalCost,
+                status: 'PENDING',
                 items: {
                     create: items.map(item => ({
                         productId: item.productId,

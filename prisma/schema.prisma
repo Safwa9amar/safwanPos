@@ -2,111 +2,81 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  barcode     String   @unique
-  price       Float
-  stock       Float
-  costPrice   Float    @default(0)
-  unit        Unit     @default(EACH)
-  image       String?
-  saleItems   SaleItem[]
+  id              String   @id @default(cuid())
+  name            String
+  barcode         String   @unique
+  price           Float
+  stock           Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  saleItems       SaleItem[]
+  costPrice       Float    @default(0)
+  unit            String   @default("EACH") // Replaces enum Unit
+  image           String?
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-
-  @@index([categoryId])
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
+  id        String   @id @default(cuid())
+  name      String   @unique
   products  Product[]
 }
 
 model Sale {
-  id          String     @id @default(uuid())
-  totalAmount Float
+  id          String     @id @default(cuid())
   saleDate    DateTime   @default(now())
+  totalAmount Float
   items       SaleItem[]
 }
 
 model SaleItem {
-  id        String  @id @default(uuid())
+  id        String   @id @default(cuid())
+  sale      Sale     @relation(fields: [saleId], references: [id])
   saleId    String
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
   price     Float // Price at the time of sale
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onUpdate: Cascade)
-
-  @@index([saleId])
-  @@index([productId])
 }
 
 model Supplier {
-  id            String          @id @default(uuid())
-  name          String
-  contactName   String?
-  email         String?
-  phone         String?
-  address       String?
+  id             String         @id @default(cuid())
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
   purchaseOrders PurchaseOrder[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
 }
 
 model PurchaseOrder {
-  id                   String              @id @default(uuid())
+  id                   String            @id @default(cuid())
+  supplier             Supplier          @relation(fields: [supplierId], references: [id])
   supplierId           String
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
-  orderDate            DateTime            @default(now())
+  orderDate            DateTime          @default(now())
   expectedDeliveryDate DateTime?
-  status               PurchaseOrderStatus @default(PENDING)
+  status               String            @default("PENDING") // Replaces enum PurchaseOrderStatus
   totalCost            Float
   items                PurchaseOrderItem[]
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-
-  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
-  id              String        @id @default(uuid())
+  id              String        @id @default(cuid())
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   purchaseOrderId String
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
   productId       String
-  product         Product       @relation(fields: [productId], references: [id], onUpdate: Cascade)
   quantity        Int
-  costPrice       Float
-
-  @@index([purchaseOrderId])
-  @@index([productId])
-}
-
-enum PurchaseOrderStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
-enum Unit {
-  EACH // Each item
-  KG   // Kilogram
-  G    // Gram
-  L    // Liter
-  ML   // Milliliter
+  costPrice       Float // Cost price at the time of purchase
 }
