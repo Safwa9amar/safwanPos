@@ -18,7 +18,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -71,6 +71,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Link href="/inventory">
                   <Package />
                   {t('sidebar.inventory')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/stats'} tooltip={t('sidebar.stats')}>
+                <Link href="/stats">
+                  <BarChart />
+                  {t('sidebar.stats')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

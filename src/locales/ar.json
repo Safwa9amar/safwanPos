@@ -3,6 +3,7 @@
     "sidebar.reports": "تقارير المبيعات",
     "sidebar.settings": "الإعدادات",
     "sidebar.inventory": "المخزون",
+    "sidebar.stats": "الإحصائيات",
     "user.role": "مدير المتجر",
     "user.myAccount": "حسابي",
     "user.logout": "تسجيل الخروج",
@@ -90,5 +91,11 @@
     "inventory.deleteConfirmTitle": "هل أنت متأكد؟",
     "inventory.deleteConfirmDescription": "سيؤدي هذا إلى حذف المنتج نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
     "inventory.deleteFailed": "فشل حذف المنتج.",
-    "inventory.deleteFailedDescription": "قد يكون هذا المنتج مرتبطًا بمبيعات سابقة."
+    "inventory.deleteFailedDescription": "قد يكون هذا المنتج مرتبطًا بمبيعات سابقة.",
+    "stats.title": "إحصائيات المبيعات",
+    "stats.totalRevenue": "إجمالي الإيرادات",
+    "stats.totalSales": "إجمالي المبيعات",
+    "stats.totalItemsSold": "إجمالي المنتجات المباعة",
+    "stats.salesLast7Days": "المبيعات في آخر 7 أيام",
+    "stats.topSellingProducts": "المنتجات الأكثر مبيعًا"
 }

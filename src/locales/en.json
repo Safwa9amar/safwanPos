@@ -3,6 +3,7 @@
     "sidebar.reports": "Sales Reports",
     "sidebar.settings": "Settings",
     "sidebar.inventory": "Inventory",
+    "sidebar.stats": "Statistics",
     "user.role": "Store Manager",
     "user.myAccount": "My Account",
     "user.logout": "Log out",
@@ -90,5 +91,11 @@
     "inventory.deleteConfirmTitle": "Are you sure?",
     "inventory.deleteConfirmDescription": "This will permanently delete the product. This action cannot be undone.",
     "inventory.deleteFailed": "Failed to delete product.",
-    "inventory.deleteFailedDescription": "This product may be associated with past sales."
+    "inventory.deleteFailedDescription": "This product may be associated with past sales.",
+    "stats.title": "Sales Statistics",
+    "stats.totalRevenue": "Total Revenue",
+    "stats.totalSales": "Total Sales",
+    "stats.totalItemsSold": "Total Items Sold",
+    "stats.salesLast7Days": "Sales Last 7 Days",
+    "stats.topSellingProducts": "Top Selling Products"
 }
