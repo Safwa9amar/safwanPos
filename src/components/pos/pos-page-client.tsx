@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
@@ -222,14 +221,24 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
                                         variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
                                         size="sm"
                                         className="relative pr-2"
-                                        onClick={() => cart.switchCart(index)}
+                                        onClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('.delete-cart-btn')) {
+                                                return;
+                                            }
+                                            cart.switchCart(index);
+                                        }}
                                     >
                                         Cart {index + 1}
                                         {cart.carts.length > 1 && (
-                                            <X 
-                                                className="h-3 w-3 text-muted-foreground absolute -top-1 -right-1"
-                                                onClick={(e) => { e.stopPropagation(); cart.removeCart(index); }}
-                                            />
+                                            <div
+                                                className="delete-cart-btn absolute -top-1 -right-1 p-0.5 rounded-full bg-muted-foreground/30 hover:bg-destructive"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    cart.removeCart(index);
+                                                }}
+                                            >
+                                                <X className="h-3 w-3 text-background" />
+                                            </div>
                                         )}
                                     </Button>
                                 </TooltipTrigger>
@@ -262,4 +271,5 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
       </div>
     </div>
   );
-}
+
+    
