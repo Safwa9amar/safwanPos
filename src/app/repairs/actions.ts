@@ -1,3 +1,4 @@
+
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -10,7 +11,7 @@ const RepairJobSchema = z.object({
   customerPhone: z.string().min(1, "Customer phone is required"),
   deviceModel: z.string().min(1, "Device model is required"),
   imei: z.string().optional(),
-ar  reportedProblem: z.string().min(1, "Reported problem is required"),
+  reportedProblem: z.string().min(1, "Reported problem is required"),
   notes: z.string().optional(),
   status: z.string().min(1, "Status is required"),
   estimatedCost: z.coerce.number().optional(),
