@@ -1,30 +1,30 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model Product {
-  id               String            @id @default(cuid())
-  name             String
-  barcode          String            @unique
-  price            Float
-  stock            Float
-  costPrice        Float
-  unit             String // "EACH", "KG", "G", "L", "ML"
-  image            String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  category         Category?         @relation(fields: [categoryId], references: [id])
-  categoryId       String?
-  saleItems        SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
+  id              String            @id @default(cuid())
+  name            String
+  barcode         String            @unique
+  price           Float
+  costPrice       Float             @default(0)
+  stock           Float
+  unit            String // "EACH", "KG", "G", "L", "ML"
+  image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  sales           SaleItem[]
+  purchaseItems   PurchaseOrderItem[]
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  categoryId      String?
 }
 
 model Category {
@@ -34,50 +34,50 @@ model Category {
 }
 
 model Sale {
-  id           String      @id @default(cuid())
-  totalAmount  Float
-  paymentType  String // "CASH", "CARD", "CREDIT"
-  amountPaid   Float
-  saleDate     DateTime    @default(now())
-  items        SaleItem[]
-  customer     Customer?   @relation(fields: [customerId], references: [id])
-  customerId   String?
+  id          String      @id @default(cuid())
+  saleDate    DateTime    @default(now())
+  totalAmount Float
+  paymentType String // "CASH", "CARD", "CREDIT"
+  amountPaid  Float
+  items       SaleItem[]
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  customerId  String?
 }
 
 model SaleItem {
-  id        String   @id @default(cuid())
-  sale      Sale     @relation(fields: [saleId], references: [id])
+  id        String  @id @default(cuid())
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
   productId String
   quantity  Float
   price     Float
 }
 
 model Supplier {
-  id              String          @id @default(cuid())
-  name            String
-  contactName     String?
-  email           String?
-  phone           String?
-  address         String?
-  purchaseOrders  PurchaseOrder[]
+  id            String          @id @default(cuid())
+  name          String
+  contactName   String?
+  email         String?
+  phone         String?
+  address       String?
+  purchaseOrders PurchaseOrder[]
 }
 
 model PurchaseOrder {
-  id                   String              @id @default(cuid())
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
-  supplierId           String
-  orderDate            DateTime            @default(now())
-  expectedDeliveryDate DateTime?
-  totalCost            Float
-  status               String // "PENDING", "COMPLETED", "CANCELLED"
-  items                PurchaseOrderItem[]
+  id                    String              @id @default(cuid())
+  supplier              Supplier            @relation(fields: [supplierId], references: [id])
+  supplierId            String
+  orderDate             DateTime            @default(now())
+  expectedDeliveryDate  DateTime?
+  status                String // "PENDING", "COMPLETED", "CANCELLED"
+  totalCost             Float
+  items                 PurchaseOrderItem[]
 }
 
 model PurchaseOrderItem {
   id              String        @id @default(cuid())
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   purchaseOrderId String
   product         Product       @relation(fields: [productId], references: [id])
   productId       String
@@ -86,23 +86,23 @@ model PurchaseOrderItem {
 }
 
 model Customer {
-    id      String @id @default(cuid())
-    name    String
-    phone   String?
-    email   String?
-    address String?
-    balance Float  @default(0)
-    sales   Sale[]
-    payments Payment[]
+  id      String   @id @default(cuid())
+  name    String
+  email   String?
+  phone   String?
+  address String?
+  balance Float    @default(0)
+  sales   Sale[]
+  payments Payment[]
 }
 
 model Payment {
-    id          String   @id @default(cuid())
-    customer    Customer @relation(fields: [customerId], references: [id])
-    customerId  String
-    amount      Float
-    paymentDate DateTime @default(now())
-    notes       String?
+  id          String   @id @default(cuid())
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String
+  amount      Float
+  paymentDate DateTime @default(now())
+  notes       String?
 }
 
 model RepairJob {
@@ -119,4 +119,19 @@ model RepairJob {
   boxNumber       Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  expenses Expense[]
+}
+
+model Expense {
+  id              String          @id @default(cuid())
+  description     String
+  amount          Float
+  expenseDate     DateTime        @default(now())
+  category        ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId      String
 }
