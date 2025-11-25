@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -29,7 +30,7 @@ import Image from "next/image";
 import { useCurrency } from "@/hooks/use-currency";
 import { BarcodeLabelDialog } from "./barcode-label-dialog";
 
-export function ProductTable({ products, onEdit }: { products: ProductWithCategory[], onEdit: (product: Product) => void }) {
+export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategory[], onEdit: (product: Product) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
@@ -95,8 +96,8 @@ export function ProductTable({ products, onEdit }: { products: ProductWithCatego
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
+          {products.map((product, index) => (
+            <TableRow key={product.id} ref={index === products.length - 1 ? lastElementRef : null}>
               <TableCell>
                 {product.image ? (
                    <Image src={product.image} alt={product.name} width={40} height={40} className="rounded-md object-cover" />

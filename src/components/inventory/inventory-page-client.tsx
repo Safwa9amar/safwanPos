@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Product, Category } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,12 @@ import { ProductSheet } from "./product-sheet";
 import { useTranslation } from "@/hooks/use-translation";
 import { useRouter } from "next/navigation";
 import { ProductWithCategory } from "@/types";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 
 type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock-asc' | 'stock-desc';
+
+const INITIAL_INFINITE_LOAD = 50;
+const SUBSEQUENT_INFINITE_LOAD = 25;
 
 export function InventoryPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
   const { t } = useTranslation();
@@ -25,6 +29,24 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(10);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_INFINITE_LOAD);
+  
+  const observer = useRef<IntersectionObserver>();
+  
+  const lastElementRef = useCallback((node: HTMLTableRowElement) => {
+    if (itemsPerPage !== 'all') return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount(prev => prev + SUBSEQUENT_INFINITE_LOAD);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [itemsPerPage]);
 
 
   const handleAddProduct = () => {
@@ -69,6 +91,33 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
     });
 
   }, [initialProducts, searchTerm, filterCategory, sortBy]);
+
+  // Reset to first page whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setVisibleCount(INITIAL_INFINITE_LOAD);
+  }, [searchTerm, filterCategory, sortBy, itemsPerPage]);
+
+  const paginatedProducts = useMemo(() => {
+    if (itemsPerPage === 'all') {
+      return filteredAndSortedProducts.slice(0, visibleCount);
+    }
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedProducts.slice(startIndex, endIndex);
+  }, [filteredAndSortedProducts, currentPage, itemsPerPage, visibleCount]);
+  
+  const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }
+  
+  const handleItemsPerPageChange = (value: string) => {
+      setItemsPerPage(value === 'all' ? 'all' : Number(value));
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -128,7 +177,51 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
                     </Select>
                 </div>
             </div>
-          <ProductTable products={filteredAndSortedProducts} onEdit={handleEditProduct} />
+          <ProductTable products={paginatedProducts} onEdit={handleEditProduct} lastElementRef={lastElementRef}/>
+          
+           <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+                <div className="text-sm text-muted-foreground">
+                    Showing {paginatedProducts.length} of {filteredAndSortedProducts.length} products.
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">Rows per page:</span>
+                        <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
+                            <SelectTrigger className="w-[80px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="all">All</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {itemsPerPage !== 'all' && totalPages > 1 && (
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious href="#" onClick={(e) => {e.preventDefault(); handlePageChange(currentPage - 1)}} className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''} />
+                                </PaginationItem>
+                                
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <PaginationItem key={page}>
+                                        <PaginationLink href="#" onClick={(e) => {e.preventDefault(); handlePageChange(page)}} isActive={page === currentPage}>
+                                            {page}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+
+                                <PaginationItem>
+                                    <PaginationNext href="#" onClick={(e) => {e.preventDefault(); handlePageChange(currentPage + 1)}} className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''} />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    )}
+                </div>
+           </div>
         </CardContent>
       </Card>
 
