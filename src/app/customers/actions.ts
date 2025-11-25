@@ -18,7 +18,17 @@ export async function getCustomers() {
     const customers = await prisma.customer.findMany({
       orderBy: { name: "asc" },
     });
-    return { customers };
+    const totalDebt = await prisma.customer.aggregate({
+        _sum: {
+            balance: true,
+        },
+        where: {
+            balance: {
+                gt: 0,
+            }
+        }
+    });
+    return { customers, totalDebt: totalDebt._sum.balance || 0 };
   } catch (error) {
     console.error(error);
     return { error: "Failed to fetch customers" };

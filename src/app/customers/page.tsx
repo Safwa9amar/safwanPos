@@ -5,7 +5,7 @@ import { getCustomers } from "./actions";
 import { CustomersPageClient } from "@/components/customers/customers-page-client";
 
 export default async function CustomersPage() {
-  const { customers, error } = await getCustomers();
+  const { customers, totalDebt, error } = await getCustomers();
 
   if (error) {
     return (
@@ -20,7 +20,7 @@ export default async function CustomersPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <CustomersPageClient initialCustomers={customers || []} />
+        <CustomersPageClient initialCustomers={customers || []} totalDebt={totalDebt || 0} />
       </MainLayout>
     </AuthGuard>
   );
