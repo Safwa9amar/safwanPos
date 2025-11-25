@@ -11,72 +11,122 @@ datasource db {
 }
 
 model Product {
-  id              String   @id @default(cuid())
-  name            String
-  barcode         String   @unique
-  price           Float
-  stock           Float    @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  saleItems       SaleItem[]
-  costPrice       Float    @default(0)
-  unit            String   @default("EACH") // Replaces enum Unit
-  image           String?
-  categoryId      String?
-  category        Category? @relation(fields: [categoryId], references: [id])
+  id                String              @id @default(cuid())
+  name              String
+  barcode           String              @unique
+  price             Float
+  costPrice         Float
+  stock             Float
+  unit              ProductUnit
+  image             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  saleItems         SaleItem[]
   purchaseOrderItems PurchaseOrderItem[]
+  category          Category?           @relation(fields: [categoryId], references: [id])
+  categoryId        String?
+}
+
+enum ProductUnit {
+  EACH
+  KG
+  G
+  L
+  ML
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String    @id @default(cuid())
+  name      String    @unique
   products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Sale {
-  id          String     @id @default(cuid())
-  saleDate    DateTime   @default(now())
+  id        String     @id @default(cuid())
   totalAmount Float
-  items       SaleItem[]
+  saleDate  DateTime   @default(now())
+  items     SaleItem[]
+  customer  Customer?  @relation(fields: [customerId], references: [id])
+  customerId String?
+  paymentType PaymentType @default(CASH)
+  amountPaid Float?
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
 }
 
 model SaleItem {
   id        String   @id @default(cuid())
-  sale      Sale     @relation(fields: [saleId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
-  price     Float // Price at the time of sale
+  price     Float
 }
 
 model Supplier {
-  id             String         @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   contactName    String?
   email          String?
   phone          String?
   address        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   purchaseOrders PurchaseOrder[]
 }
 
 model PurchaseOrder {
-  id                   String            @id @default(cuid())
-  supplier             Supplier          @relation(fields: [supplierId], references: [id])
+  id                   String              @id @default(cuid())
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
   supplierId           String
-  orderDate            DateTime          @default(now())
+  orderDate            DateTime            @default(now())
   expectedDeliveryDate DateTime?
-  status               String            @default("PENDING") // Replaces enum PurchaseOrderStatus
+  status               POStatus
   totalCost            Float
   items                PurchaseOrderItem[]
 }
 
+enum POStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model PurchaseOrderItem {
   id              String        @id @default(cuid())
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   purchaseOrderId String
   product         Product       @relation(fields: [productId], references: [id])
   productId       String
   quantity        Int
-  costPrice       Float // Cost price at the time of purchase
+  costPrice       Float
+}
+
+model Customer {
+  id         String     @id @default(cuid())
+  name       String
+  phone      String?    @unique
+  email      String?    @unique
+  address    String?
+  balance    Float      @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  sales      Sale[]
+  payments   Payment[]
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  amount     Float
+  paymentDate DateTime @default(now())
+  notes      String?
 }

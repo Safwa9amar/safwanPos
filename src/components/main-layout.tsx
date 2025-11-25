@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import {
@@ -23,7 +24,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -90,6 +91,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Link href="/suppliers">
                   <Truck />
                   {t('sidebar.suppliers')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers')}>
+                <Link href="/customers">
+                  <Users />
+                  {t('sidebar.customers')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

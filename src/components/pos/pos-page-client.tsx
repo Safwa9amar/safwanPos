@@ -1,9 +1,10 @@
 
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useMultiCart } from '@/hooks/use-multi-cart';
-import { Product, Category } from '@prisma/client';
+import { Product, Category, Customer } from '@prisma/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export function PosPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
+export function PosPageClient({ initialProducts, categories, customers }: { initialProducts: ProductWithCategory[], categories: Category[], customers: Customer[] }) {
   const cart = useMultiCart();
   const { toast } = useToast();
   const { t } = useTranslation("translation");
@@ -58,7 +59,7 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
     }
   }, [barcode, cart, toast, t]);
 
-  const handleCompleteSale = async () => {
+  const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number) => {
     if (cart.activeCart.items.length === 0) {
       toast({
         title: t('pos.emptyCartTitle'),
@@ -67,9 +68,18 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
       return;
     }
     
+    if (paymentType === 'CREDIT' && !customerId) {
+        toast({
+            variant: "destructive",
+            title: t('pos.customerRequiredTitle'),
+            description: t('pos.customerRequiredDescription'),
+        });
+        return;
+    }
+
     setIsCompleting(true);
     try {
-      const result = await completeSale(cart.activeCart.items);
+      const result = await completeSale(cart.activeCart.items, paymentType, customerId, amountPaid);
       if (result.success && result.sale) {
         // @ts-ignore
         setLastSale(result.sale);
@@ -242,7 +252,12 @@ export function PosPageClient({ initialProducts, categories }: { initialProducts
             </Card>
         </div>
         <div>
-          <CompleteSaleDialog onConfirm={handleCompleteSale} cart={cart} isCompleting={isCompleting}/>
+          <CompleteSaleDialog 
+            onConfirm={handleCompleteSale} 
+            cart={cart} 
+            isCompleting={isCompleting}
+            customers={customers}
+            />
         </div>
       </div>
     </div>

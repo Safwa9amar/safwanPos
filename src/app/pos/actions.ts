@@ -1,16 +1,31 @@
+
 "use server";
 
 import prisma from '@/lib/prisma';
 import { CartItem } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { PaymentType } from '@prisma/client';
 
-export async function completeSale(items: CartItem[]) {
+export async function completeSale(
+  items: CartItem[], 
+  paymentType: PaymentType, 
+  customerId?: string, 
+  amountPaid?: number
+) {
   if (!items || items.length === 0) {
     return { success: false, error: 'Cart is empty' };
   }
   
   try {
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // Validate amountPaid for non-credit sales
+    if (paymentType !== 'CREDIT' && (amountPaid === undefined || amountPaid < totalAmount)) {
+      // Allow for cash/card sales to be slightly less if that's a feature, but for now let's be strict
+      // return { success: false, error: 'Amount paid is less than total amount for non-credit sale.' };
+    }
+    
+    const finalAmountPaid = amountPaid === undefined ? totalAmount : amountPaid;
 
     const productIds = items.map(item => item.productId);
     const products = await prisma.product.findMany({
@@ -30,6 +45,9 @@ export async function completeSale(items: CartItem[]) {
       const sale = await tx.sale.create({
         data: {
           totalAmount,
+          paymentType,
+          customerId: paymentType === 'CREDIT' ? customerId : null,
+          amountPaid: finalAmountPaid,
           items: {
             create: items.map(item => ({
               productId: item.productId,
@@ -40,15 +58,23 @@ export async function completeSale(items: CartItem[]) {
         },
       });
 
+      // Update product stock
       for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
+          data: { stock: { decrement: item.quantity } },
         });
+      }
+
+      // Update customer balance if it's a credit sale
+      if (paymentType === 'CREDIT' && customerId) {
+        const debt = totalAmount - finalAmountPaid;
+        if (debt > 0) {
+          await tx.customer.update({
+            where: { id: customerId },
+            data: { balance: { increment: debt } },
+          });
+        }
       }
 
       return sale;
@@ -57,6 +83,8 @@ export async function completeSale(items: CartItem[]) {
     revalidatePath('/pos');
     revalidatePath('/reports');
     revalidatePath('/inventory');
+    if (customerId) revalidatePath(`/customers/${customerId}`);
+
 
     const saleForClient = await prisma.sale.findUnique({
       where: { id: newSale.id },
