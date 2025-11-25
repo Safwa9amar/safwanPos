@@ -6,27 +6,28 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  barcode     String   @unique
-  price       Float
-  costPrice   Float    @default(0)
-  stock       Float
-  unit        String   @default("EACH") // EACH, KG, G, L, ML
-  image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
+  id           String        @id @default(cuid())
+  name         String
+  barcode      String        @unique
+  price        Float
+  costPrice    Float         @default(0)
+  stock        Float
+  unit         String // EACH, KG, G, L, ML
+  image        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  saleItems    SaleItem[]
+  poItems      PurchaseOrderItem[]
 
-  saleItems   SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
+  @@index([categoryId])
 }
 
 model Category {
@@ -37,16 +38,15 @@ model Category {
 
 model Sale {
   id           String      @id @default(cuid())
+  saleDate     DateTime    @default(now())
   totalAmount  Float
   paymentType  PaymentType
-  saleDate     DateTime    @default(now())
-  
+  amountPaid   Float
+  items        SaleItem[]
   customerId   String?
   customer     Customer?   @relation(fields: [customerId], references: [id])
-  
-  amountPaid   Float       @default(0)
-  
-  items        SaleItem[]
+
+  @@index([customerId])
 }
 
 model SaleItem {
@@ -57,29 +57,40 @@ model SaleItem {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Float
   price     Float
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
 }
 
 model Supplier {
-  id            String    @id @default(cuid())
-  name          String
-  contactName   String?
-  email         String?
-  phone         String?
-  address       String?
-  
+  id             String          @id @default(cuid())
+  name           String          @unique
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   purchaseOrders PurchaseOrder[]
 }
 
 model PurchaseOrder {
-  id                   String   @id @default(cuid())
+  id                   String              @id @default(cuid())
   supplierId           String
-  supplier             Supplier @relation(fields: [supplierId], references: [id])
-  orderDate            DateTime @default(now())
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+  orderDate            DateTime            @default(now())
   expectedDeliveryDate DateTime?
-  status               String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  status               String // PENDING, COMPLETED, CANCELLED
   totalCost            Float
-  
   items                PurchaseOrderItem[]
+
+  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
@@ -90,74 +101,76 @@ model PurchaseOrderItem {
   product         Product       @relation(fields: [productId], references: [id])
   quantity        Int
   costPrice       Float
+
+  @@index([purchaseOrderId])
+  @@index([productId])
 }
 
 model Customer {
-  id      String @id @default(cuid())
-  name    String
-  phone   String?
-  email   String? @unique
-  address String?
-  balance Float  @default(0)
-  
-  sales   Sale[]
-  payments Payment[]
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?  @unique
+  address   String?
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+  payments  Payment[]
 }
 
 model Payment {
-  id          String   @id @default(cuid())
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
-  amount      Float
-  paymentDate DateTime @default(now())
-  notes       String?
+    id          String   @id @default(cuid())
+    customerId  String
+    customer    Customer @relation(fields: [customerId], references: [id])
+    amount      Float
+    paymentDate DateTime @default(now())
+    notes       String?
+
+    @@index([customerId])
 }
 
 model RepairJob {
-  id              String   @id @default(cuid())
-  customerName    String
-  customerPhone   String
-  deviceModel     String
-  imei            String?
-  reportedProblem String
-  notes           String?
-  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
-  estimatedCost   Float?
-  finalCost       Float?
-  boxNumber       Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+    id String @id @default(cuid())
+    customerName String
+    customerPhone String
+    deviceModel String
+    imei String?
+    reportedProblem String
+    notes String?
+    status String @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
+    estimatedCost Float?
+    finalCost Float?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    boxNumber Int?
+}
+
+model ExpenseCategory {
+    id   String    @id @default(cuid())
+    name String    @unique
+    expenses Expense[]
+}
+
+model Expense {
+    id          String          @id @default(cuid())
+    description String
+    amount      Float
+    expenseDate DateTime
+    categoryId  String
+    category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
+
+    @@index([categoryId])
 }
 
 model User {
-  id        String   @id @unique
+  id        String   @id
   email     String   @unique
   name      String
   role      UserRole @default(CASHIER)
   createdAt DateTime @default(now())
-}
-
-model Expense {
-  id            String          @id @default(cuid())
-  description   String
-  amount        Float
-  expenseDate   DateTime
-  categoryId    String
-  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-}
-
-model ExpenseCategory {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  expenses  Expense[]
-}
-
-enum PaymentType {
-  CASH
-  CARD
-  CREDIT
 }
 
 enum UserRole {
