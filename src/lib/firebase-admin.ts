@@ -1,7 +1,6 @@
 
 import * as admin from 'firebase-admin';
 
-// Check if the app is already initialized
 if (!admin.apps.length) {
     try {
         const serviceAccount = {
