@@ -1,6 +1,6 @@
 "use server";
 
-import { generateBusinessReport } from "@/ai/flows/business-report-tool";
+import { generateBusinessReport } from "@/ai/flows/sales-reporting-tool";
 import prisma from "@/lib/prisma";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 
