@@ -12,7 +12,7 @@ export async function getStatsData(dateRange?: DateRange) {
       ? {
           saleDate: {
             gte: dateRange.from,
-            lte: date.to,
+            lte: dateRange.to,
           },
         }
       : {};
