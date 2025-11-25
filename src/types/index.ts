@@ -50,3 +50,8 @@ export interface CustomerWithDetails extends Customer {
     sales: SaleWithItemsAndCustomer[];
     payments: Payment[];
 }
+
+// Add react-to-print type definition
+declare module 'react-to-print' {
+    export function useReactToPrint(options: any): () => void;
+}

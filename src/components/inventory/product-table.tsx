@@ -15,9 +15,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Printer } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DeleteProductAlert } from "./delete-product-alert";
 import { deleteProduct } from "@/app/inventory/actions";
@@ -26,6 +27,7 @@ import { ProductWithCategory } from "@/types";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { useCurrency } from "@/hooks/use-currency";
+import { BarcodeLabelDialog } from "./barcode-label-dialog";
 
 export function ProductTable({ products, onEdit }: { products: ProductWithCategory[], onEdit: (product: Product) => void }) {
   const { t } = useTranslation("translation");
@@ -34,10 +36,15 @@ export function ProductTable({ products, onEdit }: { products: ProductWithCatego
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productToPrint, setProductToPrint] = useState<Product | null>(null);
 
   const handleDeleteClick = (product: Product) => {
     setSelectedProduct(product);
     setIsAlertOpen(true);
+  };
+
+  const handlePrintClick = (product: Product) => {
+    setProductToPrint(product);
   };
 
   const handleConfirmDelete = async () => {
@@ -124,6 +131,11 @@ export function ProductTable({ products, onEdit }: { products: ProductWithCatego
                       <Pencil className="mr-2 h-4 w-4" />
                       {t("inventory.edit")}
                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handlePrintClick(product)}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      {t("inventory.printBarcode")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleDeleteClick(product)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       {t("inventory.delete")}
@@ -140,6 +152,10 @@ export function ProductTable({ products, onEdit }: { products: ProductWithCatego
         onOpenChange={setIsAlertOpen}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+      <BarcodeLabelDialog 
+        product={productToPrint}
+        onOpenChange={(isOpen) => !isOpen && setProductToPrint(null)}
       />
     </>
   );

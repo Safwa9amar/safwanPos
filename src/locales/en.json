@@ -171,6 +171,7 @@
     "inventory.deleteCategoryConfirmTitle": "Delete Category?",
     "inventory.deleteCategoryConfirmDescription": "Products in this category will not be deleted, but they will become uncategorized. This action cannot be undone.",
     "inventory.noCategories": "No categories found.",
+    "inventory.printBarcode": "Print Barcode",
 
     "units.EACH": "Each",
     "units.KG": "kg",
