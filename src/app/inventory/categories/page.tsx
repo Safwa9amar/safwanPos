@@ -1,44 +1,37 @@
 
-"use client";
 import { AuthGuard } from "@/components/auth-guard";
 import { CategoriesPageClient } from "@/components/inventory/categories-page-client";
 import { MainLayout } from "@/components/main-layout";
 import { getCategories } from "../actions";
-import { useAuth } from "@/context/auth-context";
-import { useState, useEffect } from "react";
-import { Category } from "@prisma/client";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function CategoriesPage() {
-  const { user } = useAuth();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+async function getUserId() {
+    const auth = getAdminAuth();
+    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
 
-  useEffect(() => {
-    if (user) {
-      const fetchCategories = async () => {
-        setLoading(true);
-        const { categories: fetchedCategories, error: fetchError } = await getCategories(user.uid);
-        if (fetchError) {
-          setError(fetchError);
-        } else {
-          setCategories(fetchedCategories || []);
-        }
-        setLoading(false);
-      };
-      fetchCategories();
+    if (!idToken) {
+        return null;
     }
-  }, [user]);
 
-  if (loading) {
-    return (
-      <AuthGuard>
-        <MainLayout>
-          <div className="p-4">Loading categories...</div>
-        </MainLayout>
-      </AuthGuard>
-    );
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        return null;
+    }
+}
+
+
+export default async function CategoriesPage() {
+  const userId = await getUserId();
+  if (!userId) {
+    redirect('/login');
   }
+
+  const { categories, error } = await getCategories(userId);
 
   if (error) {
     return (
@@ -53,7 +46,7 @@ export default function CategoriesPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <CategoriesPageClient initialCategories={categories} />
+        <CategoriesPageClient initialCategories={categories || []} />
       </MainLayout>
     </AuthGuard>
   );

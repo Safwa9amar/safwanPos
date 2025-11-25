@@ -1,13 +1,14 @@
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 
 async function getUserIdFromRequest(request: Request): Promise<string | null> {
     const authorization = request.headers.get('Authorization');
     if (authorization?.startsWith('Bearer ')) {
         const idToken = authorization.split('Bearer ')[1];
         try {
+            const adminAuth = getAdminAuth();
             const decodedToken = await adminAuth.verifyIdToken(idToken);
             return decodedToken.uid;
         } catch (error) {

@@ -1,41 +1,44 @@
 
-"use client";
-
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getCustomerById } from "../actions";
 import { CustomerDetailPageClient } from "@/components/customers/customer-detail-page-client";
-import { useAuth } from "@/context/auth-context";
-import { useEffect, useState } from "react";
-import { CustomerWithDetails } from "@/types";
+import { headers } from "next/headers";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { redirect } from "next/navigation";
 
-export default function CustomerDetailPage({ params }: { params: { id: string } }) {
-  const { user } = useAuth();
-  const [customer, setCustomer] = useState<CustomerWithDetails | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      const fetchCustomer = async () => {
-        setLoading(true);
-        const { customer: fetchedCustomer, error: fetchError } = await getCustomerById(params.id, user.uid);
-        if (fetchError) {
-          setError(fetchError);
-        }
-        setCustomer(fetchedCustomer || null);
-        setLoading(false);
-      };
-      fetchCustomer();
+async function getUserId() {
+    const auth = getAdminAuth();
+    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
+
+    if (!idToken) {
+        return null;
     }
-  }, [user, params.id]);
+
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        return null;
+    }
+}
+
+
+export default async function CustomerDetailPage({ params }: { params: { id: string } }) {
+  const userId = await getUserId();
+  
+  if (!userId) {
+    redirect('/login');
+  }
+
+  const { customer, error } = await getCustomerById(params.id, userId);
 
   return (
     <AuthGuard>
       <MainLayout>
-        {loading ? (
-            <div className="p-4">Loading customer details...</div>
-        ) : error ? (
+        {error ? (
             <div className="p-4">Error: {error}</div>
         ) : !customer ? (
             <div className="p-4">Customer not found.</div>

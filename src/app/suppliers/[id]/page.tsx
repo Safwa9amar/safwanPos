@@ -1,55 +1,42 @@
 
-"use client";
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getSupplierById } from "../actions";
 import { SupplierDetailPageClient } from "@/components/suppliers/supplier-detail-page-client";
 import { getProducts } from "@/app/inventory/actions";
-import { useAuth } from "@/context/auth-context";
-import { useEffect, useState } from "react";
-import { Product } from "@prisma/client";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-interface SupplierWithOrders extends import("@prisma/client").Supplier {
-    purchaseOrders: import("@prisma/client").PurchaseOrder[];
+async function getUserId() {
+    const auth = getAdminAuth();
+    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
+
+    if (!idToken) {
+        return null;
+    }
+
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        return null;
+    }
 }
 
-export default function SupplierDetailPage({ params }: { params: { id: string } }) {
-  const { user } = useAuth();
-  const [supplier, setSupplier] = useState<SupplierWithOrders | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      const fetchData = async () => {
-        setLoading(true);
-        const [supplierRes, productsRes] = await Promise.all([
-          getSupplierById(params.id, user.uid),
-          getProducts(user.uid)
-        ]);
-
-        if (supplierRes.error || productsRes.error) {
-          setError(supplierRes.error || productsRes.error || "Failed to load data");
-        } else {
-          setSupplier(supplierRes.supplier || null);
-          setProducts(productsRes.products || []);
-        }
-        setLoading(false);
-      };
-      fetchData();
-    }
-  }, [user, params.id]);
-
-  if (loading) {
-    return (
-      <AuthGuard>
-        <MainLayout>
-          <div className="p-4">Loading supplier details...</div>
-        </MainLayout>
-      </AuthGuard>
-    );
+export default async function SupplierDetailPage({ params }: { params: { id: string } }) {
+  const userId = await getUserId();
+  if (!userId) {
+    redirect('/login');
   }
+
+  const [supplierRes, productsRes] = await Promise.all([
+    getSupplierById(params.id, userId),
+    getProducts(userId)
+  ]);
+
+  const error = supplierRes.error || productsRes.error;
 
   if (error) {
     return (
@@ -61,7 +48,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
     );
   }
 
-  if (!supplier) {
+  if (!supplierRes.supplier) {
     return (
         <AuthGuard>
           <MainLayout>
@@ -74,7 +61,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
   return (
     <AuthGuard>
       <MainLayout>
-        <SupplierDetailPageClient initialSupplier={supplier} allProducts={products} />
+        <SupplierDetailPageClient initialSupplier={supplierRes.supplier} allProducts={productsRes.products || []} />
       </MainLayout>
     </AuthGuard>
   );

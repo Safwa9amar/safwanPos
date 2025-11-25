@@ -1,44 +1,37 @@
 
-"use client";
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getSuppliers } from "./actions";
 import { SuppliersPageClient } from "@/components/suppliers/suppliers-page-client";
-import { useAuth } from "@/context/auth-context";
-import { useState, useEffect } from "react";
-import { Supplier } from "@prisma/client";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function SuppliersPage() {
-  const { user } = useAuth();
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+async function getUserId() {
+    const auth = getAdminAuth();
+    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
 
-  useEffect(() => {
-    if (user) {
-      const fetchSuppliers = async () => {
-        setLoading(true);
-        const { suppliers: fetchedSuppliers, error: fetchError } = await getSuppliers(user.uid);
-        if (fetchError) {
-          setError(fetchError);
-        } else {
-          setSuppliers(fetchedSuppliers || []);
-        }
-        setLoading(false);
-      };
-      fetchSuppliers();
+    if (!idToken) {
+        return null;
     }
-  }, [user]);
 
-  if (loading) {
-    return (
-      <AuthGuard>
-        <MainLayout>
-          <div className="p-4">Loading suppliers...</div>
-        </MainLayout>
-      </AuthGuard>
-    );
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        return null;
+    }
+}
+
+
+export default async function SuppliersPage() {
+  const userId = await getUserId();
+  if (!userId) {
+    redirect('/login');
   }
+
+  const { suppliers, error } = await getSuppliers(userId);
 
   if (error) {
     return (
@@ -53,7 +46,7 @@ export default function SuppliersPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <SuppliersPageClient initialSuppliers={suppliers} />
+        <SuppliersPageClient initialSuppliers={suppliers || []} />
       </MainLayout>
     </AuthGuard>
   );

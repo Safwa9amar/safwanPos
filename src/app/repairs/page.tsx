@@ -1,44 +1,37 @@
 
-"use client";
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getRepairJobs } from "./actions";
 import { RepairsPageClient } from "@/components/repairs/repairs-page-client";
-import { useAuth } from "@/context/auth-context";
-import { useState, useEffect } from "react";
-import { RepairJob } from "@prisma/client";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function RepairsPage() {
-  const { user } = useAuth();
-  const [jobs, setJobs] = useState<RepairJob[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+async function getUserId() {
+    const auth = getAdminAuth();
+    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
 
-  useEffect(() => {
-    if (user) {
-      const fetchJobs = async () => {
-        setLoading(true);
-        const { jobs: fetchedJobs, error: fetchError } = await getRepairJobs(user.uid);
-        if (fetchError) {
-          setError(fetchError);
-        } else {
-          setJobs(fetchedJobs || []);
-        }
-        setLoading(false);
-      };
-      fetchJobs();
+    if (!idToken) {
+        return null;
     }
-  }, [user]);
 
-  if (loading) {
-    return (
-      <AuthGuard>
-        <MainLayout>
-          <div className="p-4">Loading repairs...</div>
-        </MainLayout>
-      </AuthGuard>
-    );
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        return null;
+    }
+}
+
+
+export default async function RepairsPage() {
+  const userId = await getUserId();
+  if (!userId) {
+    redirect('/login');
   }
+
+  const { jobs, error } = await getRepairJobs(userId);
 
   if (error) {
     return (
@@ -53,7 +46,7 @@ export default function RepairsPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <RepairsPageClient initialJobs={jobs} />
+        <RepairsPageClient initialJobs={jobs || []} />
       </MainLayout>
     </AuthGuard>
   );

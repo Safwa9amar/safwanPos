@@ -1,7 +1,7 @@
 
 "use server";
 
-import { adminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -22,6 +22,7 @@ export async function updateProfile(formData: FormData) {
   const { uid, displayName } = validatedFields.data;
 
   try {
+    const adminAuth = getAdminAuth();
     await adminAuth.updateUser(uid, { displayName });
     revalidatePath("/settings/profile");
     return { success: true };
@@ -49,6 +50,7 @@ export async function changePassword(formData: FormData) {
   const { uid, newPassword } = validatedFields.data;
 
   try {
+    const adminAuth = getAdminAuth();
     await adminAuth.updateUser(uid, { password: newPassword });
     return { success: true };
   } catch (error: any) {

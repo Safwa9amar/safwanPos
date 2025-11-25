@@ -1,7 +1,7 @@
 
 "use server";
 
-import { adminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth } from "@/lib/firebase-admin";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -36,27 +36,27 @@ export async function upsertUser(formData: FormData) {
   }
 
   const { id, name, email, role, password } = validatedFields.data;
+  const adminAuth = getAdminAuth();
 
   try {
     if (id) {
-      // Logic for both updating an existing user and creating a new user from registration
-      await adminAuth.updateUser(id, {
-        email,
-        displayName: name,
-        ...(password && { password }), // Only update password if provided
-      });
+        // User exists in Firebase, needs to be updated in Prisma
+        await adminAuth.updateUser(id, {
+            email,
+            displayName: name,
+            ...(password && { password }), // Only update password if provided
+        });
 
-      await adminAuth.setCustomUserClaims(id, { role });
-      
-      // "Upsert" logic: update if exists, create if not
-      const user = await prisma.user.upsert({
-        where: { id },
-        update: { name, email, role },
-        create: { id, name, email, role },
-      });
+        await adminAuth.setCustomUserClaims(id, { role });
+        
+        const user = await prisma.user.upsert({
+            where: { id },
+            update: { name, email, role },
+            create: { id, name, email, role },
+        });
 
-      revalidatePath("/settings/users");
-      return { success: true, user };
+        revalidatePath("/settings/users");
+        return { success: true, user };
 
     } else {
       // Create new user from the users management page
@@ -95,7 +95,7 @@ export async function deleteUser(userId: string) {
     try {
         // You might want to check if the user being deleted is the last ADMIN
         // For simplicity, we'll skip that check here.
-
+        const adminAuth = getAdminAuth();
         await adminAuth.deleteUser(userId);
         await prisma.user.delete({ where: { id: userId } });
         
