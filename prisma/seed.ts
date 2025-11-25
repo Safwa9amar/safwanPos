@@ -1,7 +1,22 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // 1. Create a dummy user to own the seed data
+  const seedUser = await prisma.user.upsert({
+    where: { email: 'seeduser@example.com' },
+    update: {},
+    create: {
+      id: 'seed-user-id',
+      name: 'Seed User',
+      email: 'seeduser@example.com',
+      role: UserRole.ADMIN,
+    },
+  });
+
+  console.log(`Upserted seed user with ID: ${seedUser.id}`);
+
+
   const products = [
     {
       name: 'Organic Apples',
@@ -95,11 +110,15 @@ async function main() {
     },
   ];
 
+  // 2. Create products and associate them with the dummy user
   for (const product of products) {
     await prisma.product.upsert({
-      where: { barcode: product.barcode },
+      where: { barcode_userId: { barcode: product.barcode, userId: seedUser.id } },
       update: {},
-      create: product,
+      create: {
+        ...product,
+        userId: seedUser.id,
+      },
     });
   }
 
