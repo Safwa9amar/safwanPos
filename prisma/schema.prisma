@@ -1,32 +1,27 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider          = "mysql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String            @id @default(cuid())
-  name            String
+  id              String            @id
+  name            String?
   email           String            @unique
   role            UserRole          @default(CASHIER)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   products        Product[]
   sales           Sale[]
-  purchaseOrders  PurchaseOrder[]
   suppliers       Supplier[]
-  categories      Category[]
   customers       Customer[]
+  purchaseOrders  PurchaseOrder[]
   payments        Payment[]
   expenses        Expense[]
   expenseCategories ExpenseCategory[]
@@ -34,22 +29,25 @@ model User {
 }
 
 model Product {
-  id              String            @id @default(cuid())
-  name            String
-  barcode         String
-  price           Float
-  stock           Float
-  costPrice       Float             @default(0)
-  unit            UnitType          @default(EACH)
-  image           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  user            User              @relation(fields: [userId], references: [id])
-  userId          String
-  category        Category?         @relation(fields: [categoryId], references: [id])
-  categoryId      String?
-  saleItems       SaleItem[]
-  purchaseItems   PurchaseOrderItem[]
+  id          String   @id @default(cuid())
+  name        String
+  barcode     String
+  price       Float
+  costPrice   Float    @default(0)
+  stock       Float
+  unit        String   @default("EACH") // e.g., EACH, KG, L
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+
+  category    Category? @relation(fields: [categoryId], references: [id'])
+  categoryId  String?
+  
+  saleItems   SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@unique([barcode, userId])
 }
@@ -58,120 +56,114 @@ model Category {
   id        String    @id @default(cuid())
   name      String
   products  Product[]
-  user      User      @relation(fields: [userId], references: [id])
+  
+  user      User     @relation(fields: [userId], references: [id])
   userId    String
 
   @@unique([name, userId])
 }
 
 model Sale {
-  id           String      @id @default(cuid())
-  totalAmount  Float
-  saleDate     DateTime    @default(now())
-  paymentType  PaymentType @default(CASH)
-  amountPaid   Float       @default(0)
-  user         User        @relation(fields: [userId], references: [id])
-  userId       String
-  items        SaleItem[]
-  customer     Customer?   @relation(fields: [customerId], references: [id])
-  customerId   String?
+  id          String      @id @default(cuid())
+  saleDate    DateTime    @default(now())
+  totalAmount Float
+  paymentType PaymentType
+  amountPaid  Float
+  
+  items       SaleItem[]
+
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  customer    Customer? @relation(fields: [customerId], references: [id'])
+  customerId  String?
 }
 
 model SaleItem {
   id        String   @id @default(cuid())
   quantity  Float
   price     Float
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  
+  sale      Sale     @relation(fields: [saleId], references: [id])
   saleId    String
-  product   Product  @relation(fields: [productId], references: [id])
+  
+  product   Product  @relation(fields: [productId], references: [id'])
   productId String
 }
 
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  contactName   String?
+  phone         String?
+  email         String?
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  purchaseOrders PurchaseOrder[]
+
+   @@unique([name, userId])
+}
+
 model PurchaseOrder {
-  id                   String              @id @default(cuid())
-  orderDate            DateTime            @default(now())
+  id                  String   @id @default(cuid())
+  orderDate           DateTime @default(now())
   expectedDeliveryDate DateTime?
-  status               POStatus
-  totalCost            Float
-  items                PurchaseOrderItem[]
-  user                 User                @relation(fields: [userId], references: [id])
-  userId               String
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
-  supplierId           String
+  status              String // PENDING, COMPLETED, CANCELLED
+  totalCost           Float
+
+  user                User     @relation(fields: [userId], references: [id])
+  userId              String
+  supplier            Supplier @relation(fields: [supplierId], references: [id'])
+  supplierId          String
+  
+  items               PurchaseOrderItem[]
 }
 
 model PurchaseOrderItem {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   quantity        Int
   costPrice       Float
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   purchaseOrderId String
-  product         Product       @relation(fields: [productId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id'])
   productId       String
 }
 
-model Supplier {
-  id             String          @id @default(cuid())
-  name           String
-  contactName    String?
-  email          String?
-  phone          String?
-  address        String?
-  purchaseOrders PurchaseOrder[]
-  user           User            @relation(fields: [userId], references: [id])
-  userId         String
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  balance     Float    @default(0) // Positive for debt, negative for credit
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  
+  sales       Sale[]
+  payments    Payment[]
 
   @@unique([name, userId])
 }
 
-model Customer {
-    id        String      @id @default(cuid())
-    name      String
-    phone     String?
-    email     String?
-    address   String?
-    balance   Float       @default(0)
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
-    user      User        @relation(fields: [userId], references: [id])
-    userId    String
-    sales     Sale[]
-    payments  Payment[]
-
-    @@unique([name, userId])
-}
-
 model Payment {
-    id          String      @id @default(cuid())
+    id          String   @id @default(cuid())
+    paymentDate DateTime @default(now())
     amount      Float
-    paymentDate DateTime    @default(now())
     notes       String?
-    user        User        @relation(fields: [userId], references: [id])
+
+    user        User     @relation(fields: [userId], references: [id])
     userId      String
-    customer    Customer    @relation(fields: [customerId], references: [id])
+    customer    Customer @relation(fields: [customerId], references: [id'])
     customerId  String
 }
 
-model Expense {
-    id            String          @id @default(cuid())
-    description   String
-    amount        Float
-    expenseDate   DateTime
-    user          User            @relation(fields: [userId], references: [id])
-    userId        String
-    category      ExpenseCategory @relation(fields: [categoryId], references: [id])
-    categoryId    String
-}
-
-model ExpenseCategory {
-    id       String    @id @default(cuid())
-    name     String
-    user     User      @relation(fields: [userId], references: [id])
-    userId   String
-    expenses Expense[]
-
-    @@unique([name, userId])
-}
 
 model RepairJob {
   id              String   @id @default(cuid())
@@ -181,37 +173,49 @@ model RepairJob {
   imei            String?
   reportedProblem String
   notes           String?
-  status          String
+  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
   estimatedCost   Float?
   finalCost       Float?
   boxNumber       Int?
-  user            User     @relation(fields: [userId], references: [id])
-  userId          String
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+}
+
+model Expense {
+    id              String @id @default(cuid())
+    description     String
+    amount          Float
+    expenseDate     DateTime
+    
+    user            User     @relation(fields: [userId], references: [id])
+    userId          String
+    category        ExpenseCategory @relation(fields: [categoryId], references: [id'])
+    categoryId      String
+}
+
+model ExpenseCategory {
+    id          String @id @default(cuid())
+    name        String
+    
+    user        User     @relation(fields: [userId], references: [id])
+    userId      String
+    
+    expenses    Expense[]
+
+    @@unique([name, userId])
+}
+
+enum UserRole {
+  ADMIN
+  CASHIER
 }
 
 enum PaymentType {
   CASH
   CARD
   CREDIT
-}
-
-enum POStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
-enum UnitType {
-  EACH
-  KG
-  G
-  L
-  ML
-}
-
-enum UserRole {
-  ADMIN
-  CASHIER
 }
