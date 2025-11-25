@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSalesReport } from '@/app/reports/actions';
+import { getBusinessReport } from '@/app/reports/actions';
 import { FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
@@ -19,7 +19,7 @@ export function ReportsPageClient() {
         setIsLoading(true);
         setReport(null);
         try {
-            const result = await getSalesReport(language);
+            const result = await getBusinessReport(language);
             if (result.error) {
                 throw new Error(result.error);
             }

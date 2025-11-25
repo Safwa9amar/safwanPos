@@ -1,12 +1,15 @@
 "use server";
 
-import { generateSalesReport } from "@/ai/flows/sales-reporting-tool";
+import { generateBusinessReport } from "@/ai/flows/business-report-tool";
 import prisma from "@/lib/prisma";
-import { endOfDay, startOfDay } from "date-fns";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 
-export async function getSalesReport(language: string) {
+export async function getBusinessReport(language: string) {
     try {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+
         const sales = await prisma.sale.findMany({
+            where: { saleDate: { gte: thirtyDaysAgo } },
             include: {
                 items: {
                     include: {
@@ -17,11 +20,21 @@ export async function getSalesReport(language: string) {
             orderBy: {
                 saleDate: 'desc',
             },
-            take: 100, // Limit to recent sales for analysis
+        });
+        
+        const expenses = await prisma.expense.findMany({
+             where: { expenseDate: { gte: thirtyDaysAgo } },
+             orderBy: { expenseDate: 'desc' }
         });
 
-        if (sales.length === 0) {
-            return { summary: "No sales data available to generate a report." };
+        const purchaseOrders = await prisma.purchaseOrder.findMany({
+             where: { orderDate: { gte: thirtyDaysAgo } },
+             orderBy: { orderDate: 'desc' }
+        });
+
+
+        if (sales.length === 0 && expenses.length === 0 && purchaseOrders.length === 0) {
+            return { summary: "No data available to generate a report." };
         }
 
         const salesDataForAI = sales.map(sale => ({
@@ -33,20 +46,36 @@ export async function getSalesReport(language: string) {
                 productName: item.product.name,
                 quantitySold: item.quantity,
                 pricePerItem: item.price,
+                costPerItem: item.product.costPrice,
                 currentStock: item.product.stock,
             })),
         }));
+        
+        const expensesDataForAI = expenses.map(e => ({
+            description: e.description,
+            amount: e.amount,
+            date: e.expenseDate
+        }));
 
-        const report = await generateSalesReport({
+        const purchaseDataForAI = purchaseOrders.map(p => ({
+            orderId: p.id,
+            date: p.orderDate,
+            totalCost: p.totalCost,
+            status: p.status
+        }));
+
+        const report = await generateBusinessReport({
             salesData: JSON.stringify(salesDataForAI, null, 2),
+            expenseData: JSON.stringify(expensesDataForAI, null, 2),
+            purchaseData: JSON.stringify(purchaseDataForAI, null, 2),
             language: language,
         });
 
         return report;
 
     } catch (error: any) {
-        console.error("Failed to generate sales report:", error);
-        return { error: "Failed to generate sales report. " + error.message };
+        console.error("Failed to generate business report:", error);
+        return { error: "Failed to generate business report. " + error.message };
     }
 }
 

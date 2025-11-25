@@ -1,52 +1,66 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating sales reports to identify potential stock shortages.
+ * @fileOverview This file defines a Genkit flow for generating comprehensive business reports.
  *
- * - generateSalesReport - A function that generates a sales report.
- * - SalesReportInput - The input type for the generateSalesReport function.
- * - SalesReportOutput - The return type for the generateSalesReport function.
+ * - generateBusinessReport - A function that generates a business report.
+ * - BusinessReportInput - The input type for the generateBusinessReport function.
+ * - BusinessReportOutput - The return type for the generateBusinessReport function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
-const SalesReportInputSchema = z.object({
-  salesData: z.string().describe('A JSON string containing the sales data to analyze.'),
+const BusinessReportInputSchema = z.object({
+  salesData: z.string().describe('A JSON string containing recent sales data.'),
+  expenseData: z.string().describe('A JSON string containing recent expense data.'),
+  purchaseData: z.string().describe('A JSON string containing recent purchase order data (costs of goods).'),
   language: z.string().describe('The language for the report output (e.g., "en", "ar").'),
 });
-export type SalesReportInput = z.infer<typeof SalesReportInputSchema>;
+export type BusinessReportInput = z.infer<typeof BusinessReportInputSchema>;
 
-const SalesReportOutputSchema = z.object({
-  summary: z.string().describe('A summary of the sales data, highlighting potential stock shortages.'),
+const BusinessReportOutputSchema = z.object({
+  summary: z.string().describe('A comprehensive summary of the business health, analyzing sales, expenses, and costs to determine profitability and overall performance.'),
 });
-export type SalesReportOutput = z.infer<typeof SalesReportOutputSchema>;
+export type BusinessReportOutput = z.infer<typeof BusinessReportOutputSchema>;
 
-export async function generateSalesReport(input: SalesReportInput): Promise<SalesReportOutput> {
-  return salesReportFlow(input);
+export async function generateBusinessReport(input: BusinessReportInput): Promise<BusinessReportOutput> {
+  return businessReportFlow(input);
 }
 
-const salesReportPrompt = ai.definePrompt({
-  name: 'salesReportPrompt',
-  input: {schema: SalesReportInputSchema},
-  output: {schema: SalesReportOutputSchema},
-  prompt: `You are an AI assistant helping a store manager analyze sales data to identify potential stock shortages.
-  Analyze the following sales data and provide a concise summary of any products that may be running low on stock based on recent sales trends.
+const businessReportPrompt = ai.definePrompt({
+  name: 'businessReportPrompt',
+  input: {schema: BusinessReportInputSchema},
+  output: {schema: BusinessReportOutputSchema},
+  prompt: `You are an AI business analyst. Your task is to provide a clear and concise report on the health of a small retail business.
+  Analyze the following data:
+  1.  **Sales Data**: This shows the revenue generated.
+  2.  **Purchase Data**: This shows the cost of goods sold (what was paid for the products).
+  3.  **Expense Data**: This shows operational costs (rent, salaries, etc.).
+
+  Your report should:
+  - Calculate the gross profit (Total Sales Revenue - Total Purchase Costs).
+  - Calculate the net profit (Gross Profit - Total Expenses).
+  - Provide a summary of how the business is performing. Is it profitable? Are there any areas of concern (e.g., high expenses, low sales)?
+  - Identify the top-selling products from the sales data.
+  - Highlight any potential stock shortages based on sales trends vs. current stock.
+  - The entire response must be in the following language: {{{language}}}.
+
+  Here is the data:
   Sales Data: {{{salesData}}}
-  Focus on identifying products with high sales volume and suggesting potential reorder quantities.
-  Respond in a clear and actionable manner.
-  The entire response must be in the following language: {{{language}}}.
+  Purchase Data: {{{purchaseData}}}
+  Expense Data: {{{expenseData}}}
   `,
 });
 
-const salesReportFlow = ai.defineFlow(
+const businessReportFlow = ai.defineFlow(
   {
-    name: 'salesReportFlow',
-    inputSchema: SalesReportInputSchema,
-    outputSchema: SalesReportOutputSchema,
+    name: 'businessReportFlow',
+    inputSchema: BusinessReportInputSchema,
+    outputSchema: BusinessReportOutputSchema,
   },
   async input => {
-    const {output} = await salesReportPrompt(input);
+    const {output} = await businessReportPrompt(input);
     return output!;
   }
 );
