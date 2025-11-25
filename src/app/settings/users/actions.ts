@@ -39,7 +39,7 @@ export async function upsertUser(formData: FormData) {
 
   try {
     if (id) {
-      // Update existing user
+      // Logic for both updating an existing user and creating a new user from registration
       await adminAuth.updateUser(id, {
         email,
         displayName: name,
@@ -47,17 +47,19 @@ export async function upsertUser(formData: FormData) {
       });
 
       await adminAuth.setCustomUserClaims(id, { role });
-
-      const updatedUser = await prisma.user.update({
+      
+      // "Upsert" logic: update if exists, create if not
+      const user = await prisma.user.upsert({
         where: { id },
-        data: { name, email, role },
+        update: { name, email, role },
+        create: { id, name, email, role },
       });
 
       revalidatePath("/settings/users");
-      return { success: true, user: updatedUser };
+      return { success: true, user };
 
     } else {
-      // Create new user
+      // Create new user from the users management page
       if (!password) {
         return { errors: { password: ["Password is required for new users."] } };
       }
