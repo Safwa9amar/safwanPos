@@ -1,10 +1,9 @@
 "use server";
 
-import { auth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getAuth } from "firebase-admin/auth";
 import { UserRole } from "@prisma/client";
 
 export async function getUsers() {
@@ -40,7 +39,7 @@ export async function upsertUser(formData: FormData) {
   try {
     if (id) {
       // Update existing user
-      await getAuth(auth).updateUser(id, {
+      await adminAuth.updateUser(id, {
         email,
         displayName: name,
         ...(password && { password }), // Only update password if provided
@@ -59,7 +58,7 @@ export async function upsertUser(formData: FormData) {
       if (!password) {
         return { errors: { password: ["Password is required for new users."] } };
       }
-      const firebaseUser = await getAuth(auth).createUser({
+      const firebaseUser = await adminAuth.createUser({
         email,
         password,
         displayName: name,
@@ -90,7 +89,7 @@ export async function deleteUser(userId: string) {
         // You might want to check if the user being deleted is the last ADMIN
         // For simplicity, we'll skip that check here.
 
-        await getAuth(auth).deleteUser(userId);
+        await adminAuth.deleteUser(userId);
         await prisma.user.delete({ where: { id: userId } });
         
         revalidatePath("/settings/users");

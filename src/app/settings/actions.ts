@@ -1,9 +1,8 @@
 "use server";
 
-import { auth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getAuth } from "firebase-admin/auth";
 
 const UpdateProfileSchema = z.object({
   uid: z.string().min(1),
@@ -22,7 +21,7 @@ export async function updateProfile(formData: FormData) {
   const { uid, displayName } = validatedFields.data;
 
   try {
-    await getAuth(auth).updateUser(uid, { displayName });
+    await adminAuth.updateUser(uid, { displayName });
     revalidatePath("/settings/profile");
     return { success: true };
   } catch (error: any) {
@@ -49,7 +48,7 @@ export async function changePassword(formData: FormData) {
   const { uid, newPassword } = validatedFields.data;
 
   try {
-    await getAuth(auth).updateUser(uid, { password: newPassword });
+    await adminAuth.updateUser(uid, { password: newPassword });
     return { success: true };
   } catch (error: any) {
     console.error("Failed to change password:", error);
