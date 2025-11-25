@@ -33,6 +33,9 @@ const businessReportPrompt = ai.definePrompt({
   input: {schema: BusinessReportInputSchema},
   output: {schema: BusinessReportOutputSchema},
   prompt: `You are an AI business analyst. Your task is to provide a clear and concise report on the health of a small retail business.
+  
+  IMPORTANT: All monetary values in your report must be expressed in Algerian Dinars (DZD).
+
   Analyze the following data:
   1.  **Sales Data**: This shows the revenue generated.
   2.  **Purchase Data**: This shows the cost of goods sold (what was paid for the products).
