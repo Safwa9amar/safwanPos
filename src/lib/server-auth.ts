@@ -8,7 +8,8 @@ import { getAdminAuth } from "@/lib/firebase-admin";
  * @returns The user's ID if the token is valid, otherwise null.
  */
 export async function getUserIdFromRequest(): Promise<string | null> {
-    const authHeader = headers().get('Authorization');
+    const requestHeaders = headers();
+    const authHeader = requestHeaders.get('Authorization');
     const idToken = authHeader?.split('Bearer ')[1];
 
     if (!idToken) {
