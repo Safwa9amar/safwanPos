@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -12,7 +13,8 @@ import {
   SidebarInset,
   SidebarFooter,
   SidebarTrigger,
-  SidebarRail
+  SidebarRail,
+  SidebarSeparator
 } from "@/components/ui/sidebar";
 import { Icons } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,6 +64,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Storefront</div>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/pos'} tooltip={t('sidebar.pos')}>
                 <Link href="/pos">
@@ -70,6 +73,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            
+            <SidebarSeparator className="my-2" />
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Management</div>
+
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip={t('sidebar.inventory')}>
                 <Link href="/inventory">
@@ -86,6 +93,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            
+            <SidebarSeparator className="my-2" />
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Analytics</div>
+
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/stats'} tooltip={t('sidebar.stats')}>
                 <Link href="/stats">
@@ -102,17 +113,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip={t('sidebar.settings')}>
-                    <Link href="/settings">
-                        <Settings />
-                        {t('sidebar.settings')}
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
+           <SidebarMenu>
+              <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip={t('sidebar.settings')}>
+                      <Link href="/settings">
+                          <Settings />
+                          {t('sidebar.settings')}
+                      </Link>
+                  </SidebarMenuButton>
+              </SidebarMenuItem>
+           </SidebarMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 p-2 h-auto">
