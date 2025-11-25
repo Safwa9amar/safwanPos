@@ -61,7 +61,7 @@ export async function addProduct(formData: FormData) {
     }
 
     await prisma.product.create({
-      data: { 
+      data: {
         name, 
         barcode, 
         price, 
@@ -257,4 +257,56 @@ export async function deleteCategory(categoryId: string, userId: string) {
     }
 }
 
+export async function importProducts(userId: string, products: any[]) {
+    if (!userId) {
+        return { error: "User not authenticated." };
+    }
+
+    const ProductImportSchema = z.object({
+        name: z.string(),
+        barcode: z.string(),
+        price: z.coerce.number(),
+        costPrice: z.coerce.number().optional().default(0),
+        stock: z.coerce.number(),
+        unit: z.enum(["EACH", "KG", "G", "L", "ML"]).optional().default("EACH"),
+        image: z.string().optional(),
+    });
     
+    let processed = 0;
+    let errors: { row: number, error: string }[] = [];
+
+    for (const [index, p] of products.entries()) {
+        const validated = ProductImportSchema.safeParse(p);
+        if (!validated.success) {
+            errors.push({ row: index + 1, error: validated.error.flatten().fieldErrors.toString() });
+            continue;
+        }
+
+        const productData = validated.data;
+        try {
+            await prisma.product.upsert({
+                where: { barcode_userId: { barcode: productData.barcode, userId } },
+                update: {
+                    name: productData.name,
+                    price: productData.price,
+                    costPrice: productData.costPrice,
+                    stock: productData.stock,
+                    unit: productData.unit,
+                    image: productData.image,
+                },
+                create: {
+                    ...productData,
+                    userId: userId,
+                },
+            });
+            processed++;
+        } catch (e: any) {
+            errors.push({ row: index + 1, error: e.message || "Failed to upsert product." });
+        }
+    }
+    
+    revalidatePath("/inventory");
+    revalidatePath("/pos");
+    
+    return { success: true, processed, errors };
+}

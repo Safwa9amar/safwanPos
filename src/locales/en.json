@@ -1,4 +1,5 @@
 
+
 {
     "sidebar.pos": "Point of Sale",
     "sidebar.reports": "Sales Reports",
@@ -368,4 +369,5 @@
     "users.deleteConfirmTitle": "Delete User?",
     "users.deleteConfirmDescription": "This will permanently delete the user's account. This action cannot be undone."
 }
+
 

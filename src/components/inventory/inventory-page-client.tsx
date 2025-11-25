@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Folder, Search } from "lucide-react";
+import { PlusCircle, Folder, Search, Upload, Download } from "lucide-react";
 import { ProductTable } from "./product-table";
 import { ProductSheet } from "./product-sheet";
 import { useTranslation } from "@/hooks/use-translation";
 import { useRouter } from "next/navigation";
 import { ProductWithCategory } from "@/types";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { ImportDialog } from "./import-dialog";
 
 type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock-asc' | 'stock-desc';
 
@@ -35,6 +37,7 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
   const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(10);
   const [visibleCount, setVisibleCount] = useState(INITIAL_INFINITE_LOAD);
   
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const observer = useRef<IntersectionObserver>();
   
   const lastElementRef = useCallback((node: HTMLTableRowElement) => {
@@ -118,6 +121,39 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
   const handleItemsPerPageChange = (value: string) => {
       setItemsPerPage(value === 'all' ? 'all' : Number(value));
   }
+  
+  const downloadFile = (data: string, fileName: string, fileType: string) => {
+    const blob = new Blob([data], { type: fileType });
+    const a = document.createElement("a");
+    a.download = fileName;
+    a.href = window.URL.createObjectURL(blob);
+    const clickEvt = new MouseEvent("click", {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+    });
+    a.dispatchEvent(clickEvt);
+    a.remove();
+  };
+  
+  const handleExportJSON = () => {
+    downloadFile(
+      JSON.stringify(filteredAndSortedProducts, null, 2),
+      "products.json",
+      "application/json"
+    );
+  };
+  
+  const handleExportCSV = () => {
+    const headers = ["name", "barcode", "price", "costPrice", "stock", "unit", "image"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredAndSortedProducts.map(p =>
+        headers.map(header => `"${p[header as keyof Product] || ''}"`).join(",")
+      ),
+    ].join("\n");
+    downloadFile(csvContent, "products.csv", "text/csv");
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -128,6 +164,22 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
             <CardDescription>{t("inventory.description")}</CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)} className="justify-center">
+              <Upload className="mr-2 h-4 w-4" />
+              Import
+            </Button>
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="justify-center">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={handleExportJSON}>Export as JSON</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportCSV}>Export as CSV</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" onClick={() => router.push('/inventory/categories')} className="justify-center">
                 <Folder className="mr-2 h-4 w-4" />
                 {t('inventory.manageCategories')}
@@ -224,6 +276,8 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
            </div>
         </CardContent>
       </Card>
+      
+      <ImportDialog isOpen={isImportOpen} onOpenChange={setIsImportOpen} />
 
       <ProductSheet
         isOpen={isSheetOpen}
