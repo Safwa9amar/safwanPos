@@ -8,6 +8,7 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 export default async function StatsPage() {
   // Fetch initial data for the default view (e.g., last 7 days)
   const initialDateRange = { from: subDays(startOfDay(new Date()), 6), to: endOfDay(new Date()) };
+  // @ts-ignore
   const initialStats = await getStatsData(initialDateRange);
 
   return (

@@ -8,24 +8,32 @@ type DateRange = { from: Date; to: Date };
 
 export async function getStatsData(dateRange?: DateRange) {
   try {
-    const whereClause = dateRange
+    const saleWhereClause = dateRange
       ? {
           saleDate: {
             gte: dateRange.from,
-            lte: dateRange.to,
+            lte: date.to,
           },
         }
       : {};
+    
+    const poWhereClause = dateRange
+      ? {
+          orderDate: {
+              gte: dateRange.from,
+              lte: dateRange.to,
+          }
+      } : {};
 
     const totalRevenue = await prisma.sale.aggregate({
       _sum: {
         totalAmount: true,
       },
-      where: whereClause,
+      where: saleWhereClause,
     });
 
     const totalSales = await prisma.sale.count({
-      where: whereClause,
+      where: saleWhereClause,
     });
 
     const totalItemsSold = await prisma.saleItem.aggregate({
@@ -33,14 +41,12 @@ export async function getStatsData(dateRange?: DateRange) {
             quantity: true,
         },
         where: {
-            sale: whereClause
+            sale: saleWhereClause
         }
     });
     
-    // The sales over time chart will be dynamic based on the range.
-    // For this implementation, we will keep it simple and just fetch sales from the period.
     const salesOverTime = await prisma.sale.findMany({
-        where: whereClause,
+        where: saleWhereClause,
         select: {
             saleDate: true,
             totalAmount: true,
@@ -50,7 +56,6 @@ export async function getStatsData(dateRange?: DateRange) {
         }
     });
 
-    // Group sales by day
     const dailySales = salesOverTime.reduce((acc, sale) => {
         const date = sale.saleDate.toISOString().split('T')[0];
         if (!acc[date]) {
@@ -72,7 +77,7 @@ export async function getStatsData(dateRange?: DateRange) {
             quantity: true
         },
         where: {
-            sale: whereClause,
+            sale: saleWhereClause,
         },
         orderBy: {
             _sum: {
@@ -94,12 +99,51 @@ export async function getStatsData(dateRange?: DateRange) {
         quantity: item._sum.quantity || 0,
     })).filter(p => p.quantity > 0);
 
+    // --- Supplier & Purchase Order Stats ---
+    const totalSuppliers = await prisma.supplier.count();
+
+    const poStats = await prisma.purchaseOrder.aggregate({
+        _count: { id: true },
+        _sum: { totalCost: true },
+        where: poWhereClause
+    });
+
+    const topSuppliersByValue = await prisma.purchaseOrder.groupBy({
+        by: ['supplierId'],
+        _sum: {
+            totalCost: true
+        },
+        where: poWhereClause,
+        orderBy: {
+            _sum: {
+                totalCost: 'desc'
+            }
+        },
+        take: 5
+    });
+
+    const supplierIds = topSuppliersByValue.map(s => s.supplierId);
+    const suppliers = await prisma.supplier.findMany({
+        where: { id: { in: supplierIds } },
+        select: { id: true, name: true }
+    });
+    const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
+
+    const topSuppliersData = topSuppliersByValue.map(item => ({
+        name: supplierMap.get(item.supplierId) || 'Unknown',
+        total: item._sum.totalCost || 0,
+    })).filter(s => s.total > 0);
+
     return {
       totalRevenue: totalRevenue._sum.totalAmount || 0,
       totalSales: totalSales || 0,
       totalItemsSold: totalItemsSold._sum.quantity || 0,
       salesChartData: salesChartData,
       topProducts: topProducts,
+      totalSuppliers,
+      totalPurchaseOrders: poStats._count.id || 0,
+      totalPOCost: poStats._sum.totalCost || 0,
+      topSuppliers: topSuppliersData,
     };
   } catch (error) {
     console.error("Failed to fetch stats data:", error);
@@ -110,6 +154,10 @@ export async function getStatsData(dateRange?: DateRange) {
       totalItemsSold: 0,
       salesChartData: [],
       topProducts: [],
+      totalSuppliers: 0,
+      totalPurchaseOrders: 0,
+      totalPOCost: 0,
+      topSuppliers: [],
     };
   }
 }

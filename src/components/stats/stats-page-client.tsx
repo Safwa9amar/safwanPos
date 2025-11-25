@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
-import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp, Loader2, Truck, FileText } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -20,6 +20,7 @@ import { getStatsData } from "@/app/stats/actions";
 import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, endOfISOWeek, endOfMonth, endOfYear } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrency } from "@/hooks/use-currency";
+import { Separator } from "../ui/separator";
 
 type StatsData = {
   totalRevenue: number;
@@ -27,6 +28,10 @@ type StatsData = {
   totalItemsSold: number;
   salesChartData: { date: string; total: number }[];
   topProducts: { name: string; quantity: number }[];
+  totalSuppliers: number;
+  totalPurchaseOrders: number;
+  totalPOCost: number;
+  topSuppliers: { name: string; total: number }[];
   error?: string;
 };
 
@@ -67,6 +72,10 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
     totalItemsSold,
     salesChartData,
     topProducts,
+    totalSuppliers,
+    totalPurchaseOrders,
+    totalPOCost,
+    topSuppliers,
   } = stats;
   
   const salesChartConfig = {
@@ -82,6 +91,13 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
           color: "hsl(var(--chart-2))",
       },
   };
+  
+  const topSuppliersChartConfig = {
+      total: {
+          label: "Total Value",
+          color: "hsl(var(--chart-3))",
+      }
+  }
 
   const salesTickFormatter = (value: string) => {
     const date = new Date(value);
@@ -97,7 +113,7 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <CardHeader className="p-0">
           <CardTitle className="text-3xl font-bold tracking-tight">{t('stats.title')}</CardTitle>
-          <CardDescription>View sales statistics for different periods.</CardDescription>
+          <CardDescription>View sales and purchasing statistics for different periods.</CardDescription>
         </CardHeader>
         <div className="flex items-center gap-2">
             <Select value={selectedRange} onValueChange={setSelectedRange} disabled={isLoading}>
@@ -147,7 +163,7 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>{t('stats.salesLast7Days')}</CardTitle>
+            <CardTitle>Sales Performance</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
@@ -195,6 +211,65 @@ export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
           </CardContent>
         </Card>
       </div>
+
+      <div>
+        <Separator className="my-6" />
+        <h3 className="text-2xl font-bold tracking-tight mb-4">Purchasing Stats</h3>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3">
+         <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Suppliers</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalSuppliers}</div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Purchase Orders</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{totalPurchaseOrders}</div>
+            <p className="text-xs text-muted-foreground">in selected period</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total PO Cost</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalPOCost)}</div>
+            <p className="text-xs text-muted-foreground">in selected period</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid gap-6">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Top Suppliers by Purchase Value</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={topSuppliersChartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topSuppliers} layout="vertical">
+                        <CartesianGrid horizontal={false} />
+                        <XAxis type="number" tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <YAxis dataKey="name" type="category" width={100} tickLine={false} axisLine={false} tick={{fontSize: 12}} />
+                        <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" formatter={(value) => formatCurrency(value as number)} />} />
+                        <Bar dataKey="total" fill="var(--color-total)" radius={4} layout="vertical" />
+                    </BarChart>
+                </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }
