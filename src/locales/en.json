@@ -13,6 +13,7 @@
     "user.role": "Store Manager",
     "user.myAccount": "My Account",
     "user.logout": "Log out",
+    "user.profile": "Profile",
 
     "settings.title": "Settings",
     "settings.description": "Manage your account and application settings.",
@@ -22,6 +23,22 @@
     "settings.languageDescription": "Change the application's display language.",
     "settings.currency": "Currency",
     "settings.currencyDescription": "Set the currency for all prices.",
+    
+    "profile.title": "Profile",
+    "profile.description": "Update your personal information and password.",
+    "profile.updateInfo": "Update Profile Information",
+    "profile.displayName": "Display Name",
+    "profile.email": "Email Address",
+    "profile.updateSuccess": "Profile updated successfully.",
+    "profile.updateFailed": "Failed to update profile.",
+    "profile.changePassword": "Change Password",
+    "profile.currentPassword": "Current Password",
+    "profile.newPassword": "New Password",
+    "profile.confirmNewPassword": "Confirm New Password",
+    "profile.passwordUpdateSuccess": "Password updated successfully.",
+    "profile.passwordUpdateFailed": "Failed to update password.",
+    "profile.passwordsDoNotMatch": "New passwords do not match.",
+
 
     "login.tab": "Login",
     "login.title": "Login",

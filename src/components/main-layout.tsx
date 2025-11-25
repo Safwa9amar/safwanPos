@@ -23,7 +23,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -158,6 +158,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
               <DropdownMenuLabel>{t('user.myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>{t('user.profile')}</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>{t('user.logout')}</span>
