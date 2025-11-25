@@ -62,15 +62,17 @@ export async function addProduct(formData: FormData) {
 
     await prisma.product.create({
       data: { 
-        userId,
         name, 
         barcode, 
         price, 
         stock, 
         costPrice,
-        categoryId: categoryId || null,
         unit,
         image: image || null,
+        user: {
+            connect: { id: userId }
+        },
+        ...(categoryId && { category: { connect: { id: categoryId } } })
       },
     });
 
@@ -254,3 +256,5 @@ export async function deleteCategory(categoryId: string, userId: string) {
         return { error: 'Failed to delete category.' };
     }
 }
+
+    

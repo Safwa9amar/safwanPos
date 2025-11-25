@@ -99,7 +99,7 @@ export default function LoginPageClient() {
         
         const result = await upsertUser(formData);
 
-        if (!result.success) {
+        if (result.error || (result.errors && Object.keys(result.errors).length > 0)) {
             // This would happen if our DB call fails. We should probably delete the firebase user
             // but for now, we'll just show an error.
             throw new Error(result.error || "Failed to create user record in database.");
@@ -209,3 +209,5 @@ export default function LoginPageClient() {
     </div>
   );
 }
+
+    
