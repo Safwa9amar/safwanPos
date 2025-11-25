@@ -20,7 +20,7 @@ const BusinessReportInputSchema = z.object({
 export type BusinessReportInput = z.infer<typeof BusinessReportInputSchema>;
 
 const BusinessReportOutputSchema = z.object({
-  summary: z.string().describe('A comprehensive summary of the business health, analyzing sales, expenses, and costs to determine profitability and overall performance.'),
+  summary: z.string().describe('A comprehensive business health summary formatted as an HTML document. The HTML should be well-structured and use TailwindCSS classes for styling.'),
 });
 export type BusinessReportOutput = z.infer<typeof BusinessReportOutputSchema>;
 
@@ -32,22 +32,31 @@ const businessReportPrompt = ai.definePrompt({
   name: 'businessReportPrompt',
   input: {schema: BusinessReportInputSchema},
   output: {schema: BusinessReportOutputSchema},
-  prompt: `You are an AI business analyst. Your task is to provide a clear and concise report on the health of a small retail business.
-  
-  IMPORTANT: All monetary values in your report must be expressed in Algerian Dinars (DZD).
+  prompt: `You are an AI business analyst. Your task is to provide a clear and concise report on the health of a small retail business, formatted as a single HTML document.
+
+  **CRITICAL INSTRUCTIONS:**
+  - Your entire output MUST be a valid HTML document. Do not include any text outside of the HTML structure.
+  - Use Tailwind CSS classes for styling. For example: '<h2 class="text-2xl font-bold mt-6 mb-2">Profit Analysis</h2>'.
+  - Use semantic HTML tags like <h2>, <h3>, <p>, <ul>, <li>, and <strong>.
+  - All monetary values in your report must be expressed in Algerian Dinars (DZD).
 
   Analyze the following data:
-  1.  **Sales Data**: This shows the revenue generated.
-  2.  **Purchase Data**: This shows the cost of goods sold (what was paid for the products).
-  3.  **Expense Data**: This shows operational costs (rent, salaries, etc.).
+  1.  **Sales Data**: Shows revenue generated.
+  2.  **Purchase Data**: Shows the cost of goods sold (COGS).
+  3.  **Expense Data**: Shows operational costs (rent, salaries, etc.).
 
-  Your report should:
-  - Calculate the gross profit (Total Sales Revenue - Total Purchase Costs).
-  - Calculate the net profit (Gross Profit - Total Expenses).
-  - Provide a summary of how the business is performing. Is it profitable? Are there any areas of concern (e.g., high expenses, low sales)?
-  - Identify the top-selling products from the sales data.
-  - Highlight any potential stock shortages based on sales trends vs. current stock.
-  - The entire response must be in the following language: {{{language}}}.
+  Your HTML report should contain the following sections:
+  1.  **Executive Summary**: A brief, high-level summary of business performance.
+  2.  **Profitability Analysis**:
+      - Calculate and display Gross Profit (Total Sales Revenue - Total Purchase Costs).
+      - Calculate and display Net Profit (Gross Profit - Total Expenses).
+      - Provide a summary of how the business is performing. Is it profitable? Are there areas of concern?
+  3.  **Sales Performance**:
+      - Identify the top-selling products by quantity sold. Display this as an unordered list (<ul>).
+  4.  **Inventory Insights**:
+      - Highlight any potential stock shortages based on sales trends versus current stock levels. Display this as an unordered list (<ul>).
+  
+  The entire response, including all text within the HTML, must be in the following language: {{{language}}}.
 
   Here is the data:
   Sales Data: {{{salesData}}}

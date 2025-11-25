@@ -81,9 +81,10 @@ export function ReportsPageClient() {
                         <CardTitle>{t('reports.summaryTitle')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                            {report}
-                        </div>
+                        <div 
+                            className="prose prose-sm dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: report }}
+                        />
                     </CardContent>
                 </Card>
             )}
