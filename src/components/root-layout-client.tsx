@@ -1,2 +1,22 @@
-// This file is no longer needed as its content has been merged into /src/app/layout.tsx for simplification and to fix a context provider issue.
-// You can safely delete this file.
+
+"use client";
+
+import { useLanguage } from "@/context/language-context";
+import React, { useEffect } from "react";
+
+export const AppWithDirection = ({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) => {
+  const { language, dir } = useLanguage();
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = dir;
+    const bodyClass = language === "ar" ? "font-cairo" : "font-inter";
+    document.body.className = `h-full ${bodyClass}`;
+  }, [language, dir]);
+
+  return <>{children}</>;
+};
