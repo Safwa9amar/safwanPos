@@ -19,6 +19,7 @@ import { ProductGrid } from './product-grid';
 import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { WeightInputDialog } from './weight-input-dialog';
 
 export function PosPageClient({ initialProducts, categories, customers }: { initialProducts: ProductWithCategory[], categories: Category[], customers: Customer[] }) {
   const cart = useMultiCart();
@@ -30,6 +31,9 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+  const [selectedProductForWeight, setSelectedProductForWeight] = useState<Product | null>(null);
 
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,8 +48,15 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
         throw new Error(t('pos.productNotFound'));
       }
       const product: Product = await response.json();
-      cart.addItem(product);
+      
+      if (product.unit !== 'EACH') {
+          setSelectedProductForWeight(product);
+          setIsWeightModalOpen(true);
+      } else {
+          cart.addItem(product);
+      }
       setBarcode('');
+
     } catch (error) {
       toast({
         variant: "destructive",
@@ -57,6 +68,21 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
       barcodeInputRef.current?.focus();
     }
   }, [barcode, cart, toast, t]);
+
+  const handleAddToCart = (product: Product) => {
+    if (product.unit === 'EACH') {
+        cart.addItem(product);
+    } else {
+        setSelectedProductForWeight(product);
+        setIsWeightModalOpen(true);
+    }
+  };
+
+  const handleWeightSubmit = (product: Product, weight: number) => {
+    cart.addItem(product, weight);
+    setIsWeightModalOpen(false);
+    setSelectedProductForWeight(null);
+  };
 
   const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number) => {
     if (cart.activeCart.items.length === 0) {
@@ -202,7 +228,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
             </CardHeader>
             <CardContent className="flex-grow overflow-hidden p-2">
                 <ScrollArea className="h-full">
-                    <ProductGrid products={filteredProducts} onAddToCart={cart.addItem} />
+                    <ProductGrid products={filteredProducts} onAddToCart={handleAddToCart} />
                 </ScrollArea>
             </CardContent>
         </Card>
@@ -215,39 +241,39 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
                     <div className="flex items-center gap-2 flex-wrap">
                       <TooltipProvider>
                         {cart.carts.map((_, index) => (
-                            <Tooltip key={index}>
-                                <TooltipTrigger asChild>
-                                    <Button 
-                                        variant={cart.activeCartIndex === index ? "secondary" : "ghost"}
-                                        size="sm"
-                                        className="relative pr-2"
-                                        onClick={(e) => {
-                                            if ((e.target as HTMLElement).closest('.delete-cart-btn')) {
-                                                return;
-                                            }
-                                            cart.switchCart(index);
-                                        }}
-                                    >
-                                        Cart {index + 1}
-                                        {cart.carts.length > 1 && (
-                                            <div
-                                                className="delete-cart-btn absolute -top-1 -right-1 p-0.5 rounded-full bg-muted-foreground/30 hover:bg-destructive"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    cart.removeCart(index);
-                                                }}
-                                            >
-                                                <X className="h-3 w-3 text-background" />
-                                            </div>
-                                        )}
-                                    </Button>
-                                </TooltipTrigger>
-                                {index < 9 && (
-                                    <TooltipContent>
-                                        <p>Shortcut: F{index + 1}</p>
-                                    </TooltipContent>
+                          <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={cart.activeCartIndex === index ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="relative pr-2"
+                                onClick={(e) => {
+                                  if ((e.target as HTMLElement).closest('.delete-cart-btn')) {
+                                    return;
+                                  }
+                                  cart.switchCart(index);
+                                }}
+                              >
+                                Cart {index + 1}
+                                {cart.carts.length > 1 && (
+                                  <div
+                                    className="delete-cart-btn absolute -top-1 -right-1 p-0.5 rounded-full bg-muted-foreground/30 hover:bg-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cart.removeCart(index);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3 text-background" />
+                                  </div>
                                 )}
-                            </Tooltip>
+                              </Button>
+                            </TooltipTrigger>
+                            {index < 9 && (
+                              <TooltipContent>
+                                <p>Shortcut: F{index + 1}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
                         ))}
                         {cart.carts.length < 9 && (
                             <Button variant="outline" size="icon" className="h-8 w-8" onClick={cart.addCart}>
@@ -269,6 +295,12 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
             />
         </div>
       </div>
+      <WeightInputDialog 
+        isOpen={isWeightModalOpen}
+        onOpenChange={setIsWeightModalOpen}
+        product={selectedProductForWeight}
+        onConfirm={handleWeightSubmit}
+      />
     </div>
   );
 

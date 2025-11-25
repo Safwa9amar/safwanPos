@@ -74,16 +74,17 @@ export const useMultiCart = () => {
     })
   };
 
-  const addItem = useCallback((product: Product) => {
+  const addItem = useCallback((product: Product, quantity = 1) => {
     const activeCartItems = carts[activeCartIndex].items;
     const existingItem = activeCartItems.find((item) => item.productId === product.id);
 
     let newItems: CartItem[];
     if (existingItem) {
-      if (existingItem.quantity < product.stock) {
+      const newQuantity = existingItem.quantity + quantity;
+      if (newQuantity <= product.stock) {
         newItems = activeCartItems.map((item) =>
           item.productId === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: newQuantity }
             : item
         );
       } else {
@@ -95,8 +96,8 @@ export const useMultiCart = () => {
         return;
       }
     } else {
-      if (product.stock > 0) {
-        newItems = [...activeCartItems, { productId: product.id, name: product.name, price: product.price, quantity: 1, stock: product.stock }];
+      if (product.stock >= quantity) {
+        newItems = [...activeCartItems, { productId: product.id, name: product.name, price: product.price, quantity, stock: product.stock, unit: product.unit }];
       } else {
         toast({
           variant: "destructive",

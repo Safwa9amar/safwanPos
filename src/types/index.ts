@@ -13,6 +13,7 @@ export type CartItem = {
   price: number;
   quantity: number;
   stock: number;
+  unit: string;
 };
 
 export interface SaleItem extends PrismaSaleItem {

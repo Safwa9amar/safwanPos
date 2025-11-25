@@ -18,7 +18,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                 <ProductCard 
                     key={product.id} 
                     product={product} 
-                    onAddToCart={onAddToCart}
+                    onProductSelect={onAddToCart}
                 />
             ))}
         </div>

@@ -6,17 +6,18 @@ import { Product } from "@prisma/client";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/hooks/use-currency";
-import { Package } from "lucide-react";
+import { Package, Weight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
     product: Product;
-    onAddToCart: (product: Product) => void;
+    onProductSelect: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onProductSelect }: ProductCardProps) {
     const { formatCurrency } = useCurrency();
     const isOutOfStock = product.stock <= 0;
+    const isWeighted = product.unit !== 'EACH';
 
     return (
         <Card 
@@ -24,7 +25,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 "overflow-hidden cursor-pointer flex flex-col transition-all hover:shadow-lg hover:-translate-y-1",
                 isOutOfStock && "opacity-50 cursor-not-allowed"
             )}
-            onClick={() => !isOutOfStock && onAddToCart(product)}
+            onClick={() => !isOutOfStock && onProductSelect(product)}
         >
             <CardHeader className="p-0 relative h-32">
                 {product.image ? (
@@ -41,6 +42,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 )}
                  {isOutOfStock && (
                     <Badge variant="destructive" className="absolute top-2 right-2">Out of Stock</Badge>
+                 )}
+                 {isWeighted && !isOutOfStock && (
+                    <Badge variant="secondary" className="absolute top-2 left-2 flex items-center gap-1">
+                        <Weight className="h-3 w-3"/>
+                        <span>{product.unit}</span>
+                    </Badge>
                  )}
             </CardHeader>
             <CardContent className="p-3 flex-grow">
