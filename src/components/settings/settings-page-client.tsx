@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from '@/hooks/use-translation';
-import { Moon, Sun, Languages, Milestone } from 'lucide-react';
+import { Moon, Sun, Languages, Milestone, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../ui/button';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
@@ -33,7 +35,7 @@ export function SettingsPageClient() {
                     <CardTitle>{t('settings.title')}</CardTitle>
                     <CardDescription>{t('settings.description')}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="grid md:grid-cols-2 gap-6">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                             <Label htmlFor="dark-mode" className="text-base flex items-center">
@@ -90,6 +92,19 @@ export function SettingsPageClient() {
                           </SelectContent>
                         </Select>
                     </div>
+                    <Link href="/settings/users" legacyBehavior passHref>
+                        <a className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors">
+                            <div className="space-y-0.5">
+                                <Label className="text-base flex items-center cursor-pointer">
+                                    <Users className="mr-2 h-5 w-5" />
+                                    {t('settings.userManagement')}
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                    {t('settings.userManagementDescription')}
+                                </p>
+                            </div>
+                        </a>
+                    </Link>
                 </CardContent>
             </Card>
         </div>

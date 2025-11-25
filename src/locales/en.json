@@ -24,6 +24,8 @@
     "settings.languageDescription": "Change the application's display language.",
     "settings.currency": "Currency",
     "settings.currencyDescription": "Set the currency for all prices.",
+    "settings.userManagement": "User Management",
+    "settings.userManagementDescription": "Manage staff accounts and permissions.",
     
     "profile.title": "Profile",
     "profile.description": "Update your personal information and password.",
@@ -340,5 +342,30 @@
     "expenses.deleteCategoryConfirmTitle": "Delete Category?",
     "expenses.deleteCategoryConfirmDescription": "This will remove the category. Existing expenses will need to be re-categorized. This action cannot be undone.",
     "expenses.noCategories": "No categories found. Please add one first.",
-    "expenses.selectCategory": "Select a category"
+    "expenses.selectCategory": "Select a category",
+
+    "users.title": "User Management",
+    "users.description": "Add, edit, or remove staff members.",
+    "users.addUser": "Add User",
+    "users.name": "Name",
+    "users.email": "Email",
+    "users.role": "Role",
+    "users.joined": "Joined",
+    "users.noUsers": "No users found.",
+    "users.editUser": "Edit User",
+    "users.editDescription": "Update the user's details and role.",
+    "users.addDescription": "Create a new user account and set their role.",
+    "users.selectRole": "Select a role",
+    "users.password": "Password",
+    "users.confirmPassword": "Confirm Password",
+    "users.passwordHelpCreate": "A password is required for new users.",
+    "users.passwordHelpUpdate": "Leave the password fields blank to keep the current password.",
+    "users.updateSuccess": "User updated successfully.",
+    "users.createSuccess": "User created successfully.",
+    "users.saveFailed": "Failed to save user.",
+    "users.deleteSuccess": "User deleted successfully.",
+    "users.deleteFailed": "Failed to delete user.",
+    "users.deleteConfirmTitle": "Delete User?",
+    "users.deleteConfirmDescription": "This will permanently delete the user's account. This action cannot be undone."
 }
+
