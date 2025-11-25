@@ -3,29 +3,11 @@ import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getExpenses, getExpenseCategories } from "./actions";
 import { ExpensesPageClient } from "@/components/expenses/expenses-page-client";
-import { getAdminAuth } from "@/lib/firebase-admin";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-async function getUserId() {
-    const auth = getAdminAuth();
-    const idToken = headers().get('Authorization')?.split('Bearer ')[1];
-
-    if (!idToken) {
-        return null;
-    }
-
-    try {
-        const decodedToken = await auth.verifyIdToken(idToken);
-        return decodedToken.uid;
-    } catch (error) {
-        console.error("Error verifying ID token:", error);
-        return null;
-    }
-}
+import { getUserIdFromRequest } from "@/lib/server-auth";
 
 export default async function ExpensesPage() {
-  const userId = await getUserId();
+  const userId = await getUserIdFromRequest();
   if (!userId) {
     redirect('/login');
   }
