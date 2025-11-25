@@ -7,85 +7,52 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model Product {
-  id        String @id @default(cuid())
-  name      String
-  barcode   String @unique
-  price     Float
-  stock     Float
-  costPrice Float
-  unit      String // Replaced enum ProductUnit
-  image     String?
-
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
-
-  saleItems         SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String            @id @default(cuid())
+  name            String
+  barcode         String            @unique
+  price           Float
+  costPrice       Float
+  stock           Float
+  unit            String // Replaced enum with String for SQLite compatibility
+  image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  categoryId      String?
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  saleItems       SaleItem[]
+  purchaseItems   PurchaseOrderItem[]
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  products Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(cuid())
+  name      String    @unique
+  products  Product[]
 }
 
 model Sale {
-  id          String    @id @default(cuid())
-  totalAmount Float
-  paymentType String    // Replaced enum PaymentType
-  amountPaid  Float
-  saleDate    DateTime  @default(now())
-  
-  items       SaleItem[]
-  
-  customer    Customer? @relation(fields: [customerId], references: [id])
-  customerId  String?
+  id           String      @id @default(cuid())
+  saleDate     DateTime    @default(now())
+  totalAmount  Float
+  paymentType  String // Replaced enum with String
+  items        SaleItem[]
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id])
+  amountPaid   Float
 }
 
 model SaleItem {
   id        String   @id @default(cuid())
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  product   Product  @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id])
   productId String
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Float
   price     Float
 }
-
-model Customer {
-  id        String  @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  balance   Float   @default(0)
-
-  sales     Sale[]
-  payments  Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Payment {
-  id          String   @id @default(cuid())
-  customer    Customer @relation(fields: [customerId], references: [id])
-  customerId  String
-  amount      Float
-  paymentDate DateTime @default(now())
-  notes       String?
-}
-
 
 model Supplier {
   id             String          @id @default(cuid())
@@ -94,34 +61,61 @@ model Supplier {
   email          String?
   phone          String?
   address        String?
-  
   purchaseOrders PurchaseOrder[]
-
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
 }
 
 model PurchaseOrder {
   id                   String              @id @default(cuid())
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
   supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
   orderDate            DateTime            @default(now())
   expectedDeliveryDate DateTime?
+  status               String // Replaced enum with String
   totalCost            Float
-  status               String              // Replaced enum POStatus
-  
   items                PurchaseOrderItem[]
-
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
 }
 
 model PurchaseOrderItem {
   id              String        @id @default(cuid())
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   purchaseOrderId String
-  product         Product       @relation(fields: [productId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   productId       String
+  product         Product       @relation(fields: [productId], references: [id])
   quantity        Int
   costPrice       Float
+}
+
+model Customer {
+  id      String  @id @default(cuid())
+  name    String
+  phone   String?
+  email   String?
+  address String?
+  balance Float   @default(0)
+  sales   Sale[]
+  Payment Payment[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  amount      Float
+  paymentDate DateTime @default(now())
+  notes       String?
+}
+
+model RepairJob {
+  id              String    @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  deviceModel     String
+  imei            String?
+  reportedProblem String
+  notes           String?
+  status          String    @default("PENDING") // e.g., PENDING, IN_PROGRESS, COMPLETED, COLLECTED
+  estimatedCost   Float?
+  finalCost       Float?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

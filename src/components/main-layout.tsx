@@ -1,6 +1,5 @@
 
 
-
 "use client";
 
 import {
@@ -24,7 +23,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -83,6 +82,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Link href="/inventory">
                   <Package />
                   {t('sidebar.inventory')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
+                <Link href="/repairs">
+                  <Wrench />
+                  {t('sidebar.repairs')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
