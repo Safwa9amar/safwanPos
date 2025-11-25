@@ -1,5 +1,4 @@
 
-
 {
     "sidebar.pos": "Point of Sale",
     "sidebar.reports": "Sales Reports",
@@ -9,6 +8,7 @@
     "sidebar.suppliers": "Suppliers",
     "sidebar.customers": "Customers",
     "sidebar.repairs": "Repairs",
+    "sidebar.sales_history": "Sales History",
 
     "user.role": "Store Manager",
     "user.myAccount": "My Account",
@@ -106,12 +106,27 @@
     "receipt.thankYou": "Thank you for your purchase!",
 
     "reports.title": "AI-Powered Sales Analysis",
+    "reports.ai_reports": "AI Reports",
     "reports.description": "Generate a summary of recent sales to identify trends and potential stock shortages.",
     "reports.generateButton": "Generate Report",
     "reports.loadingTitle": "Analyzing Sales Data...",
     "reports.loadingDescription": "The AI is processing recent transactions. This may take a moment.",
     "reports.summaryTitle": "Sales Report Summary",
     "reports.generationFailedTitle": "Report Generation Failed",
+
+    "history.title": "Sales History",
+    "history.description": "View and filter all past sales transactions.",
+    "history.searchPlaceholder": "Search by Sale ID, Customer, Payment type...",
+    "history.pickDate": "Pick a date range",
+    "history.saleId": "Sale ID",
+    "history.date": "Date",
+    "history.customer": "Customer",
+    "history.paymentType": "Payment",
+    "history.total": "Total",
+    "history.noSales": "No sales found for the selected period.",
+    "history.walkInCustomer": "Walk-in Customer",
+    "history.saleDetailTitle": "Sale Details",
+    "history.close": "Close",
 
     "cart.outOfStockTitle": "Out of stock",
     "cart.cannotAddMore": "Cannot add more {{productName}}.",

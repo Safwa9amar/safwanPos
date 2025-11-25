@@ -1,5 +1,4 @@
 
-
 {
     "sidebar.pos": "نقطة البيع",
     "sidebar.reports": "تقارير المبيعات",
@@ -9,6 +8,7 @@
     "sidebar.suppliers": "الموردون",
     "sidebar.customers": "العملاء",
     "sidebar.repairs": "الإصلاحات",
+    "sidebar.sales_history": "سجل المبيعات",
 
     "user.role": "مدير المتجر",
     "user.myAccount": "حسابي",
@@ -104,13 +104,28 @@
     "receipt.date": "التاريخ",
     "receipt.thankYou": "شكرا لك على شرائك!",
 
-    "reports.title": "تحليل المبيعات المدعوم بالذكاء الاصطناعي",
+    "reports.title": "تحليل المبيعات",
+    "reports.ai_reports": "تقارير الذكاء الاصطناعي",
     "reports.description": "أنشئ ملخصًا للمبيعات الأخيرة لتحديد الاتجاهات ونقص المخزون المحتمل.",
     "reports.generateButton": "إنشاء تقرير",
     "reports.loadingTitle": "جاري تحليل بيانات المبيعات...",
     "reports.loadingDescription": "يعالج الذكاء الاصطناعي المعاملات الأخيرة. قد يستغرق هذا بعض الوقت.",
     "reports.summaryTitle": "ملخص تقرير المبيعات",
     "reports.generationFailedTitle": "فشل إنشاء التقرير",
+
+    "history.title": "سجل المبيعات",
+    "history.description": "عرض وتصفية جميع معاملات المبيعات السابقة.",
+    "history.searchPlaceholder": "البحث حسب معرف البيع، العميل، نوع الدفع...",
+    "history.pickDate": "اختر نطاقًا زمنيًا",
+    "history.saleId": "معرف البيع",
+    "history.date": "التاريخ",
+    "history.customer": "العميل",
+    "history.paymentType": "الدفع",
+    "history.total": "الإجمالي",
+    "history.noSales": "لم يتم العثور على مبيعات للفترة المحددة.",
+    "history.walkInCustomer": "عميل عابر",
+    "history.saleDetailTitle": "تفاصيل البيع",
+    "history.close": "إغلاق",
 
     "cart.outOfStockTitle": "نفد من المخزون",
     "cart.cannotAddMore": "لا يمكن إضافة المزيد من {{productName}}.",

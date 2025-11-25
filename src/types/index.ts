@@ -19,12 +19,13 @@ export type CartItem = {
 export interface SaleItem extends PrismaSaleItem {
     product: {
         name: string;
+        unit: string;
     };
 }
 
 export interface SaleWithItemsAndCustomer extends PrismaSale {
     items: SaleItem[];
-    customer: PrismaCustomer | null;
+    customer: { name: string } | null;
 }
 
 export interface Sale extends PrismaSale {

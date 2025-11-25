@@ -2,6 +2,7 @@
 
 import { generateSalesReport } from "@/ai/flows/sales-reporting-tool";
 import prisma from "@/lib/prisma";
+import { endOfDay, startOfDay } from "date-fns";
 
 export async function getSalesReport(language: string) {
     try {
@@ -46,5 +47,36 @@ export async function getSalesReport(language: string) {
     } catch (error: any) {
         console.error("Failed to generate sales report:", error);
         return { error: "Failed to generate sales report. " + error.message };
+    }
+}
+
+export async function getSalesHistory(options: { dateFrom?: Date; dateTo?: Date; }) {
+    const { dateFrom, dateTo } = options;
+    try {
+        const sales = await prisma.sale.findMany({
+            where: {
+                saleDate: {
+                    gte: dateFrom ? startOfDay(dateFrom) : undefined,
+                    lte: dateTo ? endOfDay(dateTo) : undefined,
+                },
+            },
+            include: {
+                items: {
+                    include: {
+                        product: { select: { name: true, unit: true } },
+                    },
+                },
+                customer: {
+                    select: { name: true },
+                },
+            },
+            orderBy: {
+                saleDate: 'desc',
+            },
+        });
+        return { sales };
+    } catch (error) {
+        console.error("Failed to fetch sales history:", error);
+        return { error: "Failed to load sales history." };
     }
 }

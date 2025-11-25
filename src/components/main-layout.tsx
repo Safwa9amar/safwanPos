@@ -23,7 +23,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -122,11 +122,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/reports'} tooltip={t('sidebar.reports')}>
+              <SidebarMenuButton asChild isActive={pathname === '/reports'} tooltip={t('reports.ai_reports')}>
                 <Link href="/reports">
                   <FileText />
-                  {t('sidebar.reports')}
+                  {t('reports.ai_reports')}
                 </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/reports/history')} tooltip={t('sidebar.sales_history')}>
+                 <Link href="/reports/history">
+                    <History />
+                    {t('sidebar.sales_history')}
+                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
