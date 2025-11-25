@@ -46,6 +46,8 @@ export async function upsertUser(formData: FormData) {
         ...(password && { password }), // Only update password if provided
       });
 
+      await adminAuth.setCustomUserClaims(id, { role });
+
       const updatedUser = await prisma.user.update({
         where: { id },
         data: { name, email, role },
@@ -64,6 +66,8 @@ export async function upsertUser(formData: FormData) {
         password,
         displayName: name,
       });
+
+      await adminAuth.setCustomUserClaims(firebaseUser.uid, { role });
 
       const newUser = await prisma.user.create({
         data: {
