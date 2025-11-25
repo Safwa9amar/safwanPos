@@ -10,11 +10,12 @@ const RepairJobSchema = z.object({
   customerPhone: z.string().min(1, "Customer phone is required"),
   deviceModel: z.string().min(1, "Device model is required"),
   imei: z.string().optional(),
-  reportedProblem: z.string().min(1, "Reported problem is required"),
+ar  reportedProblem: z.string().min(1, "Reported problem is required"),
   notes: z.string().optional(),
   status: z.string().min(1, "Status is required"),
   estimatedCost: z.coerce.number().optional(),
   finalCost: z.coerce.number().optional(),
+  boxNumber: z.coerce.number().optional(),
 });
 
 export async function getRepairJobs() {
@@ -35,6 +36,7 @@ export async function upsertRepairJob(formData: FormData) {
   // Convert empty strings for costs to undefined
   if (values.estimatedCost === '') values.estimatedCost = undefined;
   if (values.finalCost === '') values.finalCost = undefined;
+  if (values.boxNumber === '') values.boxNumber = undefined;
 
   const validatedFields = RepairJobSchema.safeParse(values);
 

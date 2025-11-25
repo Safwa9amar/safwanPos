@@ -27,6 +27,7 @@ const RepairJobSchema = z.object({
   status: z.enum(statuses),
   estimatedCost: z.coerce.number().optional(),
   finalCost: z.coerce.number().optional(),
+  boxNumber: z.coerce.number().optional(),
 });
 
 type RepairJobFormValues = z.infer<typeof RepairJobSchema>;
@@ -47,6 +48,7 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
       status: (job?.status as RepairJobFormValues['status']) || "PENDING",
       estimatedCost: job?.estimatedCost || undefined,
       finalCost: job?.finalCost || undefined,
+      boxNumber: job?.boxNumber || undefined,
     },
   });
 
@@ -124,8 +126,9 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
           <Textarea id="notes" {...register("notes")} />
           {formState.errors.notes && <p className="text-sm text-destructive">{formState.errors.notes.message}</p>}
       </div>
-
-      <div className="space-y-2">
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
             <Label htmlFor="status">{t('repairs.status')}</Label>
             <Select value={watch('status')} onValueChange={(value: RepairJobFormValues['status']) => setValue('status', value)}>
                 <SelectTrigger id="status">
@@ -139,7 +142,13 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
             </Select>
             {formState.errors.status && <p className="text-sm text-destructive">{formState.errors.status.message}</p>}
         </div>
-      
+        <div className="space-y-2">
+            <Label htmlFor="boxNumber">{t("repairs.boxNumber")}</Label>
+            <Input id="boxNumber" type="number" {...register("boxNumber")} />
+            {formState.errors.boxNumber && <p className="text-sm text-destructive">{formState.errors.boxNumber.message}</p>}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="estimatedCost">{t("repairs.estimatedCost")}</Label>

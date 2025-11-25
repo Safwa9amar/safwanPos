@@ -89,6 +89,7 @@ export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>{t("repairs.boxNumber")}</TableHead>
             <TableHead>{t("repairs.customerName")}</TableHead>
             <TableHead>{t("repairs.deviceModel")}</TableHead>
             <TableHead>{t("repairs.reportedProblem")}</TableHead>
@@ -100,6 +101,7 @@ export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
         <TableBody>
           {jobs.map((job) => (
             <TableRow key={job.id}>
+              <TableCell className="font-bold">#{job.boxNumber || 'N/A'}</TableCell>
               <TableCell className="font-medium">{job.customerName}</TableCell>
               <TableCell>{job.deviceModel}</TableCell>
               <TableCell className="max-w-[200px] truncate">{job.reportedProblem}</TableCell>

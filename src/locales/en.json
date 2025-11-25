@@ -261,6 +261,7 @@
     "repairs.status": "Status",
     "repairs.estimatedCost": "Estimated Cost (Optional)",
     "repairs.finalCost": "Final Cost (Optional)",
+    "repairs.boxNumber": "Box #",
     "repairs.jobId": "Job ID",
     "repairs.date": "Date Received",
     "repairs.statuses.PENDING": "Pending",
