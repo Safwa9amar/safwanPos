@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -13,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/context/auth-context";
 
 const statuses = ["PENDING", "IN_PROGRESS", "COMPLETED", "COLLECTED"] as const;
 
@@ -35,6 +37,8 @@ type RepairJobFormValues = z.infer<typeof RepairJobSchema>;
 export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
+  
   const form = useForm<RepairJobFormValues>({
     resolver: zodResolver(RepairJobSchema),
     defaultValues: {
@@ -55,6 +59,8 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
   const { formState, register, handleSubmit, setValue, watch } = form;
 
   const onSubmit = async (data: RepairJobFormValues) => {
+    if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
+
     const formData = new FormData();
     
     Object.entries(data).forEach(([key, value]) => {
@@ -62,6 +68,7 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
             formData.append(key, String(value));
         }
     });
+    formData.append('userId', user.uid);
 
     const result = await upsertRepairJob(formData);
 

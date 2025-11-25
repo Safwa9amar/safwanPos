@@ -21,6 +21,7 @@ import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrency } from "@/hooks/use-currency";
 import { Separator } from "../ui/separator";
+import { useAuth } from "@/context/auth-context";
 
 type StatsData = {
   totalRevenue: number;
@@ -43,24 +44,34 @@ const dateRanges = {
     'this-year': { name: 'This Year', from: startOfYear(new Date()), to: endOfYear(new Date()) },
 };
 
-export function StatsPageClient({ initialStats }: { initialStats: StatsData }) {
+export function StatsPageClient() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { formatCurrency } = useCurrency();
-  const [stats, setStats] = useState<StatsData>(initialStats);
-  const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<string>('7d');
 
-  const fetchStats = async (rangeKey: string) => {
-    setIsLoading(true);
-    const range = dateRanges[rangeKey as keyof typeof dateRanges];
-    const data = await getStatsData(range);
-    setStats(data);
-    setIsLoading(false);
-  };
-  
   useEffect(() => {
-    fetchStats(selectedRange);
-  }, [selectedRange]);
+    if (user) {
+        const fetchStats = async (rangeKey: string) => {
+            setIsLoading(true);
+            const range = dateRanges[rangeKey as keyof typeof dateRanges];
+            const data = await getStatsData(user.uid, range);
+            setStats(data);
+            setIsLoading(false);
+        };
+        fetchStats(selectedRange);
+    }
+  }, [selectedRange, user]);
+
+  if (isLoading || !stats) {
+    return (
+        <div className="p-4 md:p-6 space-y-6">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   if (stats.error) {
     return <div className="p-4">{stats.error}</div>;

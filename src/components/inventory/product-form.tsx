@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "../ui/textarea";
+import { useAuth } from "@/context/auth-context";
 
 const units = ["EACH", "KG", "G", "L", "ML"] as const;
 
@@ -34,6 +35,8 @@ type ProductFormValues = z.infer<typeof ProductSchema>;
 export function ProductForm({ product, categories, onFinished }: { product: Product | null, categories: Category[], onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: {
@@ -52,6 +55,10 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
   const { formState, register, handleSubmit, setValue, watch } = form;
 
   const onSubmit = async (data: ProductFormValues) => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error" });
+        return;
+    }
     const formData = new FormData();
     const submissionData = { ...data };
 
@@ -64,6 +71,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
             formData.append(key, String(value));
         }
     });
+    formData.append('userId', user.uid);
 
     const action = product ? updateProduct : addProduct;
     const result = await action(formData);

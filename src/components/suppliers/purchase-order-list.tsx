@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { Button } from '../ui/button';
 import { useCurrency } from '@/hooks/use-currency';
+import { useAuth } from '@/context/auth-context';
 
 interface PurchaseOrderListProps {
     purchaseOrders: PurchaseOrder[];
@@ -18,12 +20,15 @@ interface PurchaseOrderListProps {
 export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const { formatCurrency } = useCurrency();
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
 
     const handleCompleteOrder = async (orderId: string) => {
+        if (!user) return toast({ variant: 'destructive', title: "Authentication Error" });
+
         setIsCompleting(orderId);
-        const result = await completePurchaseOrder(orderId);
+        const result = await completePurchaseOrder(orderId, user.uid);
         setIsCompleting(null);
 
         if (result.success) {

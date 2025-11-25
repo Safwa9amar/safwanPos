@@ -20,8 +20,10 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { WeightInputDialog } from './weight-input-dialog';
+import { useAuth } from '@/context/auth-context';
 
 export function PosPageClient({ initialProducts, categories, customers }: { initialProducts: ProductWithCategory[], categories: Category[], customers: Customer[] }) {
+  const { user } = useAuth();
   const cart = useMultiCart();
   const { toast } = useToast();
   const { t } = useTranslation("translation");
@@ -35,15 +37,17 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<Product | null>(null);
 
-  // State for filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const handleBarcodeScan = useCallback(async () => {
-    if (!barcode) return;
+    if (!barcode || !user) return;
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/products/${barcode}`);
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/products/${barcode}`, {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+      });
       if (!response.ok) {
         throw new Error(t('pos.productNotFound'));
       }
@@ -67,7 +71,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
       setIsSearching(false);
       barcodeInputRef.current?.focus();
     }
-  }, [barcode, cart, toast, t]);
+  }, [barcode, cart, toast, t, user]);
 
   const handleAddToCart = (product: Product) => {
     if (product.unit === 'EACH') {
@@ -85,26 +89,21 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   };
 
   const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number) => {
+    if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
+
     if (cart.activeCart.items.length === 0) {
-      toast({
-        title: t('pos.emptyCartTitle'),
-        description: t('pos.emptyCartDescription'),
-      });
+      toast({ title: t('pos.emptyCartTitle'), description: t('pos.emptyCartDescription') });
       return;
     }
     
     if (paymentType === 'CREDIT' && !customerId) {
-        toast({
-            variant: "destructive",
-            title: t('pos.customerRequiredTitle'),
-            description: t('pos.customerRequiredDescription'),
-        });
+        toast({ variant: "destructive", title: t('pos.customerRequiredTitle'), description: t('pos.customerRequiredDescription') });
         return;
     }
 
     setIsCompleting(true);
     try {
-      const result = await completeSale(cart.activeCart.items, paymentType, customerId, amountPaid);
+      const result = await completeSale(user.uid, cart.activeCart.items, paymentType, customerId, amountPaid);
       if (result.success && result.sale) {
         // @ts-ignore
         setLastSale(result.sale);
@@ -303,5 +302,4 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
       />
     </div>
   );
-
-    
+}

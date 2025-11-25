@@ -11,11 +11,14 @@ const CustomerSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   address: z.string().optional(),
+  userId: z.string().min(1),
 });
 
-export async function getCustomers() {
+export async function getCustomers(userId: string) {
+  if (!userId) return { error: "User not authenticated" };
   try {
     const customers = await prisma.customer.findMany({
+      where: { userId },
       orderBy: { name: "asc" },
     });
     const totalDebt = await prisma.customer.aggregate({
@@ -23,6 +26,7 @@ export async function getCustomers() {
             balance: true,
         },
         where: {
+            userId,
             balance: {
                 gt: 0,
             }
@@ -35,10 +39,11 @@ export async function getCustomers() {
   }
 }
 
-export async function getCustomerById(id: string) {
+export async function getCustomerById(id: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        const customer = await prisma.customer.findUnique({
-            where: { id },
+        const customer = await prisma.customer.findFirst({
+            where: { id, userId },
             include: {
                 sales: {
                   include: {
@@ -57,6 +62,7 @@ export async function getCustomerById(id: string) {
                 }
             }
         });
+        if (!customer) return { error: "Customer not found or access denied." };
         return { customer };
     } catch (error) {
         console.error(error);
@@ -74,13 +80,24 @@ export async function upsertCustomer(formData: FormData) {
     };
   }
 
-  const { id, ...data } = validatedFields.data;
+  const { id, userId, ...data } = validatedFields.data;
+  
+  if (!userId) {
+    return { message: "Authentication error." };
+  }
 
   try {
+    if (id) {
+        // Ensure the user owns the customer record they are trying to update
+        const existingCustomer = await prisma.customer.findFirst({ where: { id, userId }});
+        if (!existingCustomer) {
+            return { message: "Customer not found or access denied."};
+        }
+    }
     const customer = await prisma.customer.upsert({
       where: { id: id || "" },
       update: data,
-      create: data,
+      create: { ...data, userId },
     });
     revalidatePath("/customers");
     if(id) revalidatePath(`/customers/${id}`);
@@ -91,10 +108,14 @@ export async function upsertCustomer(formData: FormData) {
   }
 }
 
-export async function deleteCustomer(customerId: string) {
+export async function deleteCustomer(customerId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        const customer = await prisma.customer.findUnique({ where: { id: customerId }});
-        if (customer && customer.balance !== 0) {
+        const customer = await prisma.customer.findFirst({ where: { id: customerId, userId }});
+        if (!customer) {
+             return { error: "Customer not found or access denied." };
+        }
+        if (customer.balance !== 0) {
             return { error: "Cannot delete customer with an outstanding balance."}
         }
         await prisma.customer.delete({ where: { id: customerId }});
@@ -113,6 +134,7 @@ const PaymentSchema = z.object({
     customerId: z.string().min(1, "Customer ID is required"),
     amount: z.coerce.number().positive("Payment amount must be positive"),
     notes: z.string().optional(),
+    userId: z.string().min(1),
 });
 
 export async function addPayment(formData: FormData) {
@@ -123,15 +145,22 @@ export async function addPayment(formData: FormData) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
     
-    const { customerId, amount, notes } = validatedFields.data;
+    const { customerId, amount, notes, userId } = validatedFields.data;
 
     try {
+        // Verify user owns the customer before adding a payment
+        const customer = await prisma.customer.findFirst({ where: { id: customerId, userId }});
+        if (!customer) {
+            return { error: "Customer not found or access denied." };
+        }
+
         await prisma.$transaction(async (tx) => {
             await tx.payment.create({
                 data: {
                     customerId,
                     amount,
                     notes,
+                    userId
                 }
             });
 

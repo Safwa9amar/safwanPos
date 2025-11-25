@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 const ExpenseSchema = z.object({
   id: z.string().optional(),
@@ -30,6 +32,8 @@ type ExpenseFormValues = z.infer<typeof ExpenseSchema>;
 export function ExpenseForm({ expense, categories, onFinished }: { expense: Expense | null, categories: ExpenseCategory[], onFinished: () => void }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(ExpenseSchema),
     defaultValues: {
@@ -44,12 +48,15 @@ export function ExpenseForm({ expense, categories, onFinished }: { expense: Expe
   const { formState, register, handleSubmit, setValue, watch } = form;
 
   const onSubmit = async (data: ExpenseFormValues) => {
+    if (!user) return toast({ variant: 'destructive', title: 'Authentication Error' });
+
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         formData.append(key, value instanceof Date ? value.toISOString() : String(value));
       }
     });
+    formData.append('userId', user.uid);
 
     const result = await upsertExpense(formData);
 

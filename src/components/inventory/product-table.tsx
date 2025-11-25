@@ -29,10 +29,12 @@ import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { useCurrency } from "@/hooks/use-currency";
 import { BarcodeLabelDialog } from "./barcode-label-dialog";
+import { useAuth } from "@/context/auth-context";
 
 export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategory[], onEdit: (product: Product) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,10 +51,10 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteProduct(selectedProduct.id);
+    const result = await deleteProduct(selectedProduct.id, user.uid);
     setIsDeleting(false);
 
     if (result.success) {

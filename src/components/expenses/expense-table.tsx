@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,6 +26,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { Badge } from "../ui/badge";
+import { useAuth } from "@/context/auth-context";
 
 type ExpenseWithCategory = Expense & { category: ExpenseCategory };
 
@@ -36,6 +38,7 @@ interface ExpenseTableProps {
 export function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -47,9 +50,9 @@ export function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedExpense) return;
+    if (!selectedExpense || !user) return;
     setIsDeleting(true);
-    const result = await deleteExpense(selectedExpense.id);
+    const result = await deleteExpense(selectedExpense.id, user.uid);
     setIsDeleting(false);
     if (result.success) {
       toast({ title: t('expenses.deleteSuccess') });

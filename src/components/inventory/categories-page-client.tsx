@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,6 +18,7 @@ import { upsertCategory, deleteCategory } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
+import { useAuth } from "@/context/auth-context";
 
 const CategorySchema = z.object({
     id: z.string().optional(),
@@ -28,6 +30,7 @@ type CategoryFormValues = z.infer<typeof CategorySchema>;
 export function CategoriesPageClient({ initialCategories }: { initialCategories: Category[] }) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -47,9 +50,12 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
     };
 
     const onSubmit = async (data: CategoryFormValues) => {
+        if (!user) return toast({ variant: 'destructive', title: 'Authentication Error' });
+
         const formData = new FormData();
         if (data.id) formData.append('id', data.id);
         formData.append('name', data.name);
+        formData.append('userId', user.uid);
         
         const result = await upsertCategory(formData);
 
@@ -73,9 +79,9 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
     };
 
     const handleConfirmDelete = async () => {
-        if (!selectedCategory) return;
+        if (!selectedCategory || !user) return;
         setIsDeleting(true);
-        const result = await deleteCategory(selectedCategory.id);
+        const result = await deleteCategory(selectedCategory.id, user.uid);
         setIsDeleting(false);
         if (result.success) {
             toast({ title: "Category Deleted" });

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,18 +9,22 @@ import { FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
+import { useAuth } from '@/context/auth-context';
 
 export function ReportsPageClient() {
     const [report, setReport] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const { t, language } = useTranslation();
+    const { user } = useAuth();
 
     const handleGenerateReport = async () => {
+        if (!user) return toast({ variant: 'destructive', title: 'Authentication Error' });
+        
         setIsLoading(true);
         setReport(null);
         try {
-            const result = await getBusinessReport(language);
+            const result = await getBusinessReport(user.uid, language);
             if (result.error) {
                 throw new Error(result.error);
             }

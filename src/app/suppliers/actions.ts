@@ -1,3 +1,4 @@
+
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -12,11 +13,14 @@ const SupplierSchema = z.object({
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
+  userId: z.string().min(1),
 });
 
-export async function getSuppliers() {
+export async function getSuppliers(userId: string) {
+  if (!userId) return { error: "User not authenticated" };
   try {
     const suppliers = await prisma.supplier.findMany({
+      where: { userId },
       orderBy: { name: "asc" },
     });
     return { suppliers };
@@ -26,16 +30,18 @@ export async function getSuppliers() {
   }
 }
 
-export async function getSupplierById(id: string) {
+export async function getSupplierById(id: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        const supplier = await prisma.supplier.findUnique({
-            where: { id },
+        const supplier = await prisma.supplier.findFirst({
+            where: { id, userId },
             include: {
                 purchaseOrders: {
                     orderBy: { orderDate: 'desc' }
                 }
             }
         });
+        if (!supplier) return { error: "Supplier not found or access denied." };
         return { supplier };
     } catch (error) {
         console.error(error);
@@ -53,13 +59,18 @@ export async function upsertSupplier(formData: FormData) {
     };
   }
 
-  const { id, ...data } = validatedFields.data;
+  const { id, userId, ...data } = validatedFields.data;
+  if (!userId) return { message: "Authentication error." };
 
   try {
+    if (id) {
+        const existingSupplier = await prisma.supplier.findFirst({ where: { id, userId }});
+        if (!existingSupplier) return { message: "Supplier not found or access denied." };
+    }
     const supplier = await prisma.supplier.upsert({
       where: { id: id || "" },
       update: data,
-      create: data,
+      create: { ...data, userId },
     });
     revalidatePath("/suppliers");
     if(id) revalidatePath(`/suppliers/${id}`);
@@ -70,8 +81,12 @@ export async function upsertSupplier(formData: FormData) {
   }
 }
 
-export async function deleteSupplier(supplierId: string) {
+export async function deleteSupplier(supplierId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
+        const supplier = await prisma.supplier.findFirst({ where: { id: supplierId, userId }});
+        if (!supplier) return { error: "Supplier not found or access denied." };
+
         await prisma.supplier.delete({ where: { id: supplierId }});
         revalidatePath('/suppliers');
         return { success: true };
@@ -93,14 +108,17 @@ const PurchaseOrderSchema = z.object({
     quantity: z.number().int().min(1),
     costPrice: z.number().min(0),
   })).min(1, "Order must have at least one item."),
+  userId: z.string().min(1),
 });
 
 export async function createPurchaseOrder(
+    userId: string,
     supplierId: string,
     items: { productId: string; quantity: number; costPrice: number }[],
     expectedDate: Date | undefined
 ) {
     const validation = PurchaseOrderSchema.safeParse({
+        userId,
         supplierId,
         items,
         expectedDeliveryDate: expectedDate
@@ -112,10 +130,14 @@ export async function createPurchaseOrder(
     }
 
     try {
+        const supplier = await prisma.supplier.findFirst({ where: { id: supplierId, userId } });
+        if (!supplier) return { error: "Supplier not found or access denied." };
+
         const totalCost = items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0);
 
         const purchaseOrder = await prisma.purchaseOrder.create({
             data: {
+                userId,
                 supplierId,
                 expectedDeliveryDate: expectedDate,
                 totalCost,
@@ -137,10 +159,11 @@ export async function createPurchaseOrder(
     }
 }
 
-export async function completePurchaseOrder(purchaseOrderId: string) {
+export async function completePurchaseOrder(purchaseOrderId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        const purchaseOrder = await prisma.purchaseOrder.findUnique({
-            where: { id: purchaseOrderId },
+        const purchaseOrder = await prisma.purchaseOrder.findFirst({
+            where: { id: purchaseOrderId, userId },
             include: { items: true },
         });
 

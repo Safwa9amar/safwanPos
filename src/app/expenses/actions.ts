@@ -1,3 +1,4 @@
+
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -12,11 +13,14 @@ const ExpenseSchema = z.object({
   amount: z.coerce.number().positive("Amount must be a positive number"),
   expenseDate: z.coerce.date(),
   categoryId: z.string().min(1, "Category is required"),
+  userId: z.string().min(1),
 });
 
-export async function getExpenses() {
+export async function getExpenses(userId: string) {
+  if (!userId) return { error: "User not authenticated" };
   try {
     const expenses = await prisma.expense.findMany({
+      where: { userId },
       orderBy: { expenseDate: "desc" },
       include: { category: true },
     });
@@ -37,13 +41,24 @@ export async function upsertExpense(formData: FormData) {
     };
   }
 
-  const { id, ...data } = validatedFields.data;
+  const { id, userId, ...data } = validatedFields.data;
+  
+  if (!userId) {
+    return { error: "Authentication error." };
+  }
 
   try {
+    if (id) {
+        const existingExpense = await prisma.expense.findFirst({ where: { id, userId }});
+        if (!existingExpense) {
+            return { error: "Expense not found or access denied."};
+        }
+    }
+
     await prisma.expense.upsert({
       where: { id: id || "" },
       update: data,
-      create: data,
+      create: { ...data, userId },
     });
     revalidatePath("/expenses");
     return { success: true };
@@ -53,8 +68,13 @@ export async function upsertExpense(formData: FormData) {
   }
 }
 
-export async function deleteExpense(expenseId: string) {
+export async function deleteExpense(expenseId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
+        const existingExpense = await prisma.expense.findFirst({ where: { id: expenseId, userId }});
+        if (!existingExpense) {
+            return { error: "Expense not found or access denied."};
+        }
         await prisma.expense.delete({ where: { id: expenseId }});
         revalidatePath('/expenses');
         return { success: true };
@@ -70,11 +90,14 @@ export async function deleteExpense(expenseId: string) {
 const ExpenseCategorySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Category name is required"),
+  userId: z.string().min(1),
 });
 
-export async function getExpenseCategories() {
+export async function getExpenseCategories(userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
         const categories = await prisma.expenseCategory.findMany({
+            where: { userId },
             orderBy: { name: 'asc' },
         });
         return { categories };
@@ -92,12 +115,14 @@ export async function upsertExpenseCategory(formData: FormData) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { id, name } = validatedFields.data;
+    const { id, name, userId } = validatedFields.data;
+    if (!userId) return { message: "Authentication error." };
 
     try {
         const existingCategory = await prisma.expenseCategory.findFirst({
             where: { 
-                name, 
+                name,
+                userId, 
                 NOT: { id: id || undefined }
             }
         });
@@ -105,10 +130,15 @@ export async function upsertExpenseCategory(formData: FormData) {
         if (existingCategory) {
             return { errors: { name: ["A category with this name already exists."] }};
         }
+        
+        if (id) {
+            const categoryToUpdate = await prisma.expenseCategory.findFirst({ where: { id, userId }});
+            if (!categoryToUpdate) return { message: "Category not found or access denied." };
+        }
 
         await prisma.expenseCategory.upsert({
             where: { id: id || '' },
-            create: { name },
+            create: { name, userId },
             update: { name }
         });
         revalidatePath('/expenses');
@@ -119,8 +149,12 @@ export async function upsertExpenseCategory(formData: FormData) {
     }
 }
 
-export async function deleteExpenseCategory(categoryId: string) {
+export async function deleteExpenseCategory(categoryId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
+        const categoryToDelete = await prisma.expenseCategory.findFirst({ where: { id: categoryId, userId }});
+        if (!categoryToDelete) return { error: "Category not found or access denied." };
+
         await prisma.expenseCategory.delete({
             where: { id: categoryId }
         });

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -17,12 +18,14 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { getSalesHistory } from "@/app/reports/actions";
 import { SaleDetailDialog } from "./sale-detail-dialog";
+import { useAuth } from "@/context/auth-context";
 
-export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithItemsAndCustomer[] }) {
+export function SalesHistoryClient() {
   const { t } = useTranslation();
-  const [sales, setSales] = useState(initialSales);
+  const { user } = useAuth();
+  const [sales, setSales] = useState<SaleWithItemsAndCustomer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 7)),
     to: new Date(),
@@ -31,18 +34,20 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
-    const fetchSales = async () => {
-      setIsLoading(true);
-      const { sales, error } = await getSalesHistory({ 
-        dateFrom: date?.from, 
-        dateTo: date?.to 
-      });
-      if (sales) setSales(sales);
-      // TODO: Handle error
-      setIsLoading(false);
-    };
-    fetchSales();
-  }, [date]);
+    if (user) {
+      const fetchSales = async () => {
+        setIsLoading(true);
+        const { sales: fetchedSales, error } = await getSalesHistory(user.uid, { 
+          dateFrom: date?.from, 
+          dateTo: date?.to 
+        });
+        if (fetchedSales) setSales(fetchedSales);
+        // TODO: Handle error
+        setIsLoading(false);
+      };
+      fetchSales();
+    }
+  }, [date, user]);
 
   const filteredSales = useMemo(() => {
     return sales.filter(sale => {

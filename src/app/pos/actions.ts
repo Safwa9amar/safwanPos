@@ -7,11 +7,15 @@ import { revalidatePath } from 'next/cache';
 import { PaymentType } from '@prisma/client';
 
 export async function completeSale(
+  userId: string,
   items: CartItem[], 
   paymentType: PaymentType, 
   customerId?: string, 
   amountPaid?: number
 ) {
+  if (!userId) {
+    return { success: false, error: 'User not authenticated' };
+  }
   if (!items || items.length === 0) {
     return { success: false, error: 'Cart is empty' };
   }
@@ -29,8 +33,12 @@ export async function completeSale(
 
     const productIds = items.map(item => item.productId);
     const products = await prisma.product.findMany({
-        where: { id: { in: productIds } },
+        where: { id: { in: productIds }, userId },
     });
+
+    if (products.length !== productIds.length) {
+        return { success: false, error: 'One or more products in the cart could not be found.' };
+    }
 
     const productMap = new Map(products.map(p => [p.id, p]));
 
@@ -44,6 +52,7 @@ export async function completeSale(
     const newSale = await prisma.$transaction(async (tx) => {
       const sale = await tx.sale.create({
         data: {
+          userId,
           totalAmount,
           paymentType,
           customerId: paymentType === 'CREDIT' ? customerId : null,
@@ -68,6 +77,15 @@ export async function completeSale(
 
       // Update customer balance if it's a credit sale
       if (paymentType === 'CREDIT' && customerId) {
+        // First verify the customer belongs to the user
+        const customer = await tx.customer.findFirst({
+            where: { id: customerId, userId },
+        });
+
+        if (!customer) {
+            throw new Error("Customer not found or access denied.");
+        }
+
         const debt = totalAmount - finalAmountPaid;
         if (debt > 0) {
           await tx.customer.update({
@@ -92,7 +110,7 @@ export async function completeSale(
         items: {
           include: {
             product: {
-              select: { name: true }
+              select: { name: true, unit: true }
             }
           }
         }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -24,6 +25,7 @@ import { deleteRepairJob } from "@/app/repairs/actions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
+import { useAuth } from "@/context/auth-context";
 
 interface RepairJobTableProps {
     jobs: RepairJob[], 
@@ -33,6 +35,7 @@ interface RepairJobTableProps {
 export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedJob, setSelectedJob] = useState<RepairJob | null>(null);
@@ -43,10 +46,10 @@ export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedJob) return;
+    if (!selectedJob || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteRepairJob(selectedJob.id);
+    const result = await deleteRepairJob(selectedJob.id, user.uid);
     setIsDeleting(false);
 
     if (result.success) {

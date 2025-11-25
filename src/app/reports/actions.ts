@@ -1,15 +1,17 @@
+
 "use server";
 
 import { generateBusinessReport } from "@/ai/flows/sales-reporting-tool";
 import prisma from "@/lib/prisma";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 
-export async function getBusinessReport(language: string) {
+export async function getBusinessReport(userId: string, language: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
         const thirtyDaysAgo = subDays(new Date(), 30);
 
         const sales = await prisma.sale.findMany({
-            where: { saleDate: { gte: thirtyDaysAgo } },
+            where: { userId, saleDate: { gte: thirtyDaysAgo } },
             include: {
                 items: {
                     include: {
@@ -23,12 +25,12 @@ export async function getBusinessReport(language: string) {
         });
         
         const expenses = await prisma.expense.findMany({
-             where: { expenseDate: { gte: thirtyDaysAgo } },
+             where: { userId, expenseDate: { gte: thirtyDaysAgo } },
              orderBy: { expenseDate: 'desc' }
         });
 
         const purchaseOrders = await prisma.purchaseOrder.findMany({
-             where: { orderDate: { gte: thirtyDaysAgo } },
+             where: { userId, orderDate: { gte: thirtyDaysAgo } },
              orderBy: { orderDate: 'desc' }
         });
 
@@ -79,11 +81,13 @@ export async function getBusinessReport(language: string) {
     }
 }
 
-export async function getSalesHistory(options: { dateFrom?: Date; dateTo?: Date; }) {
+export async function getSalesHistory(userId: string, options: { dateFrom?: Date; dateTo?: Date; }) {
+    if (!userId) return { error: "User not authenticated" };
     const { dateFrom, dateTo } = options;
     try {
         const sales = await prisma.sale.findMany({
             where: {
+                userId,
                 saleDate: {
                     gte: dateFrom ? startOfDay(dateFrom) : undefined,
                     lte: dateTo ? endOfDay(dateTo) : undefined,

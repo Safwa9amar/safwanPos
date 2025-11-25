@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { deleteSupplier } from "@/app/suppliers/actions";
 import { DeleteProductAlert } from "../inventory/delete-product-alert";
+import { useAuth } from "@/context/auth-context";
 
 interface SupplierTableProps {
     suppliers: Supplier[], 
@@ -32,6 +34,7 @@ interface SupplierTableProps {
 export function SupplierTable({ suppliers, onEdit, onView }: SupplierTableProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -42,10 +45,10 @@ export function SupplierTable({ suppliers, onEdit, onView }: SupplierTableProps)
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedSupplier) return;
+    if (!selectedSupplier || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteSupplier(selectedSupplier.id);
+    const result = await deleteSupplier(selectedSupplier.id, user.uid);
     setIsDeleting(false);
 
     if (result.success) {

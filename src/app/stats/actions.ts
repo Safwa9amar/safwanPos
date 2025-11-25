@@ -6,24 +6,28 @@ import { startOfDay, subDays, endOfDay, startOfWeek, startOfMonth, startOfYear }
 
 type DateRange = { from: Date; to: Date };
 
-export async function getStatsData(dateRange?: DateRange) {
+export async function getStatsData(userId: string, dateRange?: DateRange) {
+  if (!userId) return { error: "User not authenticated", totalRevenue:0, totalSales:0, totalItemsSold:0, salesChartData:[], topProducts:[], totalSuppliers:0, totalPurchaseOrders:0, totalPOCost:0, topSuppliers:[] };
   try {
+    const baseWhere = { userId };
     const saleWhereClause = dateRange
       ? {
+          ...baseWhere,
           saleDate: {
             gte: dateRange.from,
             lte: dateRange.to,
           },
         }
-      : {};
+      : baseWhere;
     
     const poWhereClause = dateRange
       ? {
+          ...baseWhere,
           orderDate: {
               gte: dateRange.from,
               lte: dateRange.to,
           }
-      } : {};
+      } : baseWhere;
 
     const totalRevenue = await prisma.sale.aggregate({
       _sum: {
@@ -89,7 +93,7 @@ export async function getStatsData(dateRange?: DateRange) {
 
     const productIds = topSellingProducts.map(p => p.productId);
     const products = await prisma.product.findMany({
-        where: { id: { in: productIds } },
+        where: { id: { in: productIds }, userId },
         select: { id: true, name: true}
     });
     const productMap = new Map(products.map(p => [p.id, p.name]));
@@ -100,7 +104,7 @@ export async function getStatsData(dateRange?: DateRange) {
     })).filter(p => p.quantity > 0);
 
     // --- Supplier & Purchase Order Stats ---
-    const totalSuppliers = await prisma.supplier.count();
+    const totalSuppliers = await prisma.supplier.count({ where: { userId }});
 
     const poStats = await prisma.purchaseOrder.aggregate({
         _count: { id: true },
@@ -122,15 +126,15 @@ export async function getStatsData(dateRange?: DateRange) {
         take: 5
     });
 
-    const supplierIds = topSuppliersByValue.map(s => s.supplierId);
+    const supplierIds = topSuppliersByValue.map(s => s.supplierId).filter(Boolean) as string[];
     const suppliers = await prisma.supplier.findMany({
-        where: { id: { in: supplierIds } },
+        where: { id: { in: supplierIds }, userId },
         select: { id: true, name: true }
     });
     const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
 
     const topSuppliersData = topSuppliersByValue.map(item => ({
-        name: supplierMap.get(item.supplierId) || 'Unknown',
+        name: item.supplierId ? supplierMap.get(item.supplierId) || 'Unknown' : 'Unknown',
         total: item._sum.totalCost || 0,
     })).filter(s => s.total > 0);
 

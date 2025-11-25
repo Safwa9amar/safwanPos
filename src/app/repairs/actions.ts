@@ -17,11 +17,14 @@ const RepairJobSchema = z.object({
   estimatedCost: z.coerce.number().optional(),
   finalCost: z.coerce.number().optional(),
   boxNumber: z.coerce.number().optional(),
+  userId: z.string().min(1),
 });
 
-export async function getRepairJobs() {
+export async function getRepairJobs(userId: string) {
+  if (!userId) return { error: "User not authenticated" };
   try {
     const jobs = await prisma.repairJob.findMany({
+      where: { userId },
       orderBy: { createdAt: "desc" },
     });
     return { jobs };
@@ -34,7 +37,6 @@ export async function getRepairJobs() {
 export async function upsertRepairJob(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
   
-  // Convert empty strings for costs to undefined
   if (values.estimatedCost === '') values.estimatedCost = undefined;
   if (values.finalCost === '') values.finalCost = undefined;
   if (values.boxNumber === '') values.boxNumber = undefined;
@@ -47,13 +49,18 @@ export async function upsertRepairJob(formData: FormData) {
     };
   }
 
-  const { id, ...data } = validatedFields.data;
+  const { id, userId, ...data } = validatedFields.data;
+  if (!userId) return { error: "Authentication error." };
 
   try {
+    if (id) {
+        const existingJob = await prisma.repairJob.findFirst({ where: { id, userId }});
+        if (!existingJob) return { error: "Repair job not found or access denied." };
+    }
     const job = await prisma.repairJob.upsert({
       where: { id: id || "" },
       update: data,
-      create: data,
+      create: { ...data, userId },
     });
     revalidatePath("/repairs");
     return { success: true, job };
@@ -63,8 +70,12 @@ export async function upsertRepairJob(formData: FormData) {
   }
 }
 
-export async function deleteRepairJob(jobId: string) {
+export async function deleteRepairJob(jobId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
+        const existingJob = await prisma.repairJob.findFirst({ where: { id: jobId, userId }});
+        if (!existingJob) return { error: "Repair job not found or access denied." };
+        
         await prisma.repairJob.delete({ where: { id: jobId }});
         revalidatePath('/repairs');
         return { success: true };

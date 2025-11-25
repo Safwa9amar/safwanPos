@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -12,6 +13,7 @@ import { upsertSupplier } from "@/app/suppliers/actions";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "../ui/textarea";
+import { useAuth } from "@/context/auth-context";
 
 const SupplierSchema = z.object({
   id: z.string().optional(),
@@ -27,6 +29,8 @@ type SupplierFormValues = z.infer<typeof SupplierSchema>;
 export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | null, onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
+  
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(SupplierSchema),
     defaultValues: supplier || {
@@ -41,12 +45,15 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
   const { formState } = form;
 
   const onSubmit = async (data: SupplierFormValues) => {
+    if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
+
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         formData.append(key, String(value));
       }
     });
+    formData.append("userId", user.uid);
 
     const result = await upsertSupplier(formData);
 

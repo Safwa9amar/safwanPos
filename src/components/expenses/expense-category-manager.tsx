@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "../ui/dialog";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
+import { useAuth } from "@/context/auth-context";
 
 const CategorySchema = z.object({
     id: z.string().optional(),
@@ -28,6 +30,7 @@ type CategoryFormValues = z.infer<typeof CategorySchema>;
 export function ExpenseCategoryManager({ initialCategories }: { initialCategories: ExpenseCategory[] }) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -47,9 +50,12 @@ export function ExpenseCategoryManager({ initialCategories }: { initialCategorie
     };
 
     const onSubmit = async (data: CategoryFormValues) => {
+        if (!user) return toast({ variant: 'destructive', title: 'Authentication Error' });
+        
         const formData = new FormData();
         if (data.id) formData.append('id', data.id);
         formData.append('name', data.name);
+        formData.append('userId', user.uid);
         
         const result = await upsertExpenseCategory(formData);
 
@@ -73,9 +79,9 @@ export function ExpenseCategoryManager({ initialCategories }: { initialCategorie
     };
 
     const handleConfirmDelete = async () => {
-        if (!selectedCategory) return;
+        if (!selectedCategory || !user) return;
         setIsDeleting(true);
-        const result = await deleteExpenseCategory(selectedCategory.id);
+        const result = await deleteExpenseCategory(selectedCategory.id, user.uid);
         setIsDeleting(false);
         if (result.success) {
             toast({ title: "Category Deleted" });

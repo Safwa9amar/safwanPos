@@ -15,11 +15,14 @@ const ProductSchema = z.object({
   categoryId: z.string().optional().nullable(),
   unit: z.enum(["EACH", "KG", "G", "L", "ML"]),
   image: z.string().url().optional().or(z.literal('')),
+  userId: z.string().min(1),
 });
 
-export async function getProducts() {
+export async function getProducts(userId: string) {
+  if (!userId) return { error: "User not authenticated" };
   try {
     const products = await prisma.product.findMany({
+      where: { userId },
       orderBy: { name: "asc" },
       include: { category: true }
     });
@@ -32,7 +35,6 @@ export async function getProducts() {
 
 export async function addProduct(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
-  // Handle empty string for categoryId
   if (values.categoryId === 'null' || values.categoryId === '') {
     values.categoryId = null;
   }
@@ -45,10 +47,11 @@ export async function addProduct(formData: FormData) {
     };
   }
   
-  const { name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
+  const { userId, name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
+  if (!userId) return { message: "Authentication error." };
 
   try {
-    const existingProduct = await prisma.product.findUnique({ where: { barcode } });
+    const existingProduct = await prisma.product.findFirst({ where: { barcode, userId } });
     if(existingProduct) {
         return {
             errors: {
@@ -59,6 +62,7 @@ export async function addProduct(formData: FormData) {
 
     await prisma.product.create({
       data: { 
+        userId,
         name, 
         barcode, 
         price, 
@@ -83,7 +87,6 @@ export async function addProduct(formData: FormData) {
 
 export async function updateProduct(formData: FormData) {
     const values = Object.fromEntries(formData.entries());
-    // Handle empty string for categoryId
     if (values.categoryId === 'null' || values.categoryId === '') {
       values.categoryId = null;
     }
@@ -96,23 +99,26 @@ export async function updateProduct(formData: FormData) {
         };
     }
     
-    const { id, name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
+    const { id, userId, name, barcode, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
 
-    if (!id) {
-        return { message: "Product ID is missing." };
-    }
+    if (!id) return { message: "Product ID is missing." };
+    if (!userId) return { message: "Authentication error." };
 
     try {
-        const existingProduct = await prisma.product.findFirst({ 
+        const productToUpdate = await prisma.product.findFirst({ where: { id, userId }});
+        if (!productToUpdate) {
+            return { message: "Product not found or access denied." };
+        }
+        
+        const existingBarcode = await prisma.product.findFirst({ 
             where: { 
                 barcode,
-                NOT: {
-                    id: id
-                }
+                userId,
+                NOT: { id: id }
             } 
         });
 
-        if(existingProduct) {
+        if(existingBarcode) {
             return {
                 errors: {
                     barcode: ["A different product with this barcode already exists."]
@@ -145,15 +151,17 @@ export async function updateProduct(formData: FormData) {
     }
 }
 
-export async function deleteProduct(productId: string) {
+export async function deleteProduct(productId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        await prisma.product.delete({
-            where: { id: productId }
-        })
+        const productToDelete = await prisma.product.findFirst({ where: { id: productId, userId }});
+        if (!productToDelete) return { error: "Product not found or access denied." };
+
+        await prisma.product.delete({ where: { id: productId } })
         revalidatePath('/inventory');
         return { success: true }
     } catch (error: any) {
-        if (error.code === 'P2003' || error.code === 'P2025') { // Foreign key constraint or record not found
+        if (error.code === 'P2003' || error.code === 'P2025') {
             return { error: "Cannot delete this product because it is part of a past sale or doesn't exist." };
         }
         console.error(error);
@@ -161,16 +169,17 @@ export async function deleteProduct(productId: string) {
     }
 }
 
-
-// --- Category Actions ---
 const CategorySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Category name is required"),
+  userId: z.string().min(1),
 });
 
-export async function getCategories() {
+export async function getCategories(userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
         const categories = await prisma.category.findMany({
+            where: { userId },
             orderBy: { name: 'asc' },
         });
         return { categories };
@@ -188,12 +197,14 @@ export async function upsertCategory(formData: FormData) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { id, name } = validatedFields.data;
+    const { id, name, userId } = validatedFields.data;
+    if (!userId) return { message: "Authentication error." };
 
     try {
         const existingCategory = await prisma.category.findFirst({
             where: { 
                 name, 
+                userId,
                 NOT: { id: id || undefined }
             }
         });
@@ -202,9 +213,14 @@ export async function upsertCategory(formData: FormData) {
             return { errors: { name: ["A category with this name already exists."] }};
         }
 
+        if (id) {
+            const categoryToUpdate = await prisma.category.findFirst({ where: { id, userId }});
+            if (!categoryToUpdate) return { message: "Category not found or access denied." };
+        }
+
         await prisma.category.upsert({
             where: { id: id || '' },
-            create: { name },
+            create: { name, userId },
             update: { name }
         });
         revalidatePath('/inventory/categories');
@@ -216,11 +232,14 @@ export async function upsertCategory(formData: FormData) {
     }
 }
 
-export async function deleteCategory(categoryId: string) {
+export async function deleteCategory(categoryId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
     try {
-        // We need to un-link products before deleting the category
+        const categoryToDelete = await prisma.category.findFirst({ where: { id: categoryId, userId }});
+        if (!categoryToDelete) return { error: "Category not found or access denied." };
+
         await prisma.product.updateMany({
-            where: { categoryId: categoryId },
+            where: { categoryId: categoryId, userId },
             data: { categoryId: null }
         });
 

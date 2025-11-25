@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addPayment } from "@/app/customers/actions";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/auth-context";
 
 const PaymentSchema = z.object({
     amount: z.coerce.number().positive("Payment amount must be positive"),
@@ -33,6 +34,7 @@ type PaymentFormValues = z.infer<typeof PaymentSchema>;
 export function PaymentSheet({ isOpen, onOpenChange, customer }: { isOpen: boolean, onOpenChange: (open: boolean) => void, customer: Customer }) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
 
     const form = useForm<PaymentFormValues>({
@@ -46,11 +48,17 @@ export function PaymentSheet({ isOpen, onOpenChange, customer }: { isOpen: boole
     const { register, handleSubmit, formState: { errors }, reset } = form;
 
     const onSubmit = async (data: PaymentFormValues) => {
+        if (!user) {
+            toast({ variant: "destructive", title: "Authentication Error" });
+            return;
+        }
+
         setIsSaving(true);
         const formData = new FormData();
         formData.append('customerId', customer.id);
         formData.append('amount', data.amount.toString());
         if (data.notes) formData.append('notes', data.notes);
+        formData.append('userId', user.uid);
         
         const result = await addPayment(formData);
         setIsSaving(false);

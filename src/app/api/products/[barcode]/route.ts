@@ -1,14 +1,37 @@
+
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getAuth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/firebase-admin';
+
+async function getUserIdFromRequest(request: Request): Promise<string | null> {
+    const authorization = request.headers.get('Authorization');
+    if (authorization?.startsWith('Bearer ')) {
+        const idToken = authorization.split('Bearer ')[1];
+        try {
+            const decodedToken = await auth.verifyIdToken(idToken);
+            return decodedToken.uid;
+        } catch (error) {
+            console.error("Error verifying ID token:", error);
+            return null;
+        }
+    }
+    return null;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: { barcode: string } }
 ) {
   try {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+        return new NextResponse('Unauthorized', { status: 401 });
+    }
+      
     const { barcode } = params;
-    const product = await prisma.product.findUnique({
-      where: { barcode },
+    const product = await prisma.product.findFirst({
+      where: { barcode, userId },
     });
 
     if (!product) {

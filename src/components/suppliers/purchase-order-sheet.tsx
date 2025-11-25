@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -13,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 interface PurchaseOrderSheetProps {
     isOpen: boolean;
@@ -31,11 +33,14 @@ export type POItem = {
 export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products }: PurchaseOrderSheetProps) {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [items, setItems] = useState<POItem[]>([]);
     const [expectedDate, setExpectedDate] = useState<Date | undefined>();
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveOrder = async () => {
+        if (!user) return toast({ variant: 'destructive', title: 'Authentication Error' });
+
         if (items.length === 0) {
             toast({
                 variant: 'destructive',
@@ -47,6 +52,7 @@ export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products 
 
         setIsSaving(true);
         const result = await createPurchaseOrder(
+            user.uid,
             supplierId,
             items.map(i => ({ productId: i.productId, quantity: i.quantity, costPrice: i.costPrice })),
             expectedDate

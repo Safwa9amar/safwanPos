@@ -13,6 +13,7 @@ import { upsertCustomer } from "@/app/customers/actions";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "../ui/textarea";
+import { useAuth } from "@/context/auth-context";
 
 const CustomerSchema = z.object({
   id: z.string().optional(),
@@ -27,6 +28,8 @@ type CustomerFormValues = z.infer<typeof CustomerSchema>;
 export function CustomerForm({ customer, onFinished }: { customer: Customer | null, onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(CustomerSchema),
     defaultValues: customer || {
@@ -40,12 +43,17 @@ export function CustomerForm({ customer, onFinished }: { customer: Customer | nu
   const { formState, register, handleSubmit } = form;
 
   const onSubmit = async (data: CustomerFormValues) => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error" });
+        return;
+    }
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         formData.append(key, String(value));
       }
     });
+    formData.append("userId", user.uid);
 
     const result = await upsertCustomer(formData);
 

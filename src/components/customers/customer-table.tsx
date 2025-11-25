@@ -25,6 +25,7 @@ import { deleteCustomer } from "@/app/customers/actions";
 import { DeleteProductAlert } from "../inventory/delete-product-alert";
 import { useCurrency } from "@/hooks/use-currency";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 interface CustomerTableProps {
     customers: Customer[], 
@@ -35,6 +36,7 @@ interface CustomerTableProps {
 export function CustomerTable({ customers, onEdit, onView }: CustomerTableProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
+  const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,10 +48,10 @@ export function CustomerTable({ customers, onEdit, onView }: CustomerTableProps)
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedCustomer) return;
+    if (!selectedCustomer || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteCustomer(selectedCustomer.id);
+    const result = await deleteCustomer(selectedCustomer.id, user.uid);
     setIsDeleting(false);
 
     if (result.success) {
