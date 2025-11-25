@@ -77,7 +77,7 @@ export async function upsertUser(formData: FormData) {
     }
   } catch (error: any) {
     console.error("Error upserting user:", error);
-    if (error.code === 'auth/email-already-exists') {
+    if (error.code === 'auth/email-already-exists' || error.code === 'auth/email-already-in-use') {
       return { errors: { email: ["This email address is already in use."] } };
     }
     return { error: error.message || "An unknown error occurred." };
