@@ -19,30 +19,25 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import { useReactToPrint } from 'react-to-print';
 import { Icons } from '../icons';
-
-interface SaleDetailDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  sale: SaleWithItemsAndCustomer | null;
-}
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     return (
-        <div ref={ref} className="p-6">
+        <div ref={ref} className="p-6 bg-white text-black">
             <div className="text-center mb-4">
                 <Icons.logo className="h-12 w-12 text-primary mx-auto" />
                 <h2 className="text-xl font-bold">PrismaPOS</h2>
-                <p className="text-sm text-muted-foreground">{t('receipt.title')}</p>
+                <p className="text-sm text-gray-500">{t('receipt.title')}</p>
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-2">
+            <div className="flex justify-between text-xs text-gray-500 mb-2">
                 <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
                 <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
             </div>
-            <div className="text-xs text-muted-foreground mb-4">
+            <div className="text-xs text-gray-500 mb-4">
                 {sale.customer && <p>Customer: {sale.customer.name}</p>}
             </div>
             <Separator />
@@ -51,7 +46,7 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
                     <div key={index} className="flex justify-between items-baseline text-sm">
                         <div>
                             <p>{item.product.name}</p>
-                            <p className="text-muted-foreground text-xs">
+                            <p className="text-gray-500 text-xs">
                                 {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
                             </p>
                         </div>
@@ -81,7 +76,7 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
                 </div>
             </div>
             <Separator />
-            <p className="text-center text-xs text-muted-foreground mt-6">
+            <p className="text-center text-xs text-gray-500 mt-6">
                 {t('receipt.thankYou')}
             </p>
         </div>
@@ -89,15 +84,25 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
 });
 PrintableReceipt.displayName = 'PrintableReceipt';
 
-
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
   const printRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = useReactToPrint({
-      content: () => printRef.current,
-  });
+  const handlePrint = () => {
+    const input = printRef.current;
+    if (input) {
+      html2canvas(input, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a6'); 
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.autoPrint();
+        window.open(pdf.output('bloburl'), '_blank');
+      });
+    }
+  };
 
   if (!sale) return null;
   
@@ -173,7 +178,9 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </Button>
         </DialogFooter>
         <div className="hidden">
-            {sale && <PrintableReceipt sale={sale} ref={printRef} />}
+            <div style={{ position: 'absolute', left: '-9999px' }}>
+              {sale && <PrintableReceipt sale={sale} ref={printRef} />}
+            </div>
         </div>
       </DialogContent>
     </Dialog>
