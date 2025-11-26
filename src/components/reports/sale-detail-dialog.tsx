@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -28,6 +29,7 @@ interface SaleDetailDialogProps {
     sale: SaleWithItemsAndCustomer | null;
 }
 
+// A hidden component just for printing
 const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
@@ -89,6 +91,7 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
 });
 PrintableReceipt.displayName = 'PrintableReceipt';
 
+
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
@@ -97,7 +100,23 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
   const handlePrint = () => {
     const input = printRef.current;
     if (input) {
-      html2canvas(input, { scale: 2 }).then(canvas => {
+      html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        onclone: (document) => {
+          const images = document.getElementsByTagName('img');
+          const promises = [];
+          for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            if (img.complete) continue;
+            promises.push(new Promise<void>((resolve) => {
+              img.onload = () => resolve();
+              img.onerror = () => resolve(); // continue even if an image fails
+            }));
+          }
+          return Promise.all(promises);
+        }
+      }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', [105, 148]); // A6 size
         const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -191,3 +210,5 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     </Dialog>
   );
 }
+
+    
