@@ -31,9 +31,8 @@ export function SalesHistoryClient() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
-  const [selectedSale, setSelectedSale] = useState<any | null>(null);
+  const [selectedSale, setSelectedSale] = useState<SaleWithItemsAndCustomer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [saleToPrint, setSaleToPrint] = useState<any | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -69,10 +68,6 @@ export function SalesHistoryClient() {
     setSelectedSale(sale);
     setIsDetailOpen(true);
   };
-
-  const handlePrint = (sale: any) => {
-    setSaleToPrint(sale);
-  }
   
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -85,10 +80,6 @@ export function SalesHistoryClient() {
   };
   
   const { formatCurrency } = useCurrency();
-  
-  if (saleToPrint) {
-    return <Receipt sale={saleToPrint} onDone={() => setSaleToPrint(null)} />
-  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -156,7 +147,7 @@ export function SalesHistoryClient() {
                 <TableHead>{t('history.customer')}</TableHead>
                 <TableHead>{t('history.paymentType')}</TableHead>
                 <TableHead className="text-right">{t('history.total')}</TableHead>
-                <TableHead className="w-[120px] text-right">{t("inventory.actions")}</TableHead>
+                <TableHead className="w-[80px] text-right">{t("inventory.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -173,9 +164,6 @@ export function SalesHistoryClient() {
                     <Button variant="ghost" size="icon" onClick={() => handleViewDetails(sale)}>
                         <Eye className="h-4 w-4"/>
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handlePrint(sale)}>
-                        <Printer className="h-4 w-4"/>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -189,14 +177,12 @@ export function SalesHistoryClient() {
           )}
         </CardContent>
       </Card>
-      {selectedSale && (
-        <SaleDetailDialog 
-            sale={selectedSale}
-            isOpen={isDetailOpen}
-            onOpenChange={setIsDetailOpen}
-            onPrint={handlePrint}
-        />
-      )}
+      
+      <SaleDetailDialog 
+          sale={selectedSale}
+          isOpen={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+      />
     </div>
   );
 }

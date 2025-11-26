@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useRef } from 'react';
 import { SaleWithItemsAndCustomer } from "@/types";
 import {
   Dialog,
@@ -18,17 +19,86 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
+import { useReactToPrint } from 'react-to-print';
+import { Icons } from '../icons';
 
 interface SaleDetailDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   sale: SaleWithItemsAndCustomer | null;
-  onPrint: (sale: SaleWithItemsAndCustomer) => void;
 }
 
-export function SaleDetailDialog({ isOpen, onOpenChange, sale, onPrint }: SaleDetailDialogProps) {
+// A hidden component just for printing
+const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
+    const { t } = useTranslation();
+    const { formatCurrency } = useCurrency();
+    return (
+        <div ref={ref} className="p-6">
+            <div className="text-center mb-4">
+                <Icons.logo className="h-12 w-12 text-primary mx-auto" />
+                <h2 className="text-xl font-bold">PrismaPOS</h2>
+                <p className="text-sm text-muted-foreground">{t('receipt.title')}</p>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
+                <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mb-4">
+                {sale.customer && <p>Customer: {sale.customer.name}</p>}
+            </div>
+            <Separator />
+            <div className="my-4 space-y-2">
+                {sale.items.map((item, index) => (
+                    <div key={index} className="flex justify-between items-baseline text-sm">
+                        <div>
+                            <p>{item.product.name}</p>
+                            <p className="text-muted-foreground text-xs">
+                                {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
+                            </p>
+                        </div>
+                        <p>{formatCurrency(item.quantity * item.price)}</p>
+                    </div>
+                ))}
+            </div>
+            <Separator />
+            <div className="my-4 space-y-1 text-sm">
+                <div className="flex justify-between">
+                    <span>{t('pos.subtotal')}</span>
+                    <span>{formatCurrency(sale.totalAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>{t('pos.amountPaid')}</span>
+                    <span>{formatCurrency(sale.amountPaid)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-base mt-2">
+                    <span>{t('customers.balance')}</span>
+                    <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
+                </div>
+            </div>
+            <div className="my-4 space-y-1 text-sm">
+                <div className="flex justify-between font-bold text-lg">
+                    <span>{t('pos.total')}</span>
+                    <span>{formatCurrency(sale.totalAmount)}</span>
+                </div>
+            </div>
+            <Separator />
+            <p className="text-center text-xs text-muted-foreground mt-6">
+                {t('receipt.thankYou')}
+            </p>
+        </div>
+    )
+})
+PrintableReceipt.displayName = "PrintableReceipt";
+
+
+export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+      content: () => printRef.current,
+  });
 
   if (!sale) return null;
   
@@ -98,11 +168,14 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale, onPrint }: SaleDe
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
-          <Button type="button" onClick={() => onPrint(sale)}>
+          <Button type="button" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             {t('receipt.printButton')}
           </Button>
         </DialogFooter>
+        <div className="hidden">
+            <PrintableReceipt sale={sale} ref={printRef} />
+        </div>
       </DialogContent>
     </Dialog>
   );
