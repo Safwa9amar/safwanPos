@@ -108,7 +108,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
         cart.clearCart();
         toast({
           title: t('pos.saleCompletedTitle'),
-          description: `${t('pos.saleCompletedDescription')} #${result.sale.id}`,
+          description: `${t('pos.saleCompletedDescription')} #${result.sale.id.substring(0,8)}`,
         });
       } else {
         throw new Error(result.error || "An unknown error occurred.");
