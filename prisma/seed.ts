@@ -11,6 +11,7 @@ async function main() {
       name: 'Seed User',
       email: 'seeduser@example.com',
       role: UserRole.ADMIN,
+      password : 'seedpassword',
     },
   });
 

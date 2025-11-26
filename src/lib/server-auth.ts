@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
  * @returns The user's ID if the token is valid, otherwise null.
  */
 export async function getUserIdFromRequest(request: Request): Promise<string | null> {
-    const cookieStore = cookies();
+    const cookieStore =await cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
