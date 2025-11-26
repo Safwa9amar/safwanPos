@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Product } from '@prisma/client';
 import {
   Dialog,
@@ -28,10 +28,14 @@ export function WeightInputDialog({ isOpen, onOpenChange, product, onConfirm }: 
     const { t } = useTranslation();
     const [weight, setWeight] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             setWeight('');
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 100); // Small delay to allow dialog to animate in
         }
     }, [isOpen]);
     
@@ -61,13 +65,14 @@ export function WeightInputDialog({ isOpen, onOpenChange, product, onConfirm }: 
                 <div className="py-4 space-y-2">
                     <Label htmlFor="weight">Weight ({product.unit})</Label>
                     <Input 
+                        ref={inputRef}
                         id="weight"
                         type="number"
                         step="0.01"
                         value={weight}
                         onChange={(e) => setWeight(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
                         placeholder="e.g., 0.5"
-                        autoFocus
                     />
                 </div>
                 <DialogFooter>
