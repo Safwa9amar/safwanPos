@@ -27,7 +27,7 @@ const UserSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
-export async function upsertUser(formData: FormData) {
+export async function upsertUser(formData: FormData, token?: string) {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = UserSchema.safeParse(values);
 
@@ -40,26 +40,42 @@ export async function upsertUser(formData: FormData) {
 
   try {
     if (id) {
-        // User exists in Firebase, needs to be updated in Prisma
-        await adminAuth.updateUser(id, {
-            email,
-            displayName: name,
-            ...(password && { password }), // Only update password if provided
-        });
-
-        await adminAuth.setCustomUserClaims(id, { role });
+        // If an ID is provided, this could be a new user registration or an update
+        const existingUser = await prisma.user.findUnique({ where: { id }});
         
-        const user = await prisma.user.upsert({
-            where: { id },
-            update: { name, email, role },
-            create: { id, name, email, role },
-        });
-
-        revalidatePath("/settings/users");
-        return { success: true, user };
+        if (existingUser) {
+            // User exists in our DB, so it's an update.
+            await adminAuth.updateUser(id, {
+                email,
+                displayName: name,
+                ...(password && { password }),
+            });
+            await adminAuth.setCustomUserClaims(id, { role });
+            const updatedUser = await prisma.user.update({
+                where: { id },
+                data: { name, email, role },
+            });
+            revalidatePath("/settings/users");
+            return { success: true, user: updatedUser };
+        } else {
+            // User does not exist in our DB, so it's part of a new registration.
+            // We trust the ID because it came from the client-side Firebase user creation.
+            // We just need to create the corresponding record in our database.
+            await adminAuth.setCustomUserClaims(id, { role });
+            const newUser = await prisma.user.create({
+                data: {
+                    id,
+                    name,
+                    email,
+                    role,
+                },
+            });
+            revalidatePath("/settings/users");
+            return { success: true, user: newUser };
+        }
 
     } else {
-      // Create new user from the users management page
+      // Create a brand new user from the users management page (no ID provided)
       if (!password) {
         return { errors: { password: ["Password is required for new users."] } };
       }
@@ -93,8 +109,6 @@ export async function upsertUser(formData: FormData) {
 
 export async function deleteUser(userId: string) {
     try {
-        // You might want to check if the user being deleted is the last ADMIN
-        // For simplicity, we'll skip that check here.
         const adminAuth = getAdminAuth();
         await adminAuth.deleteUser(userId);
         await prisma.user.delete({ where: { id: userId } });
