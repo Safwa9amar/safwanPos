@@ -12,7 +12,6 @@ import { Loader2, PackagePlus, Search, Telescope } from 'lucide-react';
 import { findProducts, ProductSearchOutput } from '@/ai/flows/product-search-flow';
 import { ProductSheet } from '../inventory/product-sheet';
 import { Category, Product } from '@prisma/client';
-import Image from 'next/image';
 
 const searchSchema = z.object({
   query: z.string().min(3, 'Please enter at least 3 characters.'),
@@ -123,7 +122,7 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
           {results.map((product, index) => (
             <Card key={index} className="flex flex-col">
               <CardHeader className="p-0 relative h-40">
-                  <Image src={product.imageUrl} alt={product.name} layout="fill" objectFit="cover" className="rounded-t-lg bg-muted" />
+                  <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover rounded-t-lg bg-muted" />
               </CardHeader>
               <CardContent className="p-4 flex-grow space-y-1">
                 <CardTitle className="text-base">{product.name}</CardTitle>
