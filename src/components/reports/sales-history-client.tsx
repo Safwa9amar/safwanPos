@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { SaleWithItemsAndCustomer } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Search, Eye, Download, Printer } from "lucide-react";
+import { CalendarIcon, Search, Eye, Download } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCurrency } from "@/hooks/use-currency";
@@ -19,14 +19,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { getSalesHistory } from "@/app/reports/actions";
 import { SaleDetailDialog } from "./sale-detail-dialog";
 import { useAuth } from "@/context/auth-context";
-import { Receipt } from "../pos/receipt";
 
-export function SalesHistoryClient() {
+export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithItemsAndCustomer[] }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [sales, setSales] = useState<SaleWithItemsAndCustomer[]>([]);
+  const [sales, setSales] = useState<SaleWithItemsAndCustomer[]>(initialSales);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
