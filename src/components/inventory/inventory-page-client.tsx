@@ -12,7 +12,7 @@ import { ProductTable } from "./product-table";
 import { ProductSheet } from "./product-sheet";
 import { useTranslation } from "@/hooks/use-translation";
 import { useRouter } from "next/navigation";
-import { ProductWithCategory } from "@/types";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ImportDialog } from "./import-dialog";
@@ -22,11 +22,11 @@ type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock
 const INITIAL_INFINITE_LOAD = 50;
 const SUBSEQUENT_INFINITE_LOAD = 25;
 
-export function InventoryPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategory[], categories: Category[] }) {
+export function InventoryPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategoryAndBarcodes[], categories: Category[] }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductWithCategoryAndBarcodes | null>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -57,7 +57,7 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
     setIsSheetOpen(true);
   };
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = (product: ProductWithCategoryAndBarcodes) => {
     setEditingProduct(product);
     setIsSheetOpen(true);
   };
@@ -70,7 +70,8 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = initialProducts.filter(product => {
         const matchesCategory = filterCategory === 'all' || product.categoryId === filterCategory;
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || product.barcode.toLowerCase().includes(searchTerm.toLowerCase());
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        const matchesSearch = product.name.toLowerCase().includes(lowerCaseSearchTerm) || product.barcodes.some(b => b.code.toLowerCase().includes(lowerCaseSearchTerm));
         return matchesCategory && matchesSearch;
     });
 
@@ -149,7 +150,7 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedProducts.map(p =>
-        headers.map(header => `"${p[header as keyof Product] || ''}"`).join(",")
+        headers.map(header => `"${(p as any)[header] || ''}"`).join(",")
       ),
     ].join("\n");
     downloadFile(csvContent, "products.csv", "text/csv");

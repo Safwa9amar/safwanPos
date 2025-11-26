@@ -1,27 +1,27 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Product, Category } from "@prisma/client";
+import { Product, Category, Barcode } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { addProduct, updateProduct } from "@/app/inventory/actions";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "../ui/textarea";
 import { useAuth } from "@/context/auth-context";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 
 const units = ["EACH", "KG", "G", "L", "ML"] as const;
 
 const ProductSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
-  barcode: z.string().min(1, "Barcode is required"),
+  barcodes: z.array(z.object({ value: z.string().min(1, "Barcode cannot be empty") })).min(1, "At least one barcode is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
@@ -32,7 +32,7 @@ const ProductSchema = z.object({
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
-export function ProductForm({ product, categories, onFinished }: { product: Product | null, categories: Category[], onFinished: () => void }) {
+export function ProductForm({ product, categories, onFinished }: { product: ProductWithCategoryAndBarcodes | null, categories: Category[], onFinished: () => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const { user } = useAuth();
@@ -42,7 +42,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
     defaultValues: {
       id: product?.id,
       name: product?.name || "",
-      barcode: product?.barcode || "",
+      barcodes: product?.barcodes?.map(b => ({ value: b.code })) || [{ value: "" }],
       price: product?.price || 0,
       costPrice: product?.costPrice || 0,
       stock: product?.stock || 0,
@@ -52,7 +52,12 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
     },
   });
 
-  const { formState, register, handleSubmit, setValue, watch } = form;
+  const { control, formState, register, handleSubmit, setValue, watch } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "barcodes"
+  });
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!user) {
@@ -60,14 +65,18 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
         return;
     }
     const formData = new FormData();
-    const submissionData = { ...data };
-
-    if (submissionData.categoryId === '__none__') {
-      submissionData.categoryId = null;
-    }
-
-    Object.entries(submissionData).forEach(([key, value]) => {
-        if(value !== undefined && value !== null){
+    const { barcodes, ...restOfData } = data;
+    
+    // Append barcodes as an array
+    barcodes.forEach((barcode, index) => {
+        formData.append(`barcodes[]`, barcode.value);
+    });
+    
+    // Append the rest of the data
+    Object.entries(restOfData).forEach(([key, value]) => {
+        if (key === 'categoryId' && value === '__none__') {
+            formData.append(key, 'null');
+        } else if (value !== undefined && value !== null) {
             formData.append(key, String(value));
         }
     });
@@ -85,7 +94,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
     } else if (result.errors) {
         Object.entries(result.errors).forEach(([field, messages]) => {
             if(messages){
-                form.setError(field as keyof ProductFormValues, { type: 'manual', message: messages[0] });
+                form.setError(field as keyof ProductFormValues, { type: 'manual', message: messages.join(', ') });
             }
         })
     } else {
@@ -108,9 +117,19 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="barcode">{t("inventory.barcode")}</Label>
-        <Input id="barcode" {...register("barcode")} />
-        {formState.errors.barcode && <p className="text-sm text-destructive">{formState.errors.barcode.message}</p>}
+        <Label>{t("inventory.barcode")}</Label>
+        {fields.map((field, index) => (
+            <div key={field.id} className="flex gap-2 items-center">
+                <Input {...register(`barcodes.${index}.value`)} />
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                </Button>
+            </div>
+        ))}
+         <Button type="button" variant="outline" size="sm" onClick={() => append({ value: "" })}>
+            <PlusCircle className="mr-2 h-4 w-4"/> Add Barcode
+        </Button>
+        {formState.errors.barcodes && <p className="text-sm text-destructive">{formState.errors.barcodes.message || formState.errors.barcodes.root?.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

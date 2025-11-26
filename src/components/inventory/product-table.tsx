@@ -24,14 +24,14 @@ import { useTranslation } from "react-i18next";
 import { DeleteProductAlert } from "./delete-product-alert";
 import { deleteProduct } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
-import { ProductWithCategory } from "@/types";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { useCurrency } from "@/hooks/use-currency";
 import { BarcodeLabelDialog } from "./barcode-label-dialog";
 import { useAuth } from "@/context/auth-context";
 
-export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategory[], onEdit: (product: Product) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
+export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategoryAndBarcodes[], onEdit: (product: ProductWithCategoryAndBarcodes) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const { user } = useAuth();
@@ -39,14 +39,14 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productToPrint, setProductToPrint] = useState<Product | null>(null);
+  const [productToPrint, setProductToPrint] = useState<ProductWithCategoryAndBarcodes | null>(null);
 
   const handleDeleteClick = (product: Product) => {
     setSelectedProduct(product);
     setIsAlertOpen(true);
   };
 
-  const handlePrintClick = (product: Product) => {
+  const handlePrintClick = (product: ProductWithCategoryAndBarcodes) => {
     setProductToPrint(product);
   };
 
@@ -117,7 +117,11 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
                   <span className="text-muted-foreground text-xs">N/A</span>
                 )}
               </TableCell>
-              <TableCell>{product.barcode}</TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  {product.barcodes.map(b => <Badge key={b.id} variant="outline">{b.code}</Badge>)}
+                </div>
+              </TableCell>
               <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
               <TableCell className="text-right">{formatCurrency(product.costPrice)}</TableCell>
               <TableCell className="text-right">{product.stock} {t(`units.${product.unit}`)}</TableCell>
@@ -156,8 +160,9 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
       />
+      {/* The barcode dialog expects the first barcode for printing */}
       <BarcodeLabelDialog 
-        product={productToPrint}
+        product={productToPrint ? { ...productToPrint, barcode: productToPrint.barcodes[0]?.code } : null}
         onOpenChange={(isOpen) => !isOpen && setProductToPrint(null)}
       />
     </>

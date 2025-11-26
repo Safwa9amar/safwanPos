@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/main-layout";
 import { getProducts, getCategories } from "./actions";
 import { redirect } from "next/navigation";
 import { getUserIdFromRequest } from "@/lib/server-auth";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 
 export default async function InventoryPage() {
   const userId = await getUserIdFromRequest();
@@ -33,7 +34,7 @@ export default async function InventoryPage() {
     <AuthGuard>
       <MainLayout>
         <InventoryPageClient 
-          initialProducts={productsResult.products || []} 
+          initialProducts={productsResult.products as ProductWithCategoryAndBarcodes[] || []} 
           categories={categoriesResult.categories || []} 
         />
       </MainLayout>

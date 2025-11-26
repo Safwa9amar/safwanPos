@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Product, Category } from "@prisma/client";
@@ -10,11 +11,12 @@ import {
 } from "@/components/ui/sheet";
 import { ProductForm } from "./product-form";
 import { useTranslation } from "@/hooks/use-translation";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 
 interface ProductSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  product: Product | null;
+  product: ProductWithCategoryAndBarcodes | null;
   categories: Category[];
 }
 
