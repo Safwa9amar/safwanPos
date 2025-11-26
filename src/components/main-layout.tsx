@@ -57,7 +57,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Icons.logo className="size-8 text-primary" />
-            <span className="text-lg font-semibold">PrismaPOS</span>
+            <span className="text-lg font-semibold">SafwanPOS</span>
           </div>
         </SidebarHeader>
         <SidebarContent>

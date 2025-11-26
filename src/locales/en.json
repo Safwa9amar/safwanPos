@@ -1,5 +1,4 @@
 
-
 {
     "sidebar.pos": "Point of Sale",
     "sidebar.reports": "Sales Reports",
@@ -62,7 +61,7 @@
     "register.failedTitle": "Registration Failed",
 
     "authGuard.securing": "Securing your session...",
-    "home.loading": "Loading PrismaPOS...",
+    "home.loading": "Loading SafwanPOS...",
 
     "actions.view": "View",
 
@@ -375,6 +374,3 @@
     "users.deleteConfirmTitle": "Delete User?",
     "users.deleteConfirmDescription": "This will permanently delete the user's account. This action cannot be undone."
 }
-
-
-

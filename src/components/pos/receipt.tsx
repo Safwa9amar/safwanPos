@@ -40,7 +40,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                 <div className="flex justify-center mb-4">
                     <Icons.logo className="h-12 w-12 text-primary" />
                 </div>
-                <CardTitle>PrismaPOS</CardTitle>
+                <CardTitle>SafwanPOS</CardTitle>
                 <CardDescription>{t('receipt.title')}</CardDescription>
             </CardHeader>
             <CardContent className="p-4">

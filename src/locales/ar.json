@@ -1,5 +1,4 @@
 
-
 {
     "sidebar.pos": "نقطة البيع",
     "sidebar.reports": "تقارير المبيعات",
@@ -61,7 +60,7 @@
     "register.failedTitle": "فشل التسجيل",
 
     "authGuard.securing": "جاري تأمين جلستك...",
-    "home.loading": "جاري تحميل PrismaPOS...",
+    "home.loading": "جاري تحميل SafwanPOS...",
     
     "actions.view": "عرض",
 

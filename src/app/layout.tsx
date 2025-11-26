@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>PrismaPOS</title>
+        <title>SafwanPOS</title>
         <meta
           name="description"
           content="A minimalist, fully functional Point-of-Sale (POS) system."
@@ -54,4 +54,3 @@ export default function RootLayout({
     </html>
   );
 }
-
