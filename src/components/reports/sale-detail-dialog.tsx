@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from "react";
-import { useRef } from 'react';
 import { SaleWithItemsAndCustomer } from "@/types";
 import {
   Dialog,
@@ -21,8 +20,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { Icons } from "../icons";
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -30,91 +27,100 @@ interface SaleDetailDialogProps {
     sale: SaleWithItemsAndCustomer | null;
 }
 
-// A hidden component just for printing
-const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
-    const { t } = useTranslation();
-    const { formatCurrency } = useCurrency();
-    return (
-        <div ref={ref} className="p-6 bg-white text-black w-[400px]">
-            <div className="text-center mb-4">
-                <div className="flex justify-center mb-4">
-                    <Icons.logo className="h-12 w-12 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold">PrismaPOS</h2>
-                <p className="text-sm text-gray-500">{t('receipt.title')}</p>
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 mb-2">
-                <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
-                <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
-            </div>
-            <div className="text-xs text-gray-500 mb-4">
-                {sale.customer && <p>Customer: {sale.customer.name}</p>}
-            </div>
-            <Separator />
-            <div className="my-4 space-y-2">
-                {sale.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-baseline text-sm">
-                        <div>
-                            <p>{item.product.name}</p>
-                            <p className="text-gray-500 text-xs">
-                                {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
-                            </p>
-                        </div>
-                        <p>{formatCurrency(item.quantity * item.price)}</p>
-                    </div>
-                ))}
-            </div>
-            <Separator />
-            <div className="my-4 space-y-1 text-sm">
-                <div className="flex justify-between">
-                    <span>{t('pos.subtotal')}</span>
-                    <span>{formatCurrency(sale.totalAmount)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>{t('pos.amountPaid')}</span>
-                    <span>{formatCurrency(sale.amountPaid)}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-base mt-2">
-                    <span>{t('customers.balance')}</span>
-                    <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
-                </div>
-            </div>
-            <div className="my-4 space-y-1 text-sm">
-                <div className="flex justify-between font-bold text-lg">
-                    <span>{t('pos.total')}</span>
-                    <span>{formatCurrency(sale.totalAmount)}</span>
-                </div>
-            </div>
-            <Separator />
-            <p className="text-center text-xs text-gray-500 mt-6">
-                {t('receipt.thankYou')}
-            </p>
-        </div>
-    );
-});
-PrintableReceipt.displayName = 'PrintableReceipt';
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
-  const { formatCurrency } = useCurrency();
-  const printRef = useRef<HTMLDivElement>(null);
+  const { formatCurrency, currency } = useCurrency();
 
   const handlePrint = () => {
-    const input = printRef.current;
-    if (input) {
-      html2canvas(input, {
-        scale: 2,
-        useCORS: true, 
-      }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', [105, 148]); // A6 size
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.autoPrint();
-        window.open(pdf.output('bloburl'), '_blank');
-      });
+    if (!sale) return;
+
+    const doc = new jsPDF();
+    let y = 15;
+
+    // --- Header ---
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("PrismaPOS", doc.internal.pageSize.getWidth() / 2, y, { align: "center" });
+    y += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(t('receipt.title'), doc.internal.pageSize.getWidth() / 2, y, { align: "center" });
+    y += 10;
+
+    // --- Info ---
+    doc.setFontSize(8);
+    doc.text(`${t('receipt.saleId')}: #${sale.id.substring(0,8)}`, 14, y);
+    doc.text(`${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`, doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    y += 5;
+    
+    if (sale.customer?.name) {
+        doc.text(`${t('history.customer')}: ${sale.customer.name}`, 14, y);
+        y+= 5;
     }
+    
+    doc.setLineWidth(0.2);
+    doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
+    y += 8;
+
+    // --- Items Table ---
+    doc.setFont("helvetica", "bold");
+    doc.text(t('po.item'), 14, y);
+    doc.text(t('po.quantity'), 120, y, { align: 'center' });
+    doc.text(t('inventory.price'), 150, y, { align: 'center' });
+    doc.text(t('po.total'), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    y += 6;
+    
+    doc.setFont("helvetica", "normal");
+    sale.items.forEach(item => {
+        const itemText = `${item.product.name}`;
+        const priceText = `${item.quantity}${item.product.unit !== 'EACH' ? item.product.unit : ''} x ${formatCurrency(item.price)}`;
+        
+        doc.setFontSize(9);
+        doc.text(itemText, 14, y);
+        doc.text((item.quantity).toString(), 120, y, { align: 'center' });
+        doc.text(formatCurrency(item.price), 150, y, { align: 'center' });
+        doc.text(formatCurrency(item.price * item.quantity), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+        
+        y += 4;
+        doc.setFontSize(7);
+        doc.setTextColor(150);
+        doc.text(priceText, 14, y);
+        doc.setTextColor(0);
+        y += 5;
+    });
+
+    // --- Totals ---
+    y += 5;
+    doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
+    y += 8;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(t('pos.total'), 14, y);
+    doc.text(formatCurrency(sale.totalAmount), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    y += 7;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(t('pos.amountPaid'), 14, y);
+    doc.text(formatCurrency(sale.amountPaid), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    y += 7;
+
+    doc.text(t('customers.balance'), 14, y);
+    doc.text(formatCurrency(sale.totalAmount - sale.amountPaid), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+
+
+    // --- Footer ---
+    y += 15;
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(t('receipt.thankYou'), doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+
+    // --- Print ---
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
   };
 
 
@@ -191,11 +197,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
             {t('receipt.printButton')}
           </Button>
         </DialogFooter>
-        <div className="hidden">
-            <div style={{ position: 'absolute', left: '-9999px' }}>
-              {sale && <PrintableReceipt sale={sale} ref={printRef} />}
-            </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
