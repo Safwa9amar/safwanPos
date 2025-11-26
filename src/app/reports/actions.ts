@@ -84,7 +84,7 @@ export async function getBusinessReport(userId: string, language: string) {
                     userId: userId,
                 }
             });
-            revalidatePath('/reports/history');
+            revalidatePath('/reports/ai-history');
         }
 
         return report;
@@ -156,7 +156,7 @@ export async function deleteReport(reportId: string, userId: string) {
         await prisma.report.delete({
             where: { id: reportId }
         });
-        revalidatePath('/reports/history');
+        revalidatePath('/reports/ai-history');
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete report:", error);

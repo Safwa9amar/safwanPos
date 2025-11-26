@@ -113,6 +113,12 @@ export async function completeSale(
               select: { name: true, unit: true }
             }
           }
+        },
+        user: {
+          select: { name: true }
+        },
+        customer: {
+          select: { name: true, phone: true }
         }
       }
     });

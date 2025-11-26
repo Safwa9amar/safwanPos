@@ -35,6 +35,8 @@ export interface SaleWithItemsAndCustomer extends PrismaSale {
 
 export interface Sale extends PrismaSale {
     items: SaleItem[];
+    user: { name: string | null };
+    customer: { name: string | null; phone: string | null } | null;
 }
 
 export type Supplier = PrismaSupplier;
@@ -54,9 +56,4 @@ export type Payment = PrismaPayment;
 export interface CustomerWithDetails extends Customer {
     sales: SaleWithItemsAndCustomer[];
     payments: Payment[];
-}
-
-// Add react-to-print type definition
-declare module 'react-to-print' {
-    export function useReactToPrint(options: any): () => void;
 }

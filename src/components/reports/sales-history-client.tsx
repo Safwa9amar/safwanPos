@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { SaleWithItemsAndCustomer } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Search, Eye, Download } from "lucide-react";
+import { CalendarIcon, Search, Eye, Download, Printer } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCurrency } from "@/hooks/use-currency";
@@ -19,6 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { getSalesHistory } from "@/app/reports/actions";
 import { SaleDetailDialog } from "./sale-detail-dialog";
 import { useAuth } from "@/context/auth-context";
+import { Receipt } from "../pos/receipt";
 
 export function SalesHistoryClient() {
   const { t } = useTranslation();
@@ -27,11 +28,12 @@ export function SalesHistoryClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
-  const [selectedSale, setSelectedSale] = useState<SaleWithItemsAndCustomer | null>(null);
+  const [selectedSale, setSelectedSale] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [saleToPrint, setSaleToPrint] = useState<any | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -42,7 +44,10 @@ export function SalesHistoryClient() {
           dateTo: date?.to 
         });
         if (fetchedSales) setSales(fetchedSales);
-        // TODO: Handle error
+        if (error) {
+          // You might want to use toast here
+          console.error(error);
+        }
         setIsLoading(false);
       };
       fetchSales();
@@ -64,6 +69,10 @@ export function SalesHistoryClient() {
     setSelectedSale(sale);
     setIsDetailOpen(true);
   };
+
+  const handlePrint = (sale: any) => {
+    setSaleToPrint(sale);
+  }
   
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -76,6 +85,10 @@ export function SalesHistoryClient() {
   };
   
   const { formatCurrency } = useCurrency();
+  
+  if (saleToPrint) {
+    return <Receipt sale={saleToPrint} onDone={() => setSaleToPrint(null)} />
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -143,7 +156,7 @@ export function SalesHistoryClient() {
                 <TableHead>{t('history.customer')}</TableHead>
                 <TableHead>{t('history.paymentType')}</TableHead>
                 <TableHead className="text-right">{t('history.total')}</TableHead>
-                <TableHead className="w-[80px] text-right">{t("inventory.actions")}</TableHead>
+                <TableHead className="w-[120px] text-right">{t("inventory.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,6 +172,9 @@ export function SalesHistoryClient() {
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => handleViewDetails(sale)}>
                         <Eye className="h-4 w-4"/>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handlePrint(sale)}>
+                        <Printer className="h-4 w-4"/>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -178,6 +194,7 @@ export function SalesHistoryClient() {
             sale={selectedSale}
             isOpen={isDetailOpen}
             onOpenChange={setIsDetailOpen}
+            onPrint={handlePrint}
         />
       )}
     </div>

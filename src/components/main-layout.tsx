@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -140,6 +140,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                  <Link href="/reports/history">
                     <History />
                     {t('sidebar.sales_history')}
+                 </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/reports/ai-history')} tooltip={t('reports.history.title')}>
+                 <Link href="/reports/ai-history">
+                    <Bot />
+                    {t('reports.history.title')}
                  </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

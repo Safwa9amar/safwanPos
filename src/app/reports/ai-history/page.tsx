@@ -2,13 +2,13 @@
 "use client";
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
-import { SalesHistoryClient } from "@/components/reports/sales-history-client";
+import { ReportHistoryClient } from "@/components/reports/report-history-client";
 
-export default function SalesHistoryPage() {
+export default function AiHistoryPage() {
   return (
     <AuthGuard>
       <MainLayout>
-        <SalesHistoryClient />
+        <ReportHistoryClient />
       </MainLayout>
     </AuthGuard>
   );

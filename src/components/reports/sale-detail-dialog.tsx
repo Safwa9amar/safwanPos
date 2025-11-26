@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SaleWithItemsAndCustomer } from "@/types";
@@ -16,14 +17,16 @@ import { Separator } from "../ui/separator";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
+import { Printer } from "lucide-react";
 
 interface SaleDetailDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   sale: SaleWithItemsAndCustomer | null;
+  onPrint: (sale: SaleWithItemsAndCustomer) => void;
 }
 
-export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
+export function SaleDetailDialog({ isOpen, onOpenChange, sale, onPrint }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
 
@@ -78,12 +81,24 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                         <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
                         <TableCell className="text-right font-bold text-lg">{formatCurrency(sale.totalAmount)}</TableCell>
                     </TableRow>
+                     <TableRow>
+                        <TableCell colSpan={3} className="text-right font-semibold">{t('pos.amountPaid')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.amountPaid)}</TableCell>
+                    </TableRow>
+                     <TableRow>
+                        <TableCell colSpan={3} className="text-right font-semibold">{t('customers.balance')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.totalAmount - sale.amountPaid)}</TableCell>
+                    </TableRow>
                 </TableFooter>
             </Table>
         </div>
         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
+          </Button>
+          <Button type="button" onClick={() => onPrint(sale)}>
+            <Printer className="mr-2 h-4 w-4" />
+            {t('receipt.printButton')}
           </Button>
         </DialogFooter>
       </DialogContent>
