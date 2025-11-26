@@ -55,7 +55,7 @@ export function ExpenseCategoryManager({ initialCategories }: { initialCategorie
         const formData = new FormData();
         if (data.id) formData.append('id', data.id);
         formData.append('name', data.name);
-        formData.append('userId', user.uid);
+        formData.append('userId', user.id);
         
         const result = await upsertExpenseCategory(formData);
 
@@ -81,7 +81,7 @@ export function ExpenseCategoryManager({ initialCategories }: { initialCategorie
     const handleConfirmDelete = async () => {
         if (!selectedCategory || !user) return;
         setIsDeleting(true);
-        const result = await deleteExpenseCategory(selectedCategory.id, user.uid);
+        const result = await deleteExpenseCategory(selectedCategory.id, user.id);
         setIsDeleting(false);
         if (result.success) {
             toast({ title: "Category Deleted" });

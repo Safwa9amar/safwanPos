@@ -28,7 +28,7 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
         if (!user) return toast({ variant: 'destructive', title: "Authentication Error" });
 
         setIsCompleting(orderId);
-        const result = await completePurchaseOrder(orderId, user.uid);
+        const result = await completePurchaseOrder(orderId, user.id);
         setIsCompleting(null);
 
         if (result.success) {

@@ -1,9 +1,9 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { updateProfile } from "@/app/settings/actions";
+import { User } from "@prisma/client";
+import { useAuth } from "@/context/auth-context";
 
 const ProfileSchema = z.object({
-  displayName: z.string().min(1, "Display name is required"),
+  name: z.string().min(1, "Display name is required"),
   email: z.string().email(),
 });
 
@@ -22,10 +24,11 @@ type ProfileFormValues = z.infer<typeof ProfileSchema>;
 export function ProfileForm({ user }: { user: User }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { checkUser } = useAuth();
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema),
     defaultValues: {
-      displayName: user.displayName || "",
+      name: user.name || "",
       email: user.email || "",
     },
   });
@@ -34,8 +37,8 @@ export function ProfileForm({ user }: { user: User }) {
 
   const onSubmit = async (data: ProfileFormValues) => {
     const formData = new FormData();
-    formData.append("uid", user.uid);
-    formData.append("displayName", data.displayName);
+    formData.append("uid", user.id);
+    formData.append("name", data.name);
     
     const result = await updateProfile(formData);
 
@@ -43,7 +46,7 @@ export function ProfileForm({ user }: { user: User }) {
       toast({
         title: t('profile.updateSuccess'),
       });
-      // The name in the sidebar won't update until a page reload/re-auth, which is acceptable.
+      await checkUser(); // Refresh user data in context
     } else {
       toast({
         variant: "destructive",
@@ -57,8 +60,8 @@ export function ProfileForm({ user }: { user: User }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-sm">
       <div className="space-y-2">
         <Label htmlFor="displayName">{t("profile.displayName")}</Label>
-        <Input id="displayName" {...register("displayName")} />
-        {formState.errors.displayName && <p className="text-sm text-destructive">{formState.errors.displayName.message}</p>}
+        <Input id="displayName" {...register("name")} />
+        {formState.errors.name && <p className="text-sm text-destructive">{formState.errors.name.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">{t("profile.email")}</Label>

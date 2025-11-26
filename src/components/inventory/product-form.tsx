@@ -71,7 +71,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
             formData.append(key, String(value));
         }
     });
-    formData.append('userId', user.uid);
+    formData.append('userId', user.id);
 
     const action = product ? updateProduct : addProduct;
     const result = await action(formData);

@@ -52,7 +52,7 @@ export function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
   const handleConfirmDelete = async () => {
     if (!selectedExpense || !user) return;
     setIsDeleting(true);
-    const result = await deleteExpense(selectedExpense.id, user.uid);
+    const result = await deleteExpense(selectedExpense.id, user.id);
     setIsDeleting(false);
     if (result.success) {
       toast({ title: t('expenses.deleteSuccess') });

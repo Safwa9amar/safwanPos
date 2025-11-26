@@ -37,7 +37,7 @@ export function SalesHistoryClient() {
     if (user) {
       const fetchSales = async () => {
         setIsLoading(true);
-        const { sales: fetchedSales, error } = await getSalesHistory(user.uid, { 
+        const { sales: fetchedSales, error } = await getSalesHistory(user.id, { 
           dateFrom: date?.from, 
           dateTo: date?.to 
         });

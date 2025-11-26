@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { RepairJob } from "@prisma/client";
+import { User } from "@prisma/client";
 import {
   Table,
   TableBody,
@@ -21,97 +21,71 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
-import { deleteRepairJob } from "@/app/repairs/actions";
+import { deleteUser } from "@/app/settings/users/actions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import { useAuth } from "@/context/auth-context";
 
-interface RepairJobTableProps {
-    jobs: RepairJob[], 
-    onEdit: (job: RepairJob) => void;
+
+interface UserTableProps {
+    users: User[], 
+    onEdit: (user: User) => void;
 }
 
-export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
-  const { t } = useTranslation("translation");
+export function UserTable({ users, onEdit }: UserTableProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user: currentUser } = useAuth();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<RepairJob | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const handleDeleteClick = (job: RepairJob) => {
-    setSelectedJob(job);
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
     setIsAlertOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedJob || !user) return;
+    if (!selectedUser) return;
 
     setIsDeleting(true);
-    const result = await deleteRepairJob(selectedJob.id, user.id);
+    const result = await deleteUser(selectedUser.id);
     setIsDeleting(false);
 
     if (result.success) {
-      toast({
-        title: t('repairs.deleteSuccess'),
-      });
+      toast({ title: t('users.deleteSuccess') });
       setIsAlertOpen(false);
-      setSelectedJob(null);
+      setSelectedUser(null);
     } else {
-      toast({
-        variant: "destructive",
-        title: t('repairs.deleteFailed'),
-        description: result.error,
-      });
+      toast({ variant: 'destructive', title: t('users.deleteFailed'), description: result.error });
       setIsAlertOpen(false);
     }
   };
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'COMPLETED': return 'default';
-      case 'COLLECTED': return 'outline';
-      case 'IN_PROGRESS': return 'secondary';
-      case 'PENDING':
-      default:
-        return 'destructive';
-    }
-  };
-
-  if (jobs.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-12">
-        {t("repairs.noJobs")}
-      </div>
-    );
-  }
 
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t("repairs.boxNumber")}</TableHead>
-            <TableHead>{t("repairs.customerName")}</TableHead>
-            <TableHead>{t("repairs.deviceModel")}</TableHead>
-            <TableHead>{t("repairs.reportedProblem")}</TableHead>
-            <TableHead>{t("repairs.date")}</TableHead>
-            <TableHead>{t("repairs.status")}</TableHead>
+            <TableHead>{t("users.name")}</TableHead>
+            <TableHead>{t("users.email")}</TableHead>
+            <TableHead>{t("users.role")}</TableHead>
+            <TableHead>{t("users.joined")}</TableHead>
             <TableHead className="w-[80px] text-right">{t("inventory.actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {jobs.map((job) => (
-            <TableRow key={job.id}>
-              <TableCell className="font-bold">#{job.boxNumber || 'N/A'}</TableCell>
-              <TableCell className="font-medium">{job.customerName}</TableCell>
-              <TableCell>{job.deviceModel}</TableCell>
-              <TableCell className="max-w-[200px] truncate">{job.reportedProblem}</TableCell>
-              <TableCell>{format(new Date(job.createdAt), "PP")}</TableCell>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Badge variant={getStatusVariant(job.status)}>{t(`repairs.statuses.${job.status}`)}</Badge>
+                <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                    {user.role}
+                </Badge>
               </TableCell>
+              <TableCell>{format(new Date(user.createdAt), "PP")}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -121,11 +95,15 @@ export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(job)}>
+                    <DropdownMenuItem onClick={() => onEdit(user)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       {t("inventory.edit")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDeleteClick(job)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <DropdownMenuItem 
+                        onClick={() => handleDeleteClick(user)}
+                        disabled={user.id === currentUser?.id}
+                        className="text-destructive focus:text-destructive"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       {t("inventory.delete")}
                     </DropdownMenuItem>
@@ -136,11 +114,16 @@ export function RepairJobTable({ jobs, onEdit }: RepairJobTableProps) {
           ))}
         </TableBody>
       </Table>
+       {users.length === 0 && (
+            <div className="text-center text-muted-foreground py-12">
+                <p>{t('users.noUsers')}</p>
+            </div>
+        )}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>{t('repairs.deleteConfirmTitle')}</AlertDialogTitle>
-                <AlertDialogDescription>{t('repairs.deleteConfirmDescription')}</AlertDialogDescription>
+                <AlertDialogTitle>{t('users.deleteConfirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>{t('users.deleteConfirmDescription')}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeleting}>{t('pos.cancelButton')}</AlertDialogCancel>

@@ -48,7 +48,7 @@ export function SupplierTable({ suppliers, onEdit, onView }: SupplierTableProps)
     if (!selectedSupplier || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteSupplier(selectedSupplier.id, user.uid);
+    const result = await deleteSupplier(selectedSupplier.id, user.id);
     setIsDeleting(false);
 
     if (result.success) {

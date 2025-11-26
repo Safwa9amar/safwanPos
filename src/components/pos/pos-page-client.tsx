@@ -44,7 +44,6 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     if (!barcode || !user) return;
     setIsSearching(true);
     try {
-      // With JWT in cookies, we don't need to manually pass the token
       const response = await fetch(`/api/products/${barcode}`);
       if (!response.ok) {
         throw new Error(t('pos.productNotFound'));

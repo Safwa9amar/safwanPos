@@ -68,7 +68,7 @@ export function RepairJobForm({ job, onFinished }: { job: RepairJob | null, onFi
             formData.append(key, String(value));
         }
     });
-    formData.append('userId', user.uid);
+    formData.append('userId', user.id);
 
     const result = await upsertRepairJob(formData);
 

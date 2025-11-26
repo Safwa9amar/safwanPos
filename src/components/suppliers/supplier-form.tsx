@@ -53,7 +53,7 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
         formData.append(key, String(value));
       }
     });
-    formData.append("userId", user.uid);
+    formData.append("userId", user.id);
 
     const result = await upsertSupplier(formData);
 

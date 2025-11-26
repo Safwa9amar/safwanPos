@@ -57,7 +57,7 @@ export function StatsPageClient() {
         const fetchStats = async (rangeKey: string) => {
             setIsLoading(true);
             const range = dateRanges[rangeKey as keyof typeof dateRanges];
-            const data = await getStatsData(user.uid, range);
+            const data = await getStatsData(user.id, range);
             setStats(data);
             setIsLoading(false);
         };

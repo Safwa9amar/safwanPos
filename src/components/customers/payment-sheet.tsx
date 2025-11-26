@@ -58,7 +58,7 @@ export function PaymentSheet({ isOpen, onOpenChange, customer }: { isOpen: boole
         formData.append('customerId', customer.id);
         formData.append('amount', data.amount.toString());
         if (data.notes) formData.append('notes', data.notes);
-        formData.append('userId', user.uid);
+        formData.append('userId', user.id);
         
         const result = await addPayment(formData);
         setIsSaving(false);

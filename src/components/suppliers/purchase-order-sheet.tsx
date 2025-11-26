@@ -52,7 +52,7 @@ export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products 
 
         setIsSaving(true);
         const result = await createPurchaseOrder(
-            user.uid,
+            user.id,
             supplierId,
             items.map(i => ({ productId: i.productId, quantity: i.quantity, costPrice: i.costPrice })),
             expectedDate

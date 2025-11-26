@@ -24,7 +24,7 @@ export function ReportsPageClient() {
         setIsLoading(true);
         setReport(null);
         try {
-            const result = await getBusinessReport(user.uid, language);
+            const result = await getBusinessReport(user.id, language);
             if (result.error) {
                 throw new Error(result.error);
             }

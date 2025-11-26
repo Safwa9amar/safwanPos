@@ -56,7 +56,7 @@ export function ExpenseForm({ expense, categories, onFinished }: { expense: Expe
         formData.append(key, value instanceof Date ? value.toISOString() : String(value));
       }
     });
-    formData.append('userId', user.uid);
+    formData.append('userId', user.id);
 
     const result = await upsertExpense(formData);
 

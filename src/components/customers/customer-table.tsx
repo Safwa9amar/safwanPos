@@ -51,7 +51,7 @@ export function CustomerTable({ customers, onEdit, onView }: CustomerTableProps)
     if (!selectedCustomer || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteCustomer(selectedCustomer.id, user.uid);
+    const result = await deleteCustomer(selectedCustomer.id, user.id);
     setIsDeleting(false);
 
     if (result.success) {

@@ -54,7 +54,7 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
     if (!selectedProduct || !user) return;
 
     setIsDeleting(true);
-    const result = await deleteProduct(selectedProduct.id, user.uid);
+    const result = await deleteProduct(selectedProduct.id, user.id);
     setIsDeleting(false);
 
     if (result.success) {

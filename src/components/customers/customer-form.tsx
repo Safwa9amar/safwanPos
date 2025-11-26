@@ -53,7 +53,7 @@ export function CustomerForm({ customer, onFinished }: { customer: Customer | nu
         formData.append(key, String(value));
       }
     });
-    formData.append("userId", user.uid);
+    formData.append("userId", user.id);
 
     const result = await upsertCustomer(formData);
 

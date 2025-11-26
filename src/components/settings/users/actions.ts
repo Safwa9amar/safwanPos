@@ -1,0 +1,100 @@
+
+"use server";
+
+import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { UserRole } from "@prisma/client";
+import bcrypt from 'bcryptjs';
+import { getUserIdFromRequest } from "@/lib/server-auth";
+
+export async function getUsers() {
+    try {
+        const users = await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        return { users };
+    } catch (error) {
+        console.error("Failed to fetch users:", error);
+        return { error: "Failed to load users." };
+    }
+}
+
+const UserFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  role: z.nativeEnum(UserRole),
+  password: z.string().optional(),
+});
+
+
+export async function upsertUser(formData: FormData) {
+  const values = Object.fromEntries(formData.entries());
+  const validatedFields = UserFormSchema.safeParse(values);
+
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors };
+  }
+
+  const { id, name, email, role, password } = validatedFields.data;
+
+  try {
+    if (id) {
+        // Update user
+        const updateData: { name: string; email: string; role: UserRole; password?: string } = { name, email, role };
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: updateData,
+        });
+
+        revalidatePath("/settings/users");
+        return { success: true, user: updatedUser };
+
+    } else {
+      // Create a brand new user
+      if (!password) {
+        return { errors: { password: ["Password is required for new users."] } };
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return { errors: { email: ["This email address is already in use."] } };
+      }
+
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          role,
+          password: hashedPassword
+        },
+      });
+      revalidatePath("/settings/users");
+      return { success: true, user: newUser };
+    }
+  } catch (error: any) {
+    console.error("Error upserting user:", error);
+     if (error.code === 'P2002') { // Unique constraint violation
+      return { errors: { email: ["This email address is already in use."] } };
+    }
+    return { error: error.message || "An unknown error occurred." };
+  }
+}
+
+export async function deleteUser(userId: string) {
+    try {
+        await prisma.user.delete({ where: { id: userId } });
+        
+        revalidatePath("/settings/users");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error deleting user:", error);
+        return { error: error.message || "Failed to delete user." };
+    }
+}
