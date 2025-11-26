@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot, Telescope } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -80,6 +80,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Link href="/inventory">
                   <Package />
                   {t('sidebar.inventory')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/product-discovery')} tooltip={'Product Discovery'}>
+                <Link href="/product-discovery">
+                  <Telescope />
+                  {'Product Discovery'}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

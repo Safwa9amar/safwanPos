@@ -5,6 +5,7 @@ import * as jose from 'jose';
 
 const protectedRoutes: { path: string, roles: UserRole[] }[] = [
     { path: '/inventory', roles: [UserRole.ADMIN, UserRole.CASHIER] },
+    { path: '/product-discovery', roles: [UserRole.ADMIN] },
     { path: '/pos', roles: [UserRole.ADMIN, UserRole.CASHIER] },
     { path: '/reports', roles: [UserRole.ADMIN] },
     { path: '/stats', roles: [UserRole.ADMIN] },
