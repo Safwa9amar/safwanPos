@@ -48,7 +48,16 @@ export function ImportDialog({ isOpen, onOpenChange }: ImportDialogProps) {
   };
 
   const handleImport = async () => {
-    if (!file || !user) return;
+    if (!file || !user) {
+        toast({
+            variant: "destructive",
+            title: "Import Failed",
+            description: "User not authenticated.",
+        });
+        setStatus('error');
+        setErrorDetails([{row: 0, error: 'User not authenticated.'}]);
+        return;
+    }
     
     setStatus('parsing');
     setErrorDetails([]);
@@ -56,7 +65,7 @@ export function ImportDialog({ isOpen, onOpenChange }: ImportDialogProps) {
 
     const processData = async (data: any[]) => {
         setStatus('uploading');
-        const result = await importProducts(user.uid, data);
+        const result = await importProducts(user.id, data);
         if (result.success) {
             setStatus('completed');
             setProcessedCount(result.processed);
