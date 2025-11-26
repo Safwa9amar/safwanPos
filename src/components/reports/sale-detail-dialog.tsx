@@ -39,7 +39,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     const doc = new jsPDF();
     const isArabic = language === 'ar';
     
-    // Add the Cairo font if Arabic
     if (isArabic) {
         doc.addFileToVFS("Cairo-Regular-normal.ttf", cairoFont);
         doc.addFont("Cairo-Regular-normal.ttf", "Cairo-Regular", "normal");
@@ -57,7 +56,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     const rtl_x_center = (text: string) => isArabic ? left_margin : right_margin;
     const rtl_align_center = isArabic ? 'left' : 'right';
 
-    // --- Header ---
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text("PrismaPOS", page_width / 2, y, { align: "center" });
@@ -68,7 +66,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     doc.text(t('receipt.title'), page_width / 2, y, { align: "center" });
     y += 10;
 
-    // --- Info ---
     doc.setFontSize(8);
     const saleIdText = `${t('receipt.saleId')}: #${sale.id.substring(0,8)}`;
     const dateText = `${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString(language)}`;
@@ -87,7 +84,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     doc.line(14, y, page_width - 14, y);
     y += 8;
 
-    // --- Items Table ---
     if (!isArabic) doc.setFont("helvetica", "bold"); else doc.setFont("Cairo-Regular", "normal");
     const itemHeaderText = t('po.item');
     const qtyHeaderText = t('po.quantity');
@@ -104,7 +100,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
 
     sale.items.forEach(item => {
         let name = item.product.name;
-        // jspdf doesn't handle mixed latin/arabic scripts well, so we reverse for display
         if (isArabic) {
             const arabicReverse = (s:string) => s.split('').reverse().join('');
             const latinChars = name.match(/[a-zA-Z0-9\s.,()-]+/g);
@@ -131,7 +126,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
         y += 5;
     });
 
-    // --- Totals ---
     y += 5;
     doc.line(14, y, page_width - 14, y);
     y += 8;
@@ -154,14 +148,11 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     doc.text(balanceText, rtl_x(balanceText), y, { align: rtl_align });
     doc.text(formatCurrency(sale.totalAmount - sale.amountPaid), rtl_x_center(formatCurrency(sale.totalAmount - sale.amountPaid)), y, { align: rtl_align_center });
 
-
-    // --- Footer ---
     y += 15;
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text(t('receipt.thankYou'), page_width / 2, y, { align: 'center' });
 
-    // --- Print ---
     doc.autoPrint();
     window.open(doc.output('bloburl'), '_blank');
   };
