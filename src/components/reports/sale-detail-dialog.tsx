@@ -1,7 +1,6 @@
 
 "use client";
 
-import { useRef } from "react";
 import { SaleWithItemsAndCustomer } from "@/types";
 import {
   Dialog,
@@ -20,6 +19,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { cairoFont } from '@/lib/cairo-font';
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -28,9 +30,8 @@ interface SaleDetailDialogProps {
 }
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const printableComponentRef = useRef(null);
 
   if (!sale) return null;
   
@@ -45,34 +46,109 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
   };
 
   const handlePrint = () => {
-    window.print();
+    const doc = new jsPDF();
+    const isArabic = language === 'ar';
+
+    // Add Cairo font for Arabic support
+    doc.addFileToVFS('Cairo-Regular-normal.ttf', cairoFont);
+    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo', 'normal');
+
+    if (isArabic) {
+        doc.setFont('Cairo');
+        doc.setR2L(true);
+    }
+
+    // --- Header ---
+    doc.setFontSize(22);
+    doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(t('receipt.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+
+    // --- Details ---
+    doc.setFontSize(10);
+    const saleIdText = `${t('receipt.saleId')}: #${sale.id.substring(0,8)}`;
+    const dateText = `${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`;
+    const customer = `${t('history.customer')}: ${sale.customer?.name || t('history.walkInCustomer')}`;
+    
+    if (isArabic) {
+        doc.text(saleIdText, doc.internal.pageSize.getWidth() - 15, 40, { align: 'right' });
+        doc.text(dateText, doc.internal.pageSize.getWidth() - 15, 45, { align: 'right' });
+        doc.text(customer, doc.internal.pageSize.getWidth() - 15, 50, { align: 'right' });
+    } else {
+        doc.text(saleIdText, 15, 40);
+        doc.text(dateText, 15, 45);
+        doc.text(customer, 15, 50);
+    }
+
+    // --- Items Table ---
+    const tableData = sale.items.map(item => [
+        isArabic ? item.product.name.split('').reverse().join('') : item.product.name,
+        item.quantity,
+        formatCurrency(item.price),
+        formatCurrency(item.price * item.quantity)
+    ]);
+    const head = [[t('po.item'), t('po.quantity'), t('inventory.price'), t('pos.total')]];
+    
+    autoTable(doc, {
+        startY: 60,
+        head: head,
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+            font: isArabic ? 'Cairo' : 'helvetica',
+            halign: isArabic ? 'right' : 'left'
+        },
+        bodyStyles: {
+            font: isArabic ? 'Cairo' : 'helvetica',
+            halign: isArabic ? 'right' : 'left'
+        },
+        didDrawPage: (data) => {
+            if (isArabic) {
+                data.table.body.forEach(row => {
+                    row.cells[1].styles.halign = 'left';
+                    row.cells[2].styles.halign = 'left';
+                    row.cells[3].styles.halign = 'left';
+                });
+            }
+        }
+    });
+
+    // --- Totals ---
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+
+    const addRightAlignedText = (text: string, y: number) => doc.text(text, doc.internal.pageSize.getWidth() - 15, y, { align: 'right' });
+    const addLeftAlignedText = (text: string, y: number) => doc.text(text, 15, y);
+
+    const totals = [
+        { label: t('pos.total'), value: formatCurrency(sale.totalAmount), bold: true, size: 16 },
+        { label: t('pos.amountPaid'), value: formatCurrency(sale.amountPaid) },
+        { label: t('customers.balance'), value: formatCurrency(sale.totalAmount - sale.amountPaid), bold: true },
+    ];
+    
+    let currentY = finalY;
+    totals.forEach(item => {
+        doc.setFontSize(item.size || 12);
+        doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
+        if (isArabic) {
+            doc.setFont('Cairo', item.bold ? 'bold' : 'normal');
+            addRightAlignedText(item.label, currentY);
+            addLeftAlignedText(item.value, currentY);
+        } else {
+            addLeftAlignedText(item.label, currentY);
+            addRightAlignedText(item.value, currentY);
+        }
+        currentY += (item.size || 12) / 2 + 4;
+    });
+
+    // --- Print ---
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
   }
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <div className="hidden">
-           <div ref={printableComponentRef} className="printable-area">
-                {/* Simplified receipt for printing */}
-                <h1 className="text-2xl font-bold text-center">SafwanPOS</h1>
-                <p className="text-center text-sm mb-4">Sale Receipt</p>
-                <p>Sale ID: #{sale.id.substring(0,8)}</p>
-                <p>Date: {new Date(sale.saleDate).toLocaleString()}</p>
-                <p>Customer: {sale.customer?.name || 'Walk-in Customer'}</p>
-                <Separator className="my-2" />
-                {sale.items.map(item => (
-                    <div key={item.id} className="flex justify-between">
-                        <span>{item.product.name} (x{item.quantity})</span>
-                        <span>{formatCurrency(item.price * item.quantity)}</span>
-                    </div>
-                ))}
-                <Separator className="my-2" />
-                <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>{formatCurrency(sale.totalAmount)}</span>
-                </div>
-           </div>
-        </div>
         <DialogHeader>
           <DialogTitle>{t('history.saleDetailTitle')} #{sale.id.substring(0,8)}</DialogTitle>
           <DialogDescription>
@@ -128,7 +204,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                 </TableFooter>
             </Table>
         </div>
-        <DialogFooter className="no-print">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
