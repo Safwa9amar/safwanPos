@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { barcode: string } }
 ) {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserIdFromRequest();
     if (!userId) {
         return new NextResponse('Unauthorized', { status: 401 });
     }

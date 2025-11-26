@@ -1,14 +1,14 @@
 
-import { headers, cookies } from "next/headers";
+import { cookies } from "next/headers";
 import jwt from 'jsonwebtoken';
 
 /**
  * Gets the user ID from the JWT token in the cookie.
- * This is a server-side utility.
+ * This is a server-side utility that can be used in Server Components and API Routes.
  * @returns The user's ID if the token is valid, otherwise null.
  */
-export async function getUserIdFromRequest(request: Request): Promise<string | null> {
-    const cookieStore =await cookies();
+export async function getUserIdFromRequest(): Promise<string | null> {
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
