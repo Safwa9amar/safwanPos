@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "../icons";
-import { useEffect } from "react";
 import { Printer, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Sale } from "@/types";
@@ -27,11 +26,6 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     content: () => receiptRef.current,
     documentTitle: `receipt-${sale.id}`,
   });
-
-  useEffect(() => {
-    // Automatically trigger print when component mounts
-    handlePrint();
-  }, []);
 
   return (
     <div className="flex items-center justify-center p-4 bg-muted/40 min-h-screen">
@@ -86,7 +80,6 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                         <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
                     </div>
                 </div>
-                 <Separator />
                  <div className="my-4 space-y-1 text-sm">
                     <div className="flex justify-between font-bold text-lg">
                         <span>{t('pos.total')}</span>
