@@ -5,7 +5,7 @@ import { getUserIdFromRequest } from '@/lib/server-auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { barcode: string } }
+  { params: { barcode } }: { params: { barcode: string } }
 ) {
   try {
     const userId = await getUserIdFromRequest(request);
@@ -13,7 +13,6 @@ export async function GET(
         return new NextResponse('Unauthorized', { status: 401 });
     }
       
-    const { barcode } = params;
     const product = await prisma.product.findFirst({
       where: { barcode, userId },
     });

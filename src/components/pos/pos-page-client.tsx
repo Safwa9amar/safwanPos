@@ -73,6 +73,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   const handleAddToCart = (product: Product) => {
     if (product.unit === 'EACH') {
         cart.addItem(product);
+        console.log("added to cart")
     } else {
         setSelectedProductForWeight(product);
         setIsWeightModalOpen(true);
