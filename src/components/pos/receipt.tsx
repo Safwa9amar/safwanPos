@@ -25,6 +25,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
     documentTitle: `receipt-${sale.id}`,
+    onAfterPrint: () => onDone() // Go to new sale after printing
   });
 
   return (

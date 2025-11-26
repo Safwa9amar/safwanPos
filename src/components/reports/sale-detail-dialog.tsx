@@ -19,8 +19,75 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import jsPDF from "jspdf";
-import { cairoFont } from "@/lib/cairo-font";
+import { useReactToPrint } from "react-to-print";
+import { Icons } from "../icons";
+
+// A hidden class component that react-to-print can use a ref to.
+class PrintableReceipt extends React.Component<{ sale: SaleWithItemsAndCustomer, t: any, formatCurrency: any }> {
+  render() {
+    const { sale, t, formatCurrency } = this.props;
+
+    return (
+      <div className="w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
+        <div className="text-center p-4">
+          <div className="flex justify-center mb-4">
+            <Icons.logo className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">PrismaPOS</h2>
+          <p className="text-muted-foreground">{t('receipt.title')}</p>
+        </div>
+        <div className="p-4">
+          <div className="flex justify-between text-xs text-muted-foreground mb-2">
+            <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
+            <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
+          </div>
+          <div className="text-xs text-muted-foreground mb-4">
+            {sale.customer && <p>{t('history.customer')}: {sale.customer.name}</p>}
+          </div>
+          <Separator />
+          <div className="my-4 space-y-2">
+            {sale.items.map((item, index) => (
+              <div key={index} className="flex justify-between items-baseline text-sm">
+                <div>
+                  <p>{item.product.name}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
+                  </p>
+                </div>
+                <p>{formatCurrency(item.quantity * item.price)}</p>
+              </div>
+            ))}
+          </div>
+          <Separator />
+          <div className="my-4 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>{t('pos.subtotal')}</span>
+              <span>{formatCurrency(sale.totalAmount)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>{t('pos.amountPaid')}</span>
+              <span>{formatCurrency(sale.amountPaid)}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-base mt-2">
+              <span>{t('customers.balance')}</span>
+              <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
+            </div>
+          </div>
+          <div className="my-4 space-y-1 text-sm">
+            <div className="flex justify-between font-bold text-lg">
+              <span>{t('pos.total')}</span>
+              <span>{formatCurrency(sale.totalAmount)}</span>
+            </div>
+          </div>
+          <Separator />
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            {t('receipt.thankYou')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+}
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -28,135 +95,14 @@ interface SaleDetailDialogProps {
     sale: SaleWithItemsAndCustomer | null;
 }
 
-
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
-  const { t, language, dir } = useTranslation();
-  const { formatCurrency, currency } = useCurrency();
+  const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
+  const printableComponentRef = React.useRef<PrintableReceipt>(null);
 
-  const handlePrint = () => {
-    if (!sale) return;
-
-    const doc = new jsPDF();
-    const isArabic = language === 'ar';
-    
-    if (isArabic) {
-        doc.addFileToVFS("Cairo-Regular-normal.ttf", cairoFont);
-        doc.addFont("Cairo-Regular-normal.ttf", "Cairo-Regular", "normal");
-        doc.setFont("Cairo-Regular");
-    }
-
-    let y = 15;
-    const page_width = doc.internal.pageSize.getWidth();
-    const left_margin = 14;
-    const right_margin = page_width - 14;
-
-    const rtl_x = (text: string) => isArabic ? right_margin : left_margin;
-    const rtl_align = isArabic ? 'right' : 'left';
-    
-    const rtl_x_center = (text: string) => isArabic ? left_margin : right_margin;
-    const rtl_align_center = isArabic ? 'left' : 'right';
-
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("PrismaPOS", page_width / 2, y, { align: "center" });
-    y += 8;
-    
-    doc.setFontSize(10);
-    if (!isArabic) doc.setFont("helvetica", "normal");
-    doc.text(t('receipt.title'), page_width / 2, y, { align: "center" });
-    y += 10;
-
-    doc.setFontSize(8);
-    const saleIdText = `${t('receipt.saleId')}: #${sale.id.substring(0,8)}`;
-    const dateText = `${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString(language)}`;
-    
-    doc.text(saleIdText, rtl_x(saleIdText), y, { align: rtl_align });
-    doc.text(dateText, rtl_x_center(dateText), y, { align: rtl_align_center });
-    y += 5;
-    
-    if (sale.customer?.name) {
-        const customerText = `${t('history.customer')}: ${sale.customer.name}`;
-        doc.text(customerText, rtl_x(customerText), y, { align: rtl_align });
-        y+= 5;
-    }
-    
-    doc.setLineWidth(0.2);
-    doc.line(14, y, page_width - 14, y);
-    y += 8;
-
-    if (!isArabic) doc.setFont("helvetica", "bold"); else doc.setFont("Cairo-Regular", "normal");
-    const itemHeaderText = t('po.item');
-    const qtyHeaderText = t('po.quantity');
-    const priceHeaderText = t('inventory.price');
-    const totalHeaderText = t('po.total');
-
-    doc.text(itemHeaderText, rtl_x(itemHeaderText), y, { align: rtl_align });
-    doc.text(qtyHeaderText, page_width / 2 - 10, y, { align: 'center' });
-    doc.text(priceHeaderText, page_width / 2 + 30, y, { align: 'center' });
-    doc.text(totalHeaderText, rtl_x_center(totalHeaderText), y, { align: rtl_align_center });
-    y += 6;
-    
-    if (!isArabic) doc.setFont("helvetica", "normal");
-
-    sale.items.forEach(item => {
-        let name = item.product.name;
-        if (isArabic) {
-            const arabicReverse = (s:string) => s.split('').reverse().join('');
-            const latinChars = name.match(/[a-zA-Z0-9\s.,()-]+/g);
-            if (latinChars) {
-                latinChars.forEach(part => {
-                    name = name.replace(part, arabicReverse(part));
-                });
-            }
-        }
-        const itemText = name;
-        const priceText = `${item.quantity}${item.product.unit !== 'EACH' ? item.product.unit : ''} x ${formatCurrency(item.price)}`;
-        
-        doc.setFontSize(9);
-        doc.text(itemText, rtl_x(itemText), y, { align: rtl_align });
-        doc.text((item.quantity).toString(), page_width / 2 - 10, y, { align: 'center' });
-        doc.text(formatCurrency(item.price), page_width / 2 + 30, y, { align: 'center' });
-        doc.text(formatCurrency(item.price * item.quantity), rtl_x_center(formatCurrency(item.price * item.quantity)), y, { align: rtl_align_center });
-        
-        y += 4;
-        doc.setFontSize(7);
-        doc.setTextColor(150);
-        doc.text(priceText, rtl_x(priceText), y, { align: rtl_align });
-        doc.setTextColor(0);
-        y += 5;
-    });
-
-    y += 5;
-    doc.line(14, y, page_width - 14, y);
-    y += 8;
-
-    doc.setFontSize(12);
-    if (!isArabic) doc.setFont("helvetica", "bold"); else doc.setFont("Cairo-Regular", "normal");
-    const totalText = t('pos.total');
-    doc.text(totalText, rtl_x(totalText), y, { align: rtl_align });
-    doc.text(formatCurrency(sale.totalAmount), rtl_x_center(formatCurrency(sale.totalAmount)), y, { align: rtl_align_center });
-    y += 7;
-
-    doc.setFontSize(10);
-    if (!isArabic) doc.setFont("helvetica", "normal");
-    const amountPaidText = t('pos.amountPaid');
-    doc.text(amountPaidText, rtl_x(amountPaidText), y, { align: rtl_align });
-    doc.text(formatCurrency(sale.amountPaid), rtl_x_center(formatCurrency(sale.amountPaid)), y, { align: rtl_align_center });
-    y += 7;
-
-    const balanceText = t('customers.balance');
-    doc.text(balanceText, rtl_x(balanceText), y, { align: rtl_align });
-    doc.text(formatCurrency(sale.totalAmount - sale.amountPaid), rtl_x_center(formatCurrency(sale.totalAmount - sale.amountPaid)), y, { align: rtl_align_center });
-
-    y += 15;
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(t('receipt.thankYou'), page_width / 2, y, { align: 'center' });
-
-    doc.autoPrint();
-    window.open(doc.output('bloburl'), '_blank');
-  };
-
+  const handlePrint = useReactToPrint({
+    content: () => printableComponentRef.current,
+  });
 
   if (!sale) return null;
   
@@ -231,6 +177,9 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
             {t('receipt.printButton')}
           </Button>
         </DialogFooter>
+        <div style={{ display: "none" }}>
+          <PrintableReceipt ref={printableComponentRef} sale={sale} t={t} formatCurrency={formatCurrency} />
+        </div>
       </DialogContent>
     </Dialog>
   );
