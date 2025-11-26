@@ -1,37 +1,37 @@
-
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  shadowDatabaseUrl= env("SHADOW_DATABASE_URL")
-  relationMode = "prisma"
-}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      UserRole @default(CASHIER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
 
-  products      Product[]
-  sales         Sale[]
+model User {
+  id          String    @id @default(cuid())
+  name        String?
+  email       String    @unique
+  password    String
+  role        UserRole  @default(CASHIER)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+  sales       Sale[]
+  suppliers   Supplier[]
+  customers   Customer[]
+  payments    Payment[]
   purchaseOrders PurchaseOrder[]
-  customers     Customer[]
-  payments      Payment[]
-  expenses      Expense[]
-  repairJobs    RepairJob[]
-  categories    Category[]
+  categories  Category[]
+  expenses    Expense[]
   expenseCategories ExpenseCategory[]
-  suppliers     Supplier[]
+  repairJobs  RepairJob[]
+  reports     Report[]
+
+  @@index([email])
 }
 
 enum UserRole {
@@ -40,179 +40,174 @@ enum UserRole {
 }
 
 model Product {
-  id         String  @id @default(cuid())
-  name       String
-  barcode    String
-  price      Float
-  costPrice  Float   @default(0)
-  stock      Float
-  unit       String  @default("EACH") // EACH, KG, G, L, ML
-  image      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  String?
-  
-  saleItems    SaleItem[]
+  id          String    @id @default(cuid())
+  name        String
+  barcode     String
+  price       Float
+  costPrice   Float     @default(0)
+  stock       Float
+  unit        String    @default("EACH") // EACH, KG, G, L, ML
+  image       String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  saleItems   SaleItem[]
   purchaseOrderItems PurchaseOrderItem[]
 
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@unique([barcode, userId])
+  @@index([userId])
+  @@index([categoryId])
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
 
   @@unique([name, userId])
+  @@index([userId])
 }
 
 model Sale {
   id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalAmount Float
   saleDate    DateTime    @default(now())
   paymentType PaymentType @default(CASH)
-  amountPaid  Float
-  
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Restrict)
-  
+  items       SaleItem[]
+
   customer    Customer? @relation(fields: [customerId], references: [id])
   customerId  String?
+  amountPaid  Float
 
-  items       SaleItem[]
+  @@index([userId])
+  @@index([customerId])
 }
 
 model SaleItem {
   id        String   @id @default(cuid())
-  quantity  Float
-  price     Float
-  
   sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
+  quantity  Float
+  price     Float // Price at the time of sale
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
 }
 
 model Supplier {
-  id           String    @id @default(cuid())
-  name         String
-  contactName  String?
-  email        String?
-  phone        String?
-  address      String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id            String    @id @default(cuid())
+  name          String
+  contactName   String?
+  email         String?
+  phone         String?
+  address       String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
 
-   @@unique([name, userId])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model PurchaseOrder {
-  id                   String    @id @default(cuid())
-  orderDate            DateTime  @default(now())
-  expectedDeliveryDate DateTime?
-  status               String    @default("PENDING") // PENDING, COMPLETED, CANCELLED
-  totalCost            Float
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplier              Supplier @relation(fields: [supplierId], references: [id])
+  supplierId            String
+  orderDate             DateTime  @default(now())
+  expectedDeliveryDate  DateTime?
+  status                String    // PENDING, COMPLETED, CANCELLED
+  totalCost             Float
+  items                 PurchaseOrderItem[]
 
-  userId               String
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  supplier             Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  supplierId           String
-  
-  items                PurchaseOrderItem[]
+  @@index([userId])
+  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
-  id              String   @id @default(cuid())
-  quantity        Int
-  costPrice       Float
-  
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  purchaseOrderId String
-  
-  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String
+  id                String          @id @default(cuid())
+  purchaseOrder     PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId   String
+  product           Product       @relation(fields: [productId], references: [id])
+  productId         String
+  quantity          Int
+  costPrice         Float // Cost at the time of purchase
+
+  @@index([purchaseOrderId])
+  @@index([productId])
 }
 
 model Customer {
-    id        String   @id @default(cuid())
-    name      String
-    phone     String?
-    email     String?
-    address   String?
-    balance   Float    @default(0)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    
-    userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String    @id @default(cuid())
+  name    String
+  phone   String?
+  email   String?
+  address String?
+  balance Float     @default(0)
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sales   Sale[]
+  payments Payment[]
 
-    sales     Sale[]
-    payments  Payment[]
-
-    @@unique([name, userId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
 }
 
 model Payment {
-    id          String   @id @default(cuid())
+    id          String @id @default(cuid())
     amount      Float
     paymentDate DateTime @default(now())
     notes       String?
-    
     userId      String
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    
-    customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    customer    Customer @relation(fields: [customerId], references: [id])
     customerId  String
+
+    @@index([userId])
+    @@index([customerId])
 }
 
 model RepairJob {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   customerName    String
   customerPhone   String
   deviceModel     String
   imei            String?
-  reportedProblem String    @db.Text
-  notes           String?   @db.Text
-  status          String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
-  boxNumber       Int?
+  reportedProblem String
+  notes           String?
+  status          String
   estimatedCost   Float?
   finalCost       Float?
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
+  boxNumber       Int?
+  
   userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-model Expense {
-    id              String    @id @default(cuid())
-    description     String
-    amount          Float
-    expenseDate     DateTime
-    
-    createdAt       DateTime  @default(now())
-    updatedAt       DateTime  @updatedAt
-    
-    userId          String
-    user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    
-    category        ExpenseCategory @relation(fields: [categoryId], references: [id])
-    categoryId      String
+  @@index([userId])
 }
 
 model ExpenseCategory {
@@ -223,11 +218,30 @@ model ExpenseCategory {
     expenses Expense[]
 
     @@unique([name, userId])
+    @@index([userId])
 }
 
+model Expense {
+    id              String          @id @default(cuid())
+    description     String
+    amount          Float
+    expenseDate     DateTime
+    userId          String
+    user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    category        ExpenseCategory @relation(fields: [categoryId], references: [id])
+    categoryId      String
 
-enum PaymentType {
-  CASH
-  CARD
-  CREDIT
+    @@index([userId])
+    @@index([categoryId])
+}
+
+model Report {
+    id        String   @id @default(cuid())
+    title     String
+    content   String   @db.Text
+    createdAt DateTime @default(now())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }

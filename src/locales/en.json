@@ -9,7 +9,7 @@
     "sidebar.suppliers": "Suppliers",
     "sidebar.customers": "Customers",
     "sidebar.repairs": "Repairs",
-    "sidebar.sales_history": "Sales History",
+    "sidebar.sales_history": "History",
     "sidebar.expenses": "Expenses",
 
     "user.role": "Store Manager",
@@ -117,6 +117,12 @@
     "reports.loadingDescription": "The AI is processing sales, expenses, and costs. This may take a moment.",
     "reports.summaryTitle": "Business Health Report",
     "reports.generationFailedTitle": "Report Generation Failed",
+    "reports.history.title": "AI Report History",
+    "reports.history.description": "View and manage previously generated AI reports.",
+    "reports.history.date": "Generation Date",
+    "reports.history.noReports": "No AI reports have been generated yet.",
+    "reports.history.deleteConfirmTitle": "Delete AI Report?",
+    "reports.history.deleteConfirmDescription": "This will permanently delete this report. This action cannot be undone.",
 
     "history.title": "Sales History",
     "history.description": "View and filter all past sales transactions.",
@@ -369,5 +375,6 @@
     "users.deleteConfirmTitle": "Delete User?",
     "users.deleteConfirmDescription": "This will permanently delete the user's account. This action cannot be undone."
 }
+
 
 

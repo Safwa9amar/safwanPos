@@ -9,7 +9,7 @@
     "sidebar.suppliers": "الموردون",
     "sidebar.customers": "العملاء",
     "sidebar.repairs": "الإصلاحات",
-    "sidebar.sales_history": "سجل المبيعات",
+    "sidebar.sales_history": "السجل",
     "sidebar.expenses": "المصروفات",
 
     "user.role": "مدير المتجر",
@@ -116,6 +116,12 @@
     "reports.loadingDescription": "يعالج الذكاء الاصطناعي المبيعات والمصروفات والتكاليف. قد يستغرق هذا بعض الوقت.",
     "reports.summaryTitle": "تقرير صحة العمل",
     "reports.generationFailedTitle": "فشل إنشاء التقرير",
+    "reports.history.title": "سجل تقارير الذكاء الاصطناعي",
+    "reports.history.description": "عرض وإدارة تقارير الذكاء الاصطناعي التي تم إنشاؤها مسبقًا.",
+    "reports.history.date": "تاريخ الإنشاء",
+    "reports.history.noReports": "لم يتم إنشاء أي تقارير ذكاء اصطناعي حتى الآن.",
+    "reports.history.deleteConfirmTitle": "حذف تقرير الذكاء الاصطناعي؟",
+    "reports.history.deleteConfirmDescription": "سيؤدي هذا إلى حذف هذا التقرير نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
 
     "history.title": "سجل المبيعات",
     "history.description": "عرض وتصفية جميع معاملات المبيعات السابقة.",

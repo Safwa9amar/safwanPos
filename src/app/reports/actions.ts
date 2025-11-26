@@ -4,6 +4,7 @@
 import { generateBusinessReport } from "@/ai/flows/sales-reporting-tool";
 import prisma from "@/lib/prisma";
 import { endOfDay, startOfDay, subDays } from "date-fns";
+import { revalidatePath } from "next/cache";
 
 export async function getBusinessReport(userId: string, language: string) {
     if (!userId) return { error: "User not authenticated" };
@@ -73,6 +74,19 @@ export async function getBusinessReport(userId: string, language: string) {
             language: language,
         });
 
+        // Save the generated report to the database
+        if (report.summary) {
+            const reportTitle = `Business Report - ${new Date().toLocaleDateString()}`;
+            await prisma.report.create({
+                data: {
+                    title: reportTitle,
+                    content: report.summary,
+                    userId: userId,
+                }
+            });
+            revalidatePath('/reports/history');
+        }
+
         return report;
 
     } catch (error: any) {
@@ -111,5 +125,41 @@ export async function getSalesHistory(userId: string, options: { dateFrom?: Date
     } catch (error) {
         console.error("Failed to fetch sales history:", error);
         return { error: "Failed to load sales history." };
+    }
+}
+
+export async function getReportHistory(userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+    try {
+        const reports = await prisma.report.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+        });
+        return { reports };
+    } catch (error) {
+        console.error("Failed to fetch report history:", error);
+        return { error: "Failed to load report history." };
+    }
+}
+
+export async function deleteReport(reportId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+    try {
+        const report = await prisma.report.findFirst({
+            where: { id: reportId, userId }
+        });
+
+        if (!report) {
+            return { error: "Report not found or access denied." };
+        }
+
+        await prisma.report.delete({
+            where: { id: reportId }
+        });
+        revalidatePath('/reports/history');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete report:", error);
+        return { error: "Failed to delete report." };
     }
 }
