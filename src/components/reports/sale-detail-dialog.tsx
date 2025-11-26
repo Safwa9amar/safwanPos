@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import { useReactToPrint } from "react-to-print";
+import ReactToPrint from "react-to-print";
 import { Icons } from "../icons";
 
 // A hidden class component that react-to-print can use a ref to.
@@ -100,10 +100,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
   const { formatCurrency } = useCurrency();
   const printableComponentRef = React.useRef<PrintableReceipt>(null);
 
-  const handlePrint = useReactToPrint({
-    content: () => printableComponentRef.current,
-  });
-
   if (!sale) return null;
   
   const getStatusVariant = (status: string) => {
@@ -172,10 +168,15 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
-          <Button type="button" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            {t('receipt.printButton')}
-          </Button>
+          <ReactToPrint
+            content={() => printableComponentRef.current}
+            trigger={() => (
+                <Button type="button">
+                    <Printer className="mr-2 h-4 w-4" />
+                    {t('receipt.printButton')}
+                </Button>
+            )}
+          />
         </DialogFooter>
         <div style={{ display: "none" }}>
           <PrintableReceipt ref={printableComponentRef} sale={sale} t={t} formatCurrency={formatCurrency} />
