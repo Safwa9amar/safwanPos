@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
 import jsPDF from "jspdf";
+import { cairoFont } from "@/lib/cairo-font";
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -29,94 +30,136 @@ interface SaleDetailDialogProps {
 
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
-  const { t } = useTranslation();
+  const { t, language, dir } = useTranslation();
   const { formatCurrency, currency } = useCurrency();
 
   const handlePrint = () => {
     if (!sale) return;
 
     const doc = new jsPDF();
+    const isArabic = language === 'ar';
+    
+    // Add the Cairo font if Arabic
+    if (isArabic) {
+        doc.addFileToVFS("Cairo-Regular-normal.ttf", cairoFont);
+        doc.addFont("Cairo-Regular-normal.ttf", "Cairo-Regular", "normal");
+        doc.setFont("Cairo-Regular");
+    }
+
     let y = 15;
+    const page_width = doc.internal.pageSize.getWidth();
+    const left_margin = 14;
+    const right_margin = page_width - 14;
+
+    const rtl_x = (text: string) => isArabic ? right_margin : left_margin;
+    const rtl_align = isArabic ? 'right' : 'left';
+    
+    const rtl_x_center = (text: string) => isArabic ? left_margin : right_margin;
+    const rtl_align_center = isArabic ? 'left' : 'right';
 
     // --- Header ---
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("PrismaPOS", doc.internal.pageSize.getWidth() / 2, y, { align: "center" });
+    doc.text("PrismaPOS", page_width / 2, y, { align: "center" });
     y += 8;
     
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(t('receipt.title'), doc.internal.pageSize.getWidth() / 2, y, { align: "center" });
+    if (!isArabic) doc.setFont("helvetica", "normal");
+    doc.text(t('receipt.title'), page_width / 2, y, { align: "center" });
     y += 10;
 
     // --- Info ---
     doc.setFontSize(8);
-    doc.text(`${t('receipt.saleId')}: #${sale.id.substring(0,8)}`, 14, y);
-    doc.text(`${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`, doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    const saleIdText = `${t('receipt.saleId')}: #${sale.id.substring(0,8)}`;
+    const dateText = `${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString(language)}`;
+    
+    doc.text(saleIdText, rtl_x(saleIdText), y, { align: rtl_align });
+    doc.text(dateText, rtl_x_center(dateText), y, { align: rtl_align_center });
     y += 5;
     
     if (sale.customer?.name) {
-        doc.text(`${t('history.customer')}: ${sale.customer.name}`, 14, y);
+        const customerText = `${t('history.customer')}: ${sale.customer.name}`;
+        doc.text(customerText, rtl_x(customerText), y, { align: rtl_align });
         y+= 5;
     }
     
     doc.setLineWidth(0.2);
-    doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
+    doc.line(14, y, page_width - 14, y);
     y += 8;
 
     // --- Items Table ---
-    doc.setFont("helvetica", "bold");
-    doc.text(t('po.item'), 14, y);
-    doc.text(t('po.quantity'), 120, y, { align: 'center' });
-    doc.text(t('inventory.price'), 150, y, { align: 'center' });
-    doc.text(t('po.total'), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    if (!isArabic) doc.setFont("helvetica", "bold"); else doc.setFont("Cairo-Regular", "normal");
+    const itemHeaderText = t('po.item');
+    const qtyHeaderText = t('po.quantity');
+    const priceHeaderText = t('inventory.price');
+    const totalHeaderText = t('po.total');
+
+    doc.text(itemHeaderText, rtl_x(itemHeaderText), y, { align: rtl_align });
+    doc.text(qtyHeaderText, page_width / 2 - 10, y, { align: 'center' });
+    doc.text(priceHeaderText, page_width / 2 + 30, y, { align: 'center' });
+    doc.text(totalHeaderText, rtl_x_center(totalHeaderText), y, { align: rtl_align_center });
     y += 6;
     
-    doc.setFont("helvetica", "normal");
+    if (!isArabic) doc.setFont("helvetica", "normal");
+
     sale.items.forEach(item => {
-        const itemText = `${item.product.name}`;
+        let name = item.product.name;
+        // jspdf doesn't handle mixed latin/arabic scripts well, so we reverse for display
+        if (isArabic) {
+            const arabicReverse = (s:string) => s.split('').reverse().join('');
+            const latinChars = name.match(/[a-zA-Z0-9\s.,()-]+/g);
+            if (latinChars) {
+                latinChars.forEach(part => {
+                    name = name.replace(part, arabicReverse(part));
+                });
+            }
+        }
+        const itemText = name;
         const priceText = `${item.quantity}${item.product.unit !== 'EACH' ? item.product.unit : ''} x ${formatCurrency(item.price)}`;
         
         doc.setFontSize(9);
-        doc.text(itemText, 14, y);
-        doc.text((item.quantity).toString(), 120, y, { align: 'center' });
-        doc.text(formatCurrency(item.price), 150, y, { align: 'center' });
-        doc.text(formatCurrency(item.price * item.quantity), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+        doc.text(itemText, rtl_x(itemText), y, { align: rtl_align });
+        doc.text((item.quantity).toString(), page_width / 2 - 10, y, { align: 'center' });
+        doc.text(formatCurrency(item.price), page_width / 2 + 30, y, { align: 'center' });
+        doc.text(formatCurrency(item.price * item.quantity), rtl_x_center(formatCurrency(item.price * item.quantity)), y, { align: rtl_align_center });
         
         y += 4;
         doc.setFontSize(7);
         doc.setTextColor(150);
-        doc.text(priceText, 14, y);
+        doc.text(priceText, rtl_x(priceText), y, { align: rtl_align });
         doc.setTextColor(0);
         y += 5;
     });
 
     // --- Totals ---
     y += 5;
-    doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
+    doc.line(14, y, page_width - 14, y);
     y += 8;
 
     doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(t('pos.total'), 14, y);
-    doc.text(formatCurrency(sale.totalAmount), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    if (!isArabic) doc.setFont("helvetica", "bold"); else doc.setFont("Cairo-Regular", "normal");
+    const totalText = t('pos.total');
+    doc.text(totalText, rtl_x(totalText), y, { align: rtl_align });
+    doc.text(formatCurrency(sale.totalAmount), rtl_x_center(formatCurrency(sale.totalAmount)), y, { align: rtl_align_center });
     y += 7;
 
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(t('pos.amountPaid'), 14, y);
-    doc.text(formatCurrency(sale.amountPaid), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    if (!isArabic) doc.setFont("helvetica", "normal");
+    const amountPaidText = t('pos.amountPaid');
+    doc.text(amountPaidText, rtl_x(amountPaidText), y, { align: rtl_align });
+    doc.text(formatCurrency(sale.amountPaid), rtl_x_center(formatCurrency(sale.amountPaid)), y, { align: rtl_align_center });
     y += 7;
 
-    doc.text(t('customers.balance'), 14, y);
-    doc.text(formatCurrency(sale.totalAmount - sale.amountPaid), doc.internal.pageSize.getWidth() - 14, y, { align: 'right' });
+    const balanceText = t('customers.balance');
+    doc.text(balanceText, rtl_x(balanceText), y, { align: rtl_align });
+    doc.text(formatCurrency(sale.totalAmount - sale.amountPaid), rtl_x_center(formatCurrency(sale.totalAmount - sale.amountPaid)), y, { align: rtl_align_center });
 
 
     // --- Footer ---
     y += 15;
     doc.setFontSize(9);
     doc.setTextColor(100);
-    doc.text(t('receipt.thankYou'), doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+    doc.text(t('receipt.thankYou'), page_width / 2, y, { align: 'center' });
 
     // --- Print ---
     doc.autoPrint();
