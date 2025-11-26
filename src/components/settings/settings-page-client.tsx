@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,18 +93,16 @@ export function SettingsPageClient() {
                           </SelectContent>
                         </Select>
                     </div>
-                    <Link href="/settings/users" legacyBehavior passHref>
-                        <a className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors">
-                            <div className="space-y-0.5">
-                                <Label className="text-base flex items-center cursor-pointer">
-                                    <Users className="mr-2 h-5 w-5" />
-                                    {t('settings.userManagement')}
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    {t('settings.userManagementDescription')}
-                                </p>
-                            </div>
-                        </a>
+                    <Link href="/settings/users" className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors">
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center cursor-pointer">
+                                <Users className="mr-2 h-5 w-5" />
+                                {t('settings.userManagement')}
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                {t('settings.userManagementDescription')}
+                            </p>
+                        </div>
                     </Link>
                 </CardContent>
             </Card>
