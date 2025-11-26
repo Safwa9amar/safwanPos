@@ -22,6 +22,7 @@ import { Printer } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cairoFont } from '@/lib/cairo-font';
+import { ScrollArea } from "../ui/scroll-area";
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -48,7 +49,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
   const handlePrint = () => {
       const doc = new jsPDF();
 
-      // Add Cairo font for Arabic support
       doc.addFileToVFS("Cairo-Regular-normal.ttf", cairoFont);
       doc.addFont("Cairo-Regular-normal.ttf", "Cairo-Regular", "normal");
 
@@ -65,26 +65,23 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
       const pageWidth = doc.internal.pageSize.getWidth();
       const center = pageWidth / 2;
 
-      // Header
       doc.setFontSize(22);
       doc.text("PrismaPOS", center, 20, { align: 'center' });
       doc.setFontSize(12);
       doc.text(t('receipt.title'), center, 28, { align: 'center' });
 
-      // Sale Info
       doc.setFontSize(9);
       doc.text(`${t('receipt.saleId')}: #${sale.id.substring(0,8)}`, isArabic ? pageWidth - 14 : 14, 40);
-      doc.text(new Date(sale.saleDate).toLocaleString(), isArabic ? 14 : pageWidth - 14, 40, { align: isArabic ? 'left' : 'right'});
+      doc.text(new Date(sale.saleDate).toLocaleString(), isArabic ? 14 : pageWidth - 14, 45, { align: isArabic ? 'left' : 'right'});
       
-      doc.text(`${t('history.customer')}: ${sale.customer?.name || t('history.walkInCustomer')}`, isArabic ? pageWidth - 14 : 14, 45);
+      doc.text(`${t('history.customer')}: ${sale.customer?.name || t('history.walkInCustomer')}`, isArabic ? pageWidth - 14 : 14, 50);
       
-      // Table
       const tableColumn = [t('po.item'), t('po.quantity'), t('inventory.price'), t('po.total')];
       const tableRows: (string | number)[][] = [];
 
       sale.items.forEach(item => {
           const itemData = [
-              isArabic ? item.product.name.split('').reverse().join('') : item.product.name, // Basic reversal for item name if Arabic
+              isArabic ? item.product.name.split(" ").map(word => word.split('').reverse().join('')).join(' ') : item.product.name,
               item.quantity,
               formatCurrency(item.price),
               formatCurrency(item.price * item.quantity)
@@ -98,17 +95,22 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
         startY: 55,
         theme: 'striped',
         headStyles: {
+            font: isArabic ? "Cairo-Regular" : "helvetica",
             fillColor: [41, 128, 185],
             textColor: 255,
             fontStyle: 'bold',
             halign: isArabic ? 'right' : 'left'
         },
         bodyStyles: {
+            font: isArabic ? "Cairo-Regular" : "helvetica",
             halign: isArabic ? 'right' : 'left'
+        },
+        footStyles: {
+            font: isArabic ? "Cairo-Regular" : "helvetica",
+            fillColor: [236, 240, 241]
         },
         didParseCell: function(data) {
             if (isArabic) {
-                // For quantity, price, total columns, align left
                 if (data.column.index > 0) {
                     data.cell.styles.halign = 'left';
                 }
@@ -119,18 +121,13 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
             [{ content: t('pos.amountPaid'), colSpan: 3, styles: { halign: isArabic ? 'left' : 'right' } }, { content: formatCurrency(sale.amountPaid), styles: { halign: isArabic ? 'left' : 'right' } }],
             [{ content: t('customers.balance'), colSpan: 3, styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold' } }, { content: formatCurrency(sale.totalAmount - sale.amountPaid), styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold' } }],
         ],
-        footStyles: {
-             fillColor: [236, 240, 241]
-        }
       });
       
       let finalY = (doc as any).lastAutoTable.finalY;
       
-      // Footer
       doc.setFontSize(10);
       doc.text(t('receipt.thankYou'), center, finalY + 15, { align: 'center' });
 
-      // Open print dialog
       doc.autoPrint();
       window.open(doc.output('bloburl'), '_blank');
   };
@@ -153,25 +150,30 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                 </div>
             </div>
             <Separator />
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>{t('po.item')}</TableHead>
-                        <TableHead className="text-center">{t('po.quantity')}</TableHead>
-                        <TableHead className="text-right">{t('inventory.price')}</TableHead>
-                        <TableHead className="text-right">{t('po.total')}</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {sale.items.map(item => (
-                        <TableRow key={item.id}>
-                            <TableCell>{item.product.name}</TableCell>
-                            <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
+             <ScrollArea className="h-[400px]">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t('po.item')}</TableHead>
+                            <TableHead className="text-center">{t('po.quantity')}</TableHead>
+                            <TableHead className="text-right">{t('inventory.price')}</TableHead>
+                            <TableHead className="text-right">{t('po.total')}</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
+                    </TableHeader>
+                    <TableBody>
+                        {sale.items.map(item => (
+                            <TableRow key={item.id}>
+                                <TableCell>{item.product.name}</TableCell>
+                                <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
+             <Separator />
+             <Table>
                 <TableFooter>
                     <TableRow>
                         <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
