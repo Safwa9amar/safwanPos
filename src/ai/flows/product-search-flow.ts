@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview This file defines a Genkit flow for discovering product information from the web.
@@ -44,7 +45,8 @@ const productSearchPrompt = ai.definePrompt({
 
   **CRITICAL INSTRUCTIONS:**
   - Search the web to find 5-10 real, common products that match the user's query.
-  - For each product, find a high-quality, publicly accessible image URL. The image URL must be a direct link to an image file (e.g., .jpg, .png, .webp). Do not use data URIs or links to web pages.
+  - For each product, search Google Images to find a high-quality, publicly accessible image URL.
+  - **VERY IMPORTANT**: The image URL must be a direct, previewable link to an image file (e.g., .jpg, .png, .webp). Do not use data URIs or links to web pages.
   - Provide a concise, one-sentence description for each product.
   - Suggest a relevant, single-word category for each product (e.g., "Electronics", "Groceries", "Apparel").
   - Return the data in the specified JSON format.

@@ -1,4 +1,4 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -11,16 +11,14 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
-        port: '*',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "**", // Wildcard for all hostnames
+        pathname: "**", // Wildcard for all paths
       },
       {
-        protocol: 'http',
-        hostname: '**',
-        port: '*',
-        pathname: '/**',
+        protocol: "http", // Include http if necessary, but https is recommended
+        hostname: "**",
+        pathname: "**",
       },
     ],
   },
