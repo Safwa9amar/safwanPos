@@ -52,9 +52,11 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale, onPrint }: SaleDe
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-            <div className="text-sm">
-                <p><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</p>
-                <p><span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge></p>
+            <div className="text-sm space-y-1">
+                <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
+                </div>
             </div>
             <Separator />
             <Table>
@@ -105,3 +107,4 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale, onPrint }: SaleDe
     </Dialog>
   );
 }
+
