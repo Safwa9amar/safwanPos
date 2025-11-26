@@ -22,6 +22,7 @@ import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { Icons } from "../icons";
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -36,7 +37,9 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
     return (
         <div ref={ref} className="p-6 bg-white text-black w-[400px]">
             <div className="text-center mb-4">
-                <img src="https://w7.pngwing.com/pngs/32/943/png-transparent-point-of-sale-computer-icons-system-miscellaneous-text-logo.png" alt="Logo" className="h-12 w-12 mx-auto" />
+                <div className="flex justify-center mb-4">
+                    <Icons.logo className="h-12 w-12 text-primary" />
+                </div>
                 <h2 className="text-xl font-bold">PrismaPOS</h2>
                 <p className="text-sm text-gray-500">{t('receipt.title')}</p>
             </div>
@@ -91,7 +94,6 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsA
 });
 PrintableReceipt.displayName = 'PrintableReceipt';
 
-
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
@@ -102,20 +104,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     if (input) {
       html2canvas(input, {
         scale: 2,
-        useCORS: true,
-        onclone: (document) => {
-          const images = document.getElementsByTagName('img');
-          const promises = [];
-          for (let i = 0; i < images.length; i++) {
-            const img = images[i];
-            if (img.complete) continue;
-            promises.push(new Promise<void>((resolve) => {
-              img.onload = () => resolve();
-              img.onerror = () => resolve(); // continue even if an image fails
-            }));
-          }
-          return Promise.all(promises);
-        }
+        useCORS: true, 
       }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', [105, 148]); // A6 size
@@ -127,6 +116,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
       });
     }
   };
+
 
   if (!sale) return null;
   
@@ -150,7 +140,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-            <div className="flex items-center gap-4 text-sm">
+             <div className="flex items-center gap-4 text-sm">
                 <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
@@ -210,5 +200,3 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     </Dialog>
   );
 }
-
-    
