@@ -310,3 +310,44 @@ export async function importProducts(userId: string, products: any[]) {
     
     return { success: true, processed, errors };
 }
+
+export async function importCategories(userId: string, categories: any[]) {
+    if (!userId) {
+        return { error: "User not authenticated." };
+    }
+
+    const CategoryImportSchema = z.object({
+        name: z.string().min(1, "Name is required"),
+    });
+    
+    let processed = 0;
+    let errors: { row: number, error: string }[] = [];
+
+    for (const [index, p] of categories.entries()) {
+        const validated = CategoryImportSchema.safeParse(p);
+        if (!validated.success) {
+            errors.push({ row: index + 1, error: JSON.stringify(validated.error.flatten().fieldErrors) });
+            continue;
+        }
+
+        const categoryData = validated.data;
+        try {
+            await prisma.category.upsert({
+                where: { name_userId: { name: categoryData.name, userId } },
+                update: {},
+                create: {
+                    name: categoryData.name,
+                    userId: userId,
+                },
+            });
+            processed++;
+        } catch (e: any) {
+            errors.push({ row: index + 1, error: e.message || "Failed to upsert category." });
+        }
+    }
+    
+    revalidatePath("/inventory/categories");
+    revalidatePath("/inventory");
+    
+    return { success: true, processed, errors };
+}

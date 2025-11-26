@@ -13,12 +13,13 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Loader2, Plus, Upload, Download } from "lucide-react";
 import { upsertCategory, deleteCategory } from "@/app/inventory/actions";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
 import { useAuth } from "@/context/auth-context";
+import { CategoryImportDialog } from "./category-import-dialog";
 
 const CategorySchema = z.object({
     id: z.string().optional(),
@@ -32,6 +33,7 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
     const { toast } = useToast();
     const { user } = useAuth();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isImportOpen, setIsImportOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -92,6 +94,34 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
         }
     };
 
+    const downloadFile = (data: string, fileName: string, fileType: string) => {
+        const blob = new Blob([data], { type: fileType });
+        const a = document.createElement("a");
+        a.download = fileName;
+        a.href = window.URL.createObjectURL(blob);
+        const clickEvt = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        a.dispatchEvent(clickEvt);
+        a.remove();
+    };
+
+    const handleExportJSON = () => {
+        const data = initialCategories.map(c => ({ name: c.name }));
+        downloadFile(JSON.stringify(data, null, 2), "categories.json", "application/json");
+    };
+
+    const handleExportCSV = () => {
+        const headers = ["name"];
+        const csvContent = [
+            headers.join(","),
+            ...initialCategories.map(c => `"${c.name}"`),
+        ].join("\n");
+        downloadFile(csvContent, "categories.csv", "text/csv");
+    };
+
     return (
         <div className="p-4 md:p-6 space-y-6">
             <Card>
@@ -100,9 +130,27 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
                         <CardTitle>{t('inventory.manageCategories')}</CardTitle>
                         <CardDescription>{t('inventory.categoriesDescription')}</CardDescription>
                     </div>
-                    <Button onClick={() => handleOpenSheet(null)}>
-                        <Plus className="mr-2 h-4 w-4" /> {t('inventory.addCategory')}
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsImportOpen(true)} className="justify-center">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="justify-center">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Export
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={handleExportJSON}>Export as JSON</DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExportCSV}>Export as CSV</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button onClick={() => handleOpenSheet(null)}>
+                            <Plus className="mr-2 h-4 w-4" /> {t('inventory.addCategory')}
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -143,6 +191,8 @@ export function CategoriesPageClient({ initialCategories }: { initialCategories:
                      )}
                 </CardContent>
             </Card>
+
+            <CategoryImportDialog isOpen={isImportOpen} onOpenChange={setIsImportOpen} />
 
             <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <DialogContent>
