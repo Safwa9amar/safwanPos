@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useRef } from 'react';
 import { SaleWithItemsAndCustomer } from "@/types";
 import {
@@ -122,7 +123,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-            <div className="text-sm space-y-1">
+            <div className="flex items-center gap-4 text-sm">
                 <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
@@ -174,10 +175,9 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </Button>
         </DialogFooter>
         <div className="hidden">
-            <PrintableReceipt sale={sale} ref={printRef} />
+            {sale && <PrintableReceipt sale={sale} ref={printRef} />}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-
