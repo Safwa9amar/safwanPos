@@ -95,7 +95,7 @@ export async function getBusinessReport(userId: string, language: string) {
     }
 }
 
-export async function getSalesHistory(userId: string, options: { dateFrom?: Date; dateTo?: Date; }) {
+export async function getSalesHistory(userId: string, options: { dateFrom?: Date; dateTo?: Date; } = {}) {
     if (!userId) return { error: "User not authenticated" };
     const { dateFrom, dateTo } = options;
     try {
