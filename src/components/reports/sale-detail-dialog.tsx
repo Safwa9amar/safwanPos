@@ -29,73 +29,73 @@ interface SaleDetailDialogProps {
   sale: SaleWithItemsAndCustomer | null;
 }
 
-// A hidden component just for printing
-const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
-    const { t } = useTranslation();
-    const { formatCurrency } = useCurrency();
-    return (
-        <div ref={ref} className="p-6">
-            <div className="text-center mb-4">
-                <Icons.logo className="h-12 w-12 text-primary mx-auto" />
-                <h2 className="text-xl font-bold">PrismaPOS</h2>
-                <p className="text-sm text-muted-foreground">{t('receipt.title')}</p>
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
-                <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
-            </div>
-            <div className="text-xs text-muted-foreground mb-4">
-                {sale.customer && <p>Customer: {sale.customer.name}</p>}
-            </div>
-            <Separator />
-            <div className="my-4 space-y-2">
-                {sale.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-baseline text-sm">
-                        <div>
-                            <p>{item.product.name}</p>
-                            <p className="text-muted-foreground text-xs">
-                                {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
-                            </p>
+// A hidden class component just for printing, to ensure react-to-print can find the DOM node.
+class PrintableReceipt extends React.Component<{ sale: SaleWithItemsAndCustomer, t: any, formatCurrency: any }> {
+    render() {
+        const { sale, t, formatCurrency } = this.props;
+        return (
+             <div className="p-6">
+                <div className="text-center mb-4">
+                    <Icons.logo className="h-12 w-12 text-primary mx-auto" />
+                    <h2 className="text-xl font-bold">PrismaPOS</h2>
+                    <p className="text-sm text-muted-foreground">{t('receipt.title')}</p>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                    <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
+                    <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mb-4">
+                    {sale.customer && <p>Customer: {sale.customer.name}</p>}
+                </div>
+                <Separator />
+                <div className="my-4 space-y-2">
+                    {sale.items.map((item, index) => (
+                        <div key={index} className="flex justify-between items-baseline text-sm">
+                            <div>
+                                <p>{item.product.name}</p>
+                                <p className="text-muted-foreground text-xs">
+                                    {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
+                                </p>
+                            </div>
+                            <p>{formatCurrency(item.quantity * item.price)}</p>
                         </div>
-                        <p>{formatCurrency(item.quantity * item.price)}</p>
+                    ))}
+                </div>
+                <Separator />
+                <div className="my-4 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                        <span>{t('pos.subtotal')}</span>
+                        <span>{formatCurrency(sale.totalAmount)}</span>
                     </div>
-                ))}
+                    <div className="flex justify-between">
+                        <span>{t('pos.amountPaid')}</span>
+                        <span>{formatCurrency(sale.amountPaid)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-base mt-2">
+                        <span>{t('customers.balance')}</span>
+                        <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
+                    </div>
+                </div>
+                <div className="my-4 space-y-1 text-sm">
+                    <div className="flex justify-between font-bold text-lg">
+                        <span>{t('pos.total')}</span>
+                        <span>{formatCurrency(sale.totalAmount)}</span>
+                    </div>
+                </div>
+                <Separator />
+                <p className="text-center text-xs text-muted-foreground mt-6">
+                    {t('receipt.thankYou')}
+                </p>
             </div>
-            <Separator />
-            <div className="my-4 space-y-1 text-sm">
-                <div className="flex justify-between">
-                    <span>{t('pos.subtotal')}</span>
-                    <span>{formatCurrency(sale.totalAmount)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>{t('pos.amountPaid')}</span>
-                    <span>{formatCurrency(sale.amountPaid)}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-base mt-2">
-                    <span>{t('customers.balance')}</span>
-                    <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
-                </div>
-            </div>
-            <div className="my-4 space-y-1 text-sm">
-                <div className="flex justify-between font-bold text-lg">
-                    <span>{t('pos.total')}</span>
-                    <span>{formatCurrency(sale.totalAmount)}</span>
-                </div>
-            </div>
-            <Separator />
-            <p className="text-center text-xs text-muted-foreground mt-6">
-                {t('receipt.thankYou')}
-            </p>
-        </div>
-    )
-})
-PrintableReceipt.displayName = "PrintableReceipt";
+        )
+    }
+}
 
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const printRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<PrintableReceipt>(null);
 
   const handlePrint = useReactToPrint({
       content: () => printRef.current,
@@ -175,7 +175,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </Button>
         </DialogFooter>
         <div className="hidden">
-            {sale && <PrintableReceipt sale={sale} ref={printRef} />}
+            {sale && <PrintableReceipt sale={sale} t={t} formatCurrency={formatCurrency} ref={printRef} />}
         </div>
       </DialogContent>
     </Dialog>
