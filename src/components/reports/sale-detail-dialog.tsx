@@ -19,17 +19,22 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import { Icons } from '../icons';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+
+interface SaleDetailDialogProps {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    sale: SaleWithItemsAndCustomer | null;
+}
 
 const PrintableReceipt = React.forwardRef<HTMLDivElement, { sale: SaleWithItemsAndCustomer }>(({ sale }, ref) => {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     return (
-        <div ref={ref} className="p-6 bg-white text-black">
+        <div ref={ref} className="p-6 bg-white text-black w-[400px]">
             <div className="text-center mb-4">
-                <Icons.logo className="h-12 w-12 text-primary mx-auto" />
+                <img src="https://w7.pngwing.com/pngs/32/943/png-transparent-point-of-sale-computer-icons-system-miscellaneous-text-logo.png" alt="Logo" className="h-12 w-12 mx-auto" />
                 <h2 className="text-xl font-bold">PrismaPOS</h2>
                 <p className="text-sm text-gray-500">{t('receipt.title')}</p>
             </div>
@@ -94,7 +99,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     if (input) {
       html2canvas(input, { scale: 2 }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a6'); 
+        const pdf = new jsPDF('p', 'mm', [105, 148]); // A6 size
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
