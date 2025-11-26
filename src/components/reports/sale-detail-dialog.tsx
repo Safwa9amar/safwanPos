@@ -21,7 +21,6 @@ import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
 import { Icons } from "../icons";
 
-
 interface SaleDetailDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -49,7 +48,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     window.print();
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -59,9 +57,10 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
             {format(new Date(sale.saleDate), "PPPP p")}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Hidden component for printing */}
         <div ref={receiptRef} className="printable-area">
-            {/* This div is styled by globals.css for printing */}
-            <div className="hidden print:block w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
+            <div className="w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
                 <div className="text-center p-4">
                   <div className="flex justify-center mb-4">
                     <Icons.logo className="h-12 w-12 text-primary" />
@@ -75,6 +74,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                     <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
                   </div>
                   <div className="text-xs text-muted-foreground mb-4">
+                    <p>Sold by: {sale.user?.name || 'N/A'}</p>
                     {sale.customer && <p>{t('history.customer')}: {sale.customer.name}</p>}
                   </div>
                   <Separator />
@@ -97,74 +97,74 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                       <span>{t('pos.subtotal')}</span>
                       <span>{formatCurrency(sale.totalAmount)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{t('pos.amountPaid')}</span>
-                      <span>{formatCurrency(sale.amountPaid)}</span>
+                     <div className="flex justify-between">
+                        <span>{t('pos.amountPaid')}</span>
+                        <span>{formatCurrency(sale.amountPaid)}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-base mt-2">
-                      <span>{t('customers.balance')}</span>
-                      <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
+                        <span>{t('customers.balance')}</span>
+                        <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
                     </div>
-                  </div>
-                  <div className="my-4 space-y-1 text-sm">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>{t('pos.total')}</span>
-                      <span>{formatCurrency(sale.totalAmount)}</span>
-                    </div>
-                  </div>
-                  <Separator />
-                  <p className="text-center text-xs text-muted-foreground mt-6">
-                    {t('receipt.thankYou')}
-                  </p>
                 </div>
-            </div>
-
-            {/* This is the content shown in the dialog on screen */}
-            <div className="space-y-4 print:hidden">
-                 <div className="flex items-center gap-4 text-sm">
-                    <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
+                 <div className="my-4 space-y-1 text-sm">
+                    <div className="flex justify-between font-bold text-lg">
+                        <span>{t('pos.total')}</span>
+                        <span>{formatCurrency(sale.totalAmount)}</span>
                     </div>
                 </div>
                 <Separator />
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>{t('po.item')}</TableHead>
-                            <TableHead className="text-center">{t('po.quantity')}</TableHead>
-                            <TableHead className="text-right">{t('inventory.price')}</TableHead>
-                            <TableHead className="text-right">{t('po.total')}</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sale.items.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell>{item.product.name}</TableCell>
-                                <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                    <TableFooter>
-                        <TableRow>
-                            <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
-                            <TableCell className="text-right font-bold text-lg">{formatCurrency(sale.totalAmount)}</TableCell>
-                        </TableRow>
-                         <TableRow>
-                            <TableCell colSpan={3} className="text-right font-semibold">{t('pos.amountPaid')}</TableCell>
-                            <TableCell className="text-right font-semibold">{formatCurrency(sale.amountPaid)}</TableCell>
-                        </TableRow>
-                         <TableRow>
-                            <TableCell colSpan={3} className="text-right font-semibold">{t('customers.balance')}</TableCell>
-                            <TableCell className="text-right font-semibold">{formatCurrency(sale.totalAmount - sale.amountPaid)}</TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
+                <p className="text-center text-xs text-muted-foreground mt-6">
+                    {t('receipt.thankYou')}
+                </p>
+                </div>
             </div>
         </div>
-        <DialogFooter className="print:hidden">
+
+        {/* This is the content shown in the dialog on screen */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-4 text-sm">
+                <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
+                </div>
+            </div>
+            <Separator />
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>{t('po.item')}</TableHead>
+                        <TableHead className="text-center">{t('po.quantity')}</TableHead>
+                        <TableHead className="text-right">{t('inventory.price')}</TableHead>
+                        <TableHead className="text-right">{t('po.total')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {sale.items.map(item => (
+                        <TableRow key={item.id}>
+                            <TableCell>{item.product.name}</TableCell>
+                            <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                <TableFooter>
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
+                        <TableCell className="text-right font-bold text-lg">{formatCurrency(sale.totalAmount)}</TableCell>
+                    </TableRow>
+                        <TableRow>
+                        <TableCell colSpan={3} className="text-right font-semibold">{t('pos.amountPaid')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.amountPaid)}</TableCell>
+                    </TableRow>
+                        <TableRow>
+                        <TableCell colSpan={3} className="text-right font-semibold">{t('customers.balance')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.totalAmount - sale.amountPaid)}</TableCell>
+                    </TableRow>
+                </TableFooter>
+            </Table>
+        </div>
+        <DialogFooter className="no-print">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
