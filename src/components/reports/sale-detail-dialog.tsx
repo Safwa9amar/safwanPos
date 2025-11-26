@@ -19,75 +19,8 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import ReactToPrint from "react-to-print";
 import { Icons } from "../icons";
 
-// A hidden class component that react-to-print can use a ref to.
-class PrintableReceipt extends React.Component<{ sale: SaleWithItemsAndCustomer, t: any, formatCurrency: any }> {
-  render() {
-    const { sale, t, formatCurrency } = this.props;
-
-    return (
-      <div className="w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
-        <div className="text-center p-4">
-          <div className="flex justify-center mb-4">
-            <Icons.logo className="h-12 w-12 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold">PrismaPOS</h2>
-          <p className="text-muted-foreground">{t('receipt.title')}</p>
-        </div>
-        <div className="p-4">
-          <div className="flex justify-between text-xs text-muted-foreground mb-2">
-            <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
-            <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
-          </div>
-          <div className="text-xs text-muted-foreground mb-4">
-            {sale.customer && <p>{t('history.customer')}: {sale.customer.name}</p>}
-          </div>
-          <Separator />
-          <div className="my-4 space-y-2">
-            {sale.items.map((item, index) => (
-              <div key={index} className="flex justify-between items-baseline text-sm">
-                <div>
-                  <p>{item.product.name}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
-                  </p>
-                </div>
-                <p>{formatCurrency(item.quantity * item.price)}</p>
-              </div>
-            ))}
-          </div>
-          <Separator />
-          <div className="my-4 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>{t('pos.subtotal')}</span>
-              <span>{formatCurrency(sale.totalAmount)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{t('pos.amountPaid')}</span>
-              <span>{formatCurrency(sale.amountPaid)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-base mt-2">
-              <span>{t('customers.balance')}</span>
-              <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
-            </div>
-          </div>
-          <div className="my-4 space-y-1 text-sm">
-            <div className="flex justify-between font-bold text-lg">
-              <span>{t('pos.total')}</span>
-              <span>{formatCurrency(sale.totalAmount)}</span>
-            </div>
-          </div>
-          <Separator />
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            {t('receipt.thankYou')}
-          </p>
-        </div>
-      </div>
-    );
-  }
-}
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -98,7 +31,7 @@ interface SaleDetailDialogProps {
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const printableComponentRef = React.useRef<PrintableReceipt>(null);
+  const receiptRef = React.useRef<HTMLDivElement>(null);
 
   if (!sale) return null;
   
@@ -112,6 +45,11 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -121,66 +59,120 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
             {format(new Date(sale.saleDate), "PPPP p")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-             <div className="flex items-center gap-4 text-sm">
-                <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
+        <div ref={receiptRef} className="printable-area">
+            {/* This div is styled by globals.css for printing */}
+            <div className="hidden print:block w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
+                <div className="text-center p-4">
+                  <div className="flex justify-center mb-4">
+                    <Icons.logo className="h-12 w-12 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold">PrismaPOS</h2>
+                  <p className="text-muted-foreground">{t('receipt.title')}</p>
+                </div>
+                <div className="p-4">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                    <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
+                    <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-4">
+                    {sale.customer && <p>{t('history.customer')}: {sale.customer.name}</p>}
+                  </div>
+                  <Separator />
+                  <div className="my-4 space-y-2">
+                    {sale.items.map((item, index) => (
+                      <div key={index} className="flex justify-between items-baseline text-sm">
+                        <div>
+                          <p>{item.product.name}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
+                          </p>
+                        </div>
+                        <p>{formatCurrency(item.quantity * item.price)}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="my-4 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>{t('pos.subtotal')}</span>
+                      <span>{formatCurrency(sale.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('pos.amountPaid')}</span>
+                      <span>{formatCurrency(sale.amountPaid)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-base mt-2">
+                      <span>{t('customers.balance')}</span>
+                      <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
+                    </div>
+                  </div>
+                  <div className="my-4 space-y-1 text-sm">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>{t('pos.total')}</span>
+                      <span>{formatCurrency(sale.totalAmount)}</span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <p className="text-center text-xs text-muted-foreground mt-6">
+                    {t('receipt.thankYou')}
+                  </p>
                 </div>
             </div>
-            <Separator />
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>{t('po.item')}</TableHead>
-                        <TableHead className="text-center">{t('po.quantity')}</TableHead>
-                        <TableHead className="text-right">{t('inventory.price')}</TableHead>
-                        <TableHead className="text-right">{t('po.total')}</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {sale.items.map(item => (
-                        <TableRow key={item.id}>
-                            <TableCell>{item.product.name}</TableCell>
-                            <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
+
+            {/* This is the content shown in the dialog on screen */}
+            <div className="space-y-4 print:hidden">
+                 <div className="flex items-center gap-4 text-sm">
+                    <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{t('history.paymentType')}:</span> <Badge variant={getStatusVariant(sale.paymentType)}>{sale.paymentType}</Badge>
+                    </div>
+                </div>
+                <Separator />
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t('po.item')}</TableHead>
+                            <TableHead className="text-center">{t('po.quantity')}</TableHead>
+                            <TableHead className="text-right">{t('inventory.price')}</TableHead>
+                            <TableHead className="text-right">{t('po.total')}</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-                <TableFooter>
-                    <TableRow>
-                        <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
-                        <TableCell className="text-right font-bold text-lg">{formatCurrency(sale.totalAmount)}</TableCell>
-                    </TableRow>
-                     <TableRow>
-                        <TableCell colSpan={3} className="text-right font-semibold">{t('pos.amountPaid')}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(sale.amountPaid)}</TableCell>
-                    </TableRow>
-                     <TableRow>
-                        <TableCell colSpan={3} className="text-right font-semibold">{t('customers.balance')}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(sale.totalAmount - sale.amountPaid)}</TableCell>
-                    </TableRow>
-                </TableFooter>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {sale.items.map(item => (
+                            <TableRow key={item.id}>
+                                <TableCell>{item.product.name}</TableCell>
+                                <TableCell className="text-center">{item.quantity} {item.product.unit !== 'EACH' && `(${item.product.unit})`}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    <TableFooter>
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-right font-bold text-lg">{t('pos.total')}</TableCell>
+                            <TableCell className="text-right font-bold text-lg">{formatCurrency(sale.totalAmount)}</TableCell>
+                        </TableRow>
+                         <TableRow>
+                            <TableCell colSpan={3} className="text-right font-semibold">{t('pos.amountPaid')}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatCurrency(sale.amountPaid)}</TableCell>
+                        </TableRow>
+                         <TableRow>
+                            <TableCell colSpan={3} className="text-right font-semibold">{t('customers.balance')}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatCurrency(sale.totalAmount - sale.amountPaid)}</TableCell>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
+            </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="print:hidden">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
-          <ReactToPrint
-            content={() => printableComponentRef.current}
-            trigger={() => (
-                <Button type="button">
-                    <Printer className="mr-2 h-4 w-4" />
-                    {t('receipt.printButton')}
-                </Button>
-            )}
-          />
+          <Button type="button" onClick={handlePrint}>
+              <Printer className="mr-2 h-4 w-4" />
+              {t('receipt.printButton')}
+          </Button>
         </DialogFooter>
-        <div style={{ display: "none" }}>
-          <PrintableReceipt ref={printableComponentRef} sale={sale} t={t} formatCurrency={formatCurrency} />
-        </div>
       </DialogContent>
     </Dialog>
   );
