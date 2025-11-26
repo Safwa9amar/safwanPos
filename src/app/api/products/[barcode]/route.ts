@@ -18,7 +18,6 @@ export async function GET(
     const product = await prisma.product.findFirst({
       where: { barcode, userId },
     });
-
     if (!product) {
       return new NextResponse('Product not found', { status: 404 });
     }

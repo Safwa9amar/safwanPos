@@ -40,6 +40,12 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const focusBarcode = useCallback(() => {
+    setTimeout(() => {
+      barcodeInputRef.current?.focus();
+    }, 0);
+  }, []);
+
   const handleBarcodeScan = useCallback(async () => {
     if (!barcode || !user) return;
     setIsSearching(true);
@@ -55,6 +61,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
           setIsWeightModalOpen(true);
       } else {
           cart.addItem(product);
+          focusBarcode();
       }
       setBarcode('');
 
@@ -64,16 +71,16 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
         title: t('pos.scanError'),
         description: t('pos.productNotFound'),
       });
+      focusBarcode();
     } finally {
       setIsSearching(false);
-      barcodeInputRef.current?.focus();
     }
-  }, [barcode, cart, toast, t, user]);
+  }, [barcode, cart, toast, t, user, focusBarcode]);
 
   const handleAddToCart = (product: Product) => {
     if (product.unit === 'EACH') {
         cart.addItem(product);
-        console.log("added to cart")
+        focusBarcode();
     } else {
         setSelectedProductForWeight(product);
         setIsWeightModalOpen(true);
@@ -84,7 +91,16 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     cart.addItem(product, weight);
     setIsWeightModalOpen(false);
     setSelectedProductForWeight(null);
+    focusBarcode();
   };
+
+  const onWeightModalClose = (isOpen: boolean) => {
+    setIsWeightModalOpen(isOpen);
+    if (!isOpen) {
+      focusBarcode();
+    }
+  }
+
 
   const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number) => {
     if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
@@ -134,8 +150,8 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   }, [initialProducts, searchTerm, selectedCategory]);
 
   useEffect(() => {
-    barcodeInputRef.current?.focus();
-  }, [cart.activeCartIndex]);
+    focusBarcode();
+  }, [cart.activeCartIndex, focusBarcode]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -161,6 +177,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     return <Receipt sale={lastSale} onDone={() => {
         setShowReceipt(false);
         setLastSale(null);
+        focusBarcode();
     }} />;
   }
   
@@ -294,7 +311,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
       </div>
       <WeightInputDialog 
         isOpen={isWeightModalOpen}
-        onOpenChange={setIsWeightModalOpen}
+        onOpenChange={onWeightModalClose}
         product={selectedProductForWeight}
         onConfirm={handleWeightSubmit}
       />
