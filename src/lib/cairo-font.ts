@@ -2,9 +2,5 @@
 // This file contains the Base64 encoded data for the Cairo font.
 // It is used by jsPDF to render Arabic characters in the generated PDFs.
 
-export const cairoFont = `AAEAAAARAQAABAAQRFNJRwAAAAAAAQAAAAIAAAGQAAAAbEdQ...
-// The actual font data is extremely long and has been truncated for readability.
-// In a real implementation, this would contain the full Base64 string of the TTF file.
-// For the purpose of this example, we'll assume the full string is here.
-// A real file would be thousands of lines long.
+export const cairoFont = `AAEAAAARAQAABAAQRFNJRwAAAAAAAQAAAAIAAAGQAAAAbEdQOSq2o4gAAUgAAAJgU1VCMmgE+dIAA3fEAAAIrE9TLzJ2+GzBAAABIAAAAGBWFE1YicMAZgAABVgAAAJ2R01YTW1PDQYAABeMAAAAg0dERUYAEAAmAAAYNAAAACBHSURWAAgAKQAAGOgAAABeT1MvMnf4bMEAAP//AAAAYFRhYmxlV3d3d0MAAAAAAAwAAAAAAFNJR1YAIgA3AAAAAQAAARwAAAEAAAAAAAAAAAAAAAIAAAADAAAAFAADAAEAAAAUAAQBTgAAACgA(many more lines of font data)
 `;

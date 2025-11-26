@@ -19,7 +19,9 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Printer } from "lucide-react";
-import { Icons } from "../icons";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { cairoFont } from '@/lib/cairo-font';
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
@@ -28,9 +30,8 @@ interface SaleDetailDialogProps {
 }
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const receiptRef = React.useRef<HTMLDivElement>(null);
 
   if (!sale) return null;
   
@@ -45,7 +46,93 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
   };
 
   const handlePrint = () => {
-    window.print();
+      const doc = new jsPDF();
+
+      // Add Cairo font for Arabic support
+      doc.addFileToVFS("Cairo-Regular-normal.ttf", cairoFont);
+      doc.addFont("Cairo-Regular-normal.ttf", "Cairo-Regular", "normal");
+
+      const isArabic = language === 'ar';
+      
+      if (isArabic) {
+        doc.setFont("Cairo-Regular");
+        doc.setR2L(true);
+      } else {
+        doc.setFont("helvetica");
+        doc.setR2L(false);
+      }
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const center = pageWidth / 2;
+
+      // Header
+      doc.setFontSize(22);
+      doc.text("PrismaPOS", center, 20, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(t('receipt.title'), center, 28, { align: 'center' });
+
+      // Sale Info
+      doc.setFontSize(9);
+      doc.text(`${t('receipt.saleId')}: #${sale.id.substring(0,8)}`, isArabic ? pageWidth - 14 : 14, 40);
+      doc.text(new Date(sale.saleDate).toLocaleString(), isArabic ? 14 : pageWidth - 14, 40, { align: isArabic ? 'left' : 'right'});
+      
+      doc.text(`${t('history.customer')}: ${sale.customer?.name || t('history.walkInCustomer')}`, isArabic ? pageWidth - 14 : 14, 45);
+      
+      // Table
+      const tableColumn = [t('po.item'), t('po.quantity'), t('inventory.price'), t('po.total')];
+      const tableRows: (string | number)[][] = [];
+
+      sale.items.forEach(item => {
+          const itemData = [
+              isArabic ? item.product.name.split('').reverse().join('') : item.product.name, // Basic reversal for item name if Arabic
+              item.quantity,
+              formatCurrency(item.price),
+              formatCurrency(item.price * item.quantity)
+          ];
+          tableRows.push(itemData);
+      });
+      
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 55,
+        theme: 'striped',
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: isArabic ? 'right' : 'left'
+        },
+        bodyStyles: {
+            halign: isArabic ? 'right' : 'left'
+        },
+        didParseCell: function(data) {
+            if (isArabic) {
+                // For quantity, price, total columns, align left
+                if (data.column.index > 0) {
+                    data.cell.styles.halign = 'left';
+                }
+            }
+        },
+        foot: [
+            [{ content: t('pos.total'), colSpan: 3, styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold', fontSize: 14 } }, { content: formatCurrency(sale.totalAmount), styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold', fontSize: 14 } }],
+            [{ content: t('pos.amountPaid'), colSpan: 3, styles: { halign: isArabic ? 'left' : 'right' } }, { content: formatCurrency(sale.amountPaid), styles: { halign: isArabic ? 'left' : 'right' } }],
+            [{ content: t('customers.balance'), colSpan: 3, styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold' } }, { content: formatCurrency(sale.totalAmount - sale.amountPaid), styles: { halign: isArabic ? 'left' : 'right', fontStyle: 'bold' } }],
+        ],
+        footStyles: {
+             fillColor: [236, 240, 241]
+        }
+      });
+      
+      let finalY = (doc as any).lastAutoTable.finalY;
+      
+      // Footer
+      doc.setFontSize(10);
+      doc.text(t('receipt.thankYou'), center, finalY + 15, { align: 'center' });
+
+      // Open print dialog
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
   };
 
   return (
@@ -58,69 +145,6 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
           </DialogDescription>
         </DialogHeader>
 
-        {/* Hidden component for printing */}
-        <div ref={receiptRef} className="printable-area">
-            <div className="w-full max-w-sm mx-auto bg-background p-6 rounded-lg">
-                <div className="text-center p-4">
-                  <div className="flex justify-center mb-4">
-                    <Icons.logo className="h-12 w-12 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-bold">PrismaPOS</h2>
-                  <p className="text-muted-foreground">{t('receipt.title')}</p>
-                </div>
-                <div className="p-4">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                    <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
-                    <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-4">
-                    <p>Sold by: {sale.user?.name || 'N/A'}</p>
-                    {sale.customer && <p>{t('history.customer')}: {sale.customer.name}</p>}
-                  </div>
-                  <Separator />
-                  <div className="my-4 space-y-2">
-                    {sale.items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-baseline text-sm">
-                        <div>
-                          <p>{item.product.name}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {item.quantity}{item.product.unit !== 'EACH' ? item.product.unit : ''} x {formatCurrency(item.price)}
-                          </p>
-                        </div>
-                        <p>{formatCurrency(item.quantity * item.price)}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <Separator />
-                  <div className="my-4 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>{t('pos.subtotal')}</span>
-                      <span>{formatCurrency(sale.totalAmount)}</span>
-                    </div>
-                     <div className="flex justify-between">
-                        <span>{t('pos.amountPaid')}</span>
-                        <span>{formatCurrency(sale.amountPaid)}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold text-base mt-2">
-                        <span>{t('customers.balance')}</span>
-                        <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
-                    </div>
-                </div>
-                 <div className="my-4 space-y-1 text-sm">
-                    <div className="flex justify-between font-bold text-lg">
-                        <span>{t('pos.total')}</span>
-                        <span>{formatCurrency(sale.totalAmount)}</span>
-                    </div>
-                </div>
-                <Separator />
-                <p className="text-center text-xs text-muted-foreground mt-6">
-                    {t('receipt.thankYou')}
-                </p>
-                </div>
-            </div>
-        </div>
-
-        {/* This is the content shown in the dialog on screen */}
         <div className="space-y-4">
             <div className="flex items-center gap-4 text-sm">
                 <div><span className="font-semibold">{t('history.customer')}:</span> {sale.customer?.name || t('history.walkInCustomer')}</div>
@@ -164,7 +188,7 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
                 </TableFooter>
             </Table>
         </div>
-        <DialogFooter className="no-print">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('history.close')}
           </Button>
