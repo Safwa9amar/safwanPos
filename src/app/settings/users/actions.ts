@@ -1,11 +1,12 @@
 
 "use server";
 
-import { getAdminAuth } from "@/lib/firebase-admin";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { UserRole } from "@prisma/client";
+import bcrypt from 'bcryptjs';
+import { getUserIdFromRequest } from "@/lib/server-auth";
 
 export async function getUsers() {
     try {
@@ -19,80 +20,59 @@ export async function getUsers() {
     }
 }
 
-const UserSchema = z.object({
+const UserFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
   role: z.nativeEnum(UserRole),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z.string().optional(),
 });
 
-export async function upsertUser(formData: FormData, token?: string) {
+
+export async function upsertUser(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
-  const validatedFields = UserSchema.safeParse(values);
+  const validatedFields = UserFormSchema.safeParse(values);
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
   const { id, name, email, role, password } = validatedFields.data;
-  const adminAuth = getAdminAuth();
 
   try {
     if (id) {
-        // If an ID is provided, this could be a new user registration or an update
-        const existingUser = await prisma.user.findUnique({ where: { id }});
-        
-        if (existingUser) {
-            // User exists in our DB, so it's an update.
-            await adminAuth.updateUser(id, {
-                email,
-                displayName: name,
-                ...(password && { password }),
-            });
-            await adminAuth.setCustomUserClaims(id, { role });
-            const updatedUser = await prisma.user.update({
-                where: { id },
-                data: { name, email, role },
-            });
-            revalidatePath("/settings/users");
-            return { success: true, user: updatedUser };
-        } else {
-            // User does not exist in our DB, so it's part of a new registration.
-            // We trust the ID because it came from the client-side Firebase user creation.
-            // We just need to create the corresponding record in our database.
-            await adminAuth.setCustomUserClaims(id, { role });
-            const newUser = await prisma.user.create({
-                data: {
-                    id,
-                    name,
-                    email,
-                    role,
-                },
-            });
-            revalidatePath("/settings/users");
-            return { success: true, user: newUser };
+        // Update user
+        const updateData: { name: string; email: string; role: UserRole; password?: string } = { name, email, role };
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
         }
 
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: updateData,
+        });
+
+        revalidatePath("/settings/users");
+        return { success: true, user: updatedUser };
+
     } else {
-      // Create a brand new user from the users management page (no ID provided)
+      // Create a brand new user
       if (!password) {
         return { errors: { password: ["Password is required for new users."] } };
       }
-      const firebaseUser = await adminAuth.createUser({
-        email,
-        password,
-        displayName: name,
-      });
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      await adminAuth.setCustomUserClaims(firebaseUser.uid, { role });
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return { errors: { email: ["This email address is already in use."] } };
+      }
 
       const newUser = await prisma.user.create({
         data: {
-          id: firebaseUser.uid,
           name,
           email,
           role,
+          password: hashedPassword
         },
       });
       revalidatePath("/settings/users");
@@ -100,7 +80,7 @@ export async function upsertUser(formData: FormData, token?: string) {
     }
   } catch (error: any) {
     console.error("Error upserting user:", error);
-    if (error.code === 'auth/email-already-exists' || error.code === 'auth/email-already-in-use') {
+     if (error.code === 'P2002') { // Unique constraint violation
       return { errors: { email: ["This email address is already in use."] } };
     }
     return { error: error.message || "An unknown error occurred." };
@@ -109,8 +89,6 @@ export async function upsertUser(formData: FormData, token?: string) {
 
 export async function deleteUser(userId: string) {
     try {
-        const adminAuth = getAdminAuth();
-        await adminAuth.deleteUser(userId);
         await prisma.user.delete({ where: { id: userId } });
         
         revalidatePath("/settings/users");

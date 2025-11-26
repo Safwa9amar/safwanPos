@@ -1,9 +1,9 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { changePassword } from "@/app/settings/actions";
+import { User } from "@prisma/client";
 
 const PasswordSchema = z.object({
     newPassword: z.string().min(6, "Password must be at least 6 characters long"),
@@ -38,7 +39,7 @@ export function ChangePasswordForm({ user }: { user: User }) {
 
   const onSubmit = async (data: PasswordFormValues) => {
     const formData = new FormData();
-    formData.append("uid", user.uid);
+    formData.append("uid", user.id);
     formData.append("newPassword", data.newPassword);
     
     const result = await changePassword(formData);

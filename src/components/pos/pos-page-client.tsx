@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useMultiCart } from '@/hooks/use-multi-cart';
-import { Product, Category, Customer } from '@prisma/client';
+import { Product, Category, Customer, User } from '@prisma/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -44,10 +44,8 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     if (!barcode || !user) return;
     setIsSearching(true);
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch(`/api/products/${barcode}`, {
-          headers: { 'Authorization': `Bearer ${idToken}` }
-      });
+      // With JWT in cookies, we don't need to manually pass the token
+      const response = await fetch(`/api/products/${barcode}`);
       if (!response.ok) {
         throw new Error(t('pos.productNotFound'));
       }
@@ -103,7 +101,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
 
     setIsCompleting(true);
     try {
-      const result = await completeSale(user.uid, cart.activeCart.items, paymentType, customerId, amountPaid);
+      const result = await completeSale(user.id, cart.activeCart.items, paymentType, customerId, amountPaid);
       if (result.success && result.sale) {
         // @ts-ignore
         setLastSale(result.sale);

@@ -1,7 +1,10 @@
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment } from '@prisma/client';
+
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser } from '@prisma/client';
 
 export type Product = PrismaProduct;
 export type Category = PrismaCategory;
+export type User = Omit<PrismaUser, 'password'>;
+
 
 export interface ProductWithCategory extends PrismaProduct {
     category: PrismaCategory | null;

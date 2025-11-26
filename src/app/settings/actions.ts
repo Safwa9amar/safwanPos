@@ -1,13 +1,14 @@
 
 "use server";
 
-import { getAdminAuth } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import bcrypt from 'bcryptjs';
+import prisma from "@/lib/prisma";
 
 const UpdateProfileSchema = z.object({
   uid: z.string().min(1),
-  displayName: z.string().min(1, "Display name is required"),
+  name: z.string().min(1, "Display name is required"),
 });
 
 export async function updateProfile(formData: FormData) {
@@ -19,11 +20,13 @@ export async function updateProfile(formData: FormData) {
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
-  const { uid, displayName } = validatedFields.data;
+  const { uid, name } = validatedFields.data;
 
   try {
-    const adminAuth = getAdminAuth();
-    await adminAuth.updateUser(uid, { displayName });
+    await prisma.user.update({
+        where: { id: uid },
+        data: { name }
+    });
     revalidatePath("/settings/profile");
     return { success: true };
   } catch (error: any) {
@@ -48,10 +51,13 @@ export async function changePassword(formData: FormData) {
   }
 
   const { uid, newPassword } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   try {
-    const adminAuth = getAdminAuth();
-    await adminAuth.updateUser(uid, { password: newPassword });
+    await prisma.user.update({
+        where: { id: uid },
+        data: { password: hashedPassword }
+    });
     return { success: true };
   } catch (error: any) {
     console.error("Failed to change password:", error);

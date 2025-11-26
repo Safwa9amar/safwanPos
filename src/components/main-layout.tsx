@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import {
@@ -19,8 +18,6 @@ import {
 import { Icons } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark } from "lucide-react";
@@ -37,19 +34,20 @@ import { useTranslation } from "@/hooks/use-translation";
 
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await logout();
     router.push('/login');
+    router.refresh();
   };
 
-  const getInitials = (email: string | null | undefined) => {
-    if (!email) return 'U';
-    return email.substring(0, 2).toUpperCase();
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase();
   };
 
   return (
@@ -150,7 +148,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
            <SidebarMenu>
               <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip={t('sidebar.settings')}>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')} tooltip={t('sidebar.settings')}>
                       <Link href="/settings">
                           <Settings />
                           {t('sidebar.settings')}
@@ -162,12 +160,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 p-2 h-auto">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.photoURL || undefined} />
-                  <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
+                  {/* <AvatarImage src={user?.photoURL || undefined} /> */}
+                  <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col text-sm text-left overflow-hidden">
-                    <span className="font-medium truncate">{user?.displayName || user?.email}</span>
-                    <span className="text-muted-foreground text-xs">{t('user.role')}</span>
+                    <span className="font-medium truncate">{user?.name || user?.email}</span>
+                    <span className="text-muted-foreground text-xs">{user?.role}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>

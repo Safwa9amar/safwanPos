@@ -5,11 +5,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
-import { auth as firebaseAuth } from "@/lib/firebase"; // Renamed to avoid conflict
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -28,8 +23,7 @@ import { Icons } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
-import { upsertUser } from "../settings/users/actions";
-import { UserRole } from "@prisma/client";
+import { useAuth } from "@/context/auth-context";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -60,6 +54,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function LoginPageClient() {
   const router = useRouter();
   const { toast } = useToast();
+  const { checkUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
@@ -76,14 +71,25 @@ export default function LoginPageClient() {
   const onLoginSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(firebaseAuth, data.email, data.password);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || t("login.failedDescription"));
+      }
+      
+      await checkUser(); // Re-check user status to update context
       router.push("/pos");
+      router.refresh(); // Force a refresh to update server-side data
     } catch (error: any) {
-      console.log(error);
       toast({
         variant: "destructive",
         title: t("login.failedTitle"),
-        description: t("login.failedDescription"),
+        description: error.message,
       });
     } finally {
       setLoading(false);
@@ -93,51 +99,30 @@ export default function LoginPageClient() {
   const onRegisterSubmit = async (data: RegisterFormValues) => {
     setLoading(true);
     try {
-      // Create user in Firebase Auth first
-      const userCredential = await createUserWithEmailAndPassword(
-        firebaseAuth,
-        data.email,
-        data.password
-      );
-      const firebaseUser = userCredential.user;
-      
-      // Force token refresh to ensure claims are available on the backend
-      const token = await firebaseUser.getIdToken(true);
+       const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
+      });
 
-      // Then, create the user record in our own database via server action
-      const formData = new FormData();
-      formData.append("id", firebaseUser.uid);
-      formData.append("name", data.name);
-      formData.append("email", data.email);
-      formData.append("role", UserRole.ADMIN); // First user is an admin
-      
-      const result = await upsertUser(formData, token);
-
-      if (
-        result.error ||
-        (result.errors && Object.keys(result.errors).length > 0)
-      ) {
-        // This would happen if our DB call fails. We should probably delete the firebase user
-        // but for now, we'll just show an error.
-        throw new Error(
-          result.error || "Failed to create user record in database."
-        );
+       if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || t("register.failedTitle"));
       }
 
       toast({
         title: t("register.successTitle"),
         description: t("register.successDescription"),
       });
-      router.push("/pos");
-    } catch (error: any) {
-      console.log(error);
+
+      // Automatically log the user in after successful registration
+      await onLoginSubmit({ email: data.email, password: data.password });
+
+    } catch (error: any)      {
       toast({
         variant: "destructive",
         title: t("register.failedTitle"),
-        description:
-          error.code === "auth/email-already-in-use"
-            ? "This email is already registered."
-            : error.message,
+        description: error.message,
       });
     } finally {
       setLoading(false);

@@ -1,25 +1,24 @@
 
-import { headers } from "next/headers";
-import { getAdminAuth } from "@/lib/firebase-admin";
+import { headers, cookies } from "next/headers";
+import jwt from 'jsonwebtoken';
 
 /**
- * Gets the user ID from the Authorization header of the incoming request.
+ * Gets the user ID from the JWT token in the cookie.
  * This is a server-side utility.
  * @returns The user's ID if the token is valid, otherwise null.
  */
-export async function getUserIdFromRequest(): Promise<string | null> {
-    const requestHeaders = await headers();
-    const authHeader = requestHeaders.get('Authorization');
-    const idToken = authHeader?.split('Bearer ')[1];
-    if (!idToken) {
+export async function getUserIdFromRequest(request: Request): Promise<string | null> {
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
         return null;
     }
     try {
-        const auth = getAdminAuth();
-        const decodedToken = await auth.verifyIdToken(idToken);
-        return decodedToken.uid;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
+        return decoded.userId;
     } catch (error) {
-        console.error("Error verifying ID token:", error);
+        console.error("Error verifying JWT token:", error);
         return null;
     }
 }
