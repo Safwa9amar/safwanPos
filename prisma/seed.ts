@@ -1,3 +1,4 @@
+
 import { PrismaClient, UserRole } from '@prisma/client';
 const prisma = new PrismaClient();
 
@@ -114,11 +115,20 @@ async function main() {
   // 2. Create products and associate them with the dummy user
   for (const product of products) {
     await prisma.product.upsert({
-      where: { barcode_userId: { barcode: product.barcode, userId: seedUser.id } },
-      update: {},
+      where: { id: (await prisma.barcode.findFirst({ where: { code: product.barcode, userId: seedUser.id } }))?.productId || '' },
+      update: {
+        ...product,
+        updatedAt: new Date()
+      },
       create: {
         ...product,
         userId: seedUser.id,
+        barcodes: {
+          create: {
+            code: product.barcode,
+            userId: seedUser.id
+          }
+        }
       },
     });
   }
