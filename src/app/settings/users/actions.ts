@@ -6,11 +6,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { UserRole } from "@prisma/client";
 import bcrypt from 'bcryptjs';
-import { getUserIdFromRequest } from "@/lib/server-auth";
 
-export async function getUsers() {
+export async function getUsers(adminId: string) {
+    if (!adminId) return { error: "User not authenticated" };
     try {
+        // Fetch the admin user themselves plus any users they created.
         const users = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { id: adminId },
+                    { createdById: adminId }
+                ]
+            },
             orderBy: { createdAt: 'desc' }
         });
         return { users };
@@ -26,6 +33,7 @@ const UserFormSchema = z.object({
   email: z.string().email("Invalid email"),
   role: z.nativeEnum(UserRole),
   password: z.string().optional(),
+  adminId: z.string().min(1),
 });
 
 
@@ -37,11 +45,25 @@ export async function upsertUser(formData: FormData) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { id, name, email, role, password } = validatedFields.data;
+  const { id, name, email, role, password, adminId } = validatedFields.data;
 
   try {
     if (id) {
         // Update user
+        const userToUpdate = await prisma.user.findFirst({
+            where: {
+                id,
+                OR: [
+                    { id: adminId }, // Admin can edit their own profile
+                    { createdById: adminId } // Admin can edit users they created
+                ]
+            }
+        });
+
+        if (!userToUpdate) {
+            return { error: "User not found or you do not have permission to edit this user." };
+        }
+
         const updateData: { name: string; email: string; role: UserRole; password?: string } = { name, email, role };
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
@@ -56,7 +78,7 @@ export async function upsertUser(formData: FormData) {
         return { success: true, user: updatedUser };
 
     } else {
-      // Create a brand new user
+      // Create a brand new user (staff)
       if (!password) {
         return { errors: { password: ["Password is required for new users."] } };
       }
@@ -72,7 +94,9 @@ export async function upsertUser(formData: FormData) {
           name,
           email,
           role,
-          password: hashedPassword
+          password: hashedPassword,
+          createdById: adminId, // Link new user to the creating admin
+          emailVerified: new Date(), // Staff accounts are pre-verified
         },
       });
       revalidatePath("/settings/users");
@@ -87,8 +111,16 @@ export async function upsertUser(formData: FormData) {
   }
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string, adminId: string) {
     try {
+        const userToDelete = await prisma.user.findFirst({
+            where: { id: userId, createdById: adminId }
+        });
+
+        if (!userToDelete) {
+             return { error: "User not found or you do not have permission to delete this user." };
+        }
+
         await prisma.user.delete({ where: { id: userId } });
         
         revalidatePath("/settings/users");

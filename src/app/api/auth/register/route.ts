@@ -37,26 +37,37 @@ export async function POST(req: NextRequest) {
     const userCount = await prisma.user.count();
     const emailVerificationToken = crypto.randomBytes(32).toString('base64url');
 
+    // The first user to ever register is the system-wide super admin.
+    // They don't have a `createdById` and are the root of a tenancy tree.
+    const isFirstUser = userCount === 0;
+
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: userCount === 0 ? UserRole.ADMIN : UserRole.CASHIER,
-        emailVerificationToken,
+        role: isFirstUser ? UserRole.ADMIN : UserRole.CASHIER,
+        emailVerificationToken: isFirstUser ? emailVerificationToken : null, // Only first user needs to verify
+        emailVerified: isFirstUser ? null : new Date(), // Staff are auto-verified
         subscriptionStatus: SubscriptionStatus.TRIAL,
         trialEndsAt: addDays(new Date(), 14), // 14-day trial
       },
     });
-
-    // Send verification email
-    await sendVerificationEmail(email, emailVerificationToken);
+    
+    // Only send verification email to the first-ever admin user
+    if (isFirstUser) {
+      await sendVerificationEmail(email, emailVerificationToken);
+    }
 
     const { password: _, ...userWithoutPassword } = newUser;
 
+    const message = isFirstUser 
+        ? "Registration successful. Please check your email to verify your account."
+        : "User account created successfully.";
+
     return NextResponse.json({ 
         user: userWithoutPassword,
-        message: "Registration successful. Please check your email to verify your account."
+        message: message
     }, { status: 201 });
 
   } catch (error) {

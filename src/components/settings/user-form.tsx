@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "../ui/separator";
+import { useAuth } from "@/context/auth-context";
 
 const UserFormSchema = z.object({
   id: z.string().optional(),
@@ -30,7 +31,7 @@ const UserFormSchema = z.object({
     message: "Passwords do not match",
     path: ["confirmPassword"],
 }).refine(data => {
-    if (data.password) {
+    if (data.password && data.password.length > 0) {
         return data.password.length >= 6;
     }
     return true;
@@ -44,6 +45,8 @@ type UserFormValues = z.infer<typeof UserFormSchema>;
 export function UserForm({ user, onFinished }: { user: User | null, onFinished: () => void }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
+  
   const form = useForm<UserFormValues>({
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
@@ -59,9 +62,11 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
   const { formState, register, handleSubmit, setValue, watch } = form;
 
   const onSubmit = async (data: UserFormValues) => {
+    if (!adminUser) return toast({ variant: 'destructive', title: 'Authentication error' });
+
     const formData = new FormData();
     
-    // Only append fields that have values
+    formData.append('adminId', adminUser.id);
     if (data.id) formData.append('id', data.id);
     formData.append('name', data.name);
     formData.append('email', data.email);

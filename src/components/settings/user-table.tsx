@@ -46,10 +46,10 @@ export function UserTable({ users, onEdit }: UserTableProps) {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !currentUser) return;
 
     setIsDeleting(true);
-    const result = await deleteUser(selectedUser.id);
+    const result = await deleteUser(selectedUser.id, currentUser.id);
     setIsDeleting(false);
 
     if (result.success) {
