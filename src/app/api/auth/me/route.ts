@@ -6,8 +6,7 @@ import prisma from '@/lib/prisma';
 import { User } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
-  const cookieStore = cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookies().get('token')?.value;
 
   if (!token) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -38,6 +37,8 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('[ME_GET]', error);
     // This could be an expired token
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    response.cookies.delete('token');
+    return response;
   }
 }
