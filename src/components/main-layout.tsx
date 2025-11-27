@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingCart, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingBag, Folder, Wrench } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingBag, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingCart, Folder, Wrench } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
