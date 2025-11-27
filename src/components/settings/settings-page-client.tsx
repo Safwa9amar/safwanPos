@@ -113,13 +113,14 @@ export function SettingsPageClient() {
                                 {t('settings.languageDescription')}
                             </p>
                         </div>
-                        <Select onValueChange={(value) => setLanguage(value as 'en' | 'ar')} defaultValue={language}>
+                        <Select onValueChange={(value) => setLanguage(value as 'en' | 'ar' | 'dz')} defaultValue={language}>
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Language" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="en">English</SelectItem>
                             <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                            <SelectItem value="dz">العربية (الدارجة)</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>
