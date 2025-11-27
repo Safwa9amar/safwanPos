@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-    shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 
 }
 
@@ -21,7 +21,7 @@ model User {
   password                  String
   passwordResetToken        String?   @unique
   passwordResetTokenExpires DateTime?
-  role                      UserRole  @default(CASHIER)
+  role                      UserRole  @default(ADMIN)
   subscriptionStatus        SubscriptionStatus @default(TRIAL)
   trialEndsAt               DateTime?
 
