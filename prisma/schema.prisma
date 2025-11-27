@@ -2,6 +2,7 @@
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 generator client {
@@ -14,7 +15,7 @@ model User {
   email           String    @unique
   emailVerified   DateTime?
   password        String
-  role            UserRole  @default(CASHIER)
+  role            UserRole  @default(ADMIN)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
