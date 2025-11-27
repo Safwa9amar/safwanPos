@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -77,9 +78,10 @@ export default function LoginPageClient() {
         body: JSON.stringify(data),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t("login.failedDescription"));
+        throw new Error(responseData.error || t("login.failedDescription"));
       }
       
       await checkUser(); // Re-check user status to update context
@@ -105,18 +107,22 @@ export default function LoginPageClient() {
         body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
       });
 
+       const responseData = await response.json();
+
        if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t("register.failedTitle"));
+        throw new Error(responseData.error || t("register.failedTitle"));
       }
 
       toast({
         title: t("register.successTitle"),
-        description: t("register.successDescription"),
+        description: responseData.message || t("register.successDescription"),
       });
 
-      // Automatically log the user in after successful registration
-      await onLoginSubmit({ email: data.email, password: data.password });
+      // Don't auto-login, show message to verify email
+      loginForm.reset();
+      registerForm.reset();
+      // Potentially switch to login tab
+      // For now, just show toast.
 
     } catch (error: any)      {
       toast({
@@ -163,7 +169,12 @@ export default function LoginPageClient() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">{t("login.passwordLabel")}</Label>
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="password">{t("login.passwordLabel")}</Label>
+                        <Link href="/forgot-password" passHref>
+                           <Button variant="link" className="px-0 text-xs h-auto">Forgot password?</Button>
+                        </Link>
+                    </div>
                     <Input
                       id="password"
                       type="password"

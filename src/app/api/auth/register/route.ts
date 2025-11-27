@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { UserRole } from '@prisma/client';
+import crypto from 'crypto';
+import { sendVerificationEmail } from '@/lib/email';
 
 const RegisterSchema = z.object({
   name: z.string().min(1),
@@ -31,22 +33,29 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const userCount = await prisma.user.count();
+    const emailVerificationToken = crypto.randomBytes(32).toString('base64url');
 
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        // The first user registered is an ADMIN, subsequent users are CASHIERS
         role: userCount === 0 ? UserRole.ADMIN : UserRole.CASHIER,
+        emailVerificationToken,
       },
     });
 
+    // Send verification email
+    await sendVerificationEmail(email, emailVerificationToken);
+
     const { password: _, ...userWithoutPassword } = newUser;
 
-    return NextResponse.json({ user: userWithoutPassword }, { status: 201 });
+    return NextResponse.json({ 
+        user: userWithoutPassword,
+        message: "Registration successful. Please check your email to verify your account."
+    }, { status: 201 });
+
   } catch (error) {
     console.error('[REGISTER_POST]', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
