@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingCart, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingBag } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingCart, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingBag, Folder, Wrench } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -33,9 +33,14 @@ import {
 import { useTranslation } from "@/hooks/use-translation";
 import { differenceInDays, formatDistanceToNow } from "date-fns";
 import { Badge } from "./ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { cn } from "@/lib/utils";
+import { UserRole } from "@prisma/client";
 
+const SidebarLabel = ({ children }: { children: React.ReactNode }) => (
+    <p className="px-4 pt-4 pb-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">
+        {children}
+    </p>
+);
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -67,6 +72,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   const trialStatus = getTrialStatus();
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   return (
     <SidebarProvider>
@@ -79,7 +85,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
         <SidebarContent>
           <SidebarMenu>
-            <SidebarMenuItem>
+
+             <SidebarLabel>Core</SidebarLabel>
+             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/pos'} tooltip={t('sidebar.pos_screen')}>
                 <Link href="/pos">
                   <ShoppingBag />
@@ -95,109 +103,93 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
-            <Accordion type="multiple" className="w-full">
-                {/* Inventory */}
-                <AccordionItem value="inventory" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <Package className="h-4 w-4 mr-2" />
-                        <span>{t('sidebar.inventory_management')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                        <SidebarMenuItem>
-                            <Link href="/inventory" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname === '/inventory' && "bg-sidebar-accent")}>{t('sidebar.inventory')}</Link>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <Link href="/inventory/categories" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname === '/inventory/categories' && "bg-sidebar-accent")}>{t('sidebar.categories')}</Link>
-                        </SidebarMenuItem>
-                    </AccordionContent>
-                </AccordionItem>
 
-                {/* Sales Management */}
-                <AccordionItem value="sales" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <ShoppingCart className="h-4 w-4 mr-2"/>
-                        <span>{t('sidebar.sales_management')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                         <SidebarMenuItem>
-                            <Link href="/reports/history" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname.startsWith('/reports/history') && "bg-sidebar-accent")}>{t('sidebar.sales_history')}</Link>
-                         </SidebarMenuItem>
-                          <SidebarMenuItem>
-                            <Link href="/stats" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname === '/stats' && "bg-sidebar-accent")}>{t('sidebar.stats')}</Link>
-                         </SidebarMenuItem>
-                         <SidebarMenuItem>
-                            <Link href="/reports" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname === '/reports' && "bg-sidebar-accent")}>{t('reports.ai_reports')}</Link>
-                         </SidebarMenuItem>
-                    </AccordionContent>
-                </AccordionItem>
-                
-                {/* Purchases Management */}
-                <AccordionItem value="purchases" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <Truck className="h-4 w-4 mr-2"/>
-                        <span>{t('sidebar.purchases_management')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                        <SidebarMenuItem>
-                            <Link href="/suppliers" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname.startsWith('/suppliers') && "bg-sidebar-accent")}>{t('sidebar.suppliers')}</Link>
-                        </SidebarMenuItem>
-                    </AccordionContent>
-                </AccordionItem>
+            <SidebarSeparator className="my-4" />
 
-                {/* Customers Management */}
-                <AccordionItem value="customers" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <Users className="h-4 w-4 mr-2"/>
-                        <span>{t('sidebar.customers_management')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                        <SidebarMenuItem>
-                            <Link href="/customers" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname.startsWith('/customers') && "bg-sidebar-accent")}>{t('sidebar.customers')}</Link>
-                        </SidebarMenuItem>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-
+            <SidebarLabel>Management</SidebarLabel>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/settings/users')} tooltip={t('sidebar.staff_accounts')}>
-                    <Link href="/settings/users">
-                        <Contact />
-                        {t('sidebar.staff_accounts')}
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip={t('sidebar.inventory_management')}>
+                <Link href="/inventory">
+                  <Package />
+                  {t('sidebar.inventory_management')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.purchases_management')}>
+                    <Link href="/suppliers">
+                        <Truck />
+                        {t('sidebar.purchases_management')}
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
+                     <Link href="/customers">
+                        <Users />
+                        {t('sidebar.customers_management')}
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             
-             <Accordion type="multiple" className="w-full">
-                {/* Shipping */}
-                <AccordionItem value="shipping" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <Truck className="h-4 w-4 mr-2" />
-                        <span>{t('sidebar.shipping_delivery')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                        {/* Add shipping links here */}
-                    </AccordionContent>
-                </AccordionItem>
-                {/* Financial */}
-                 <AccordionItem value="financial" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline">
-                        <Banknote className="h-4 w-4 mr-2" />
-                        <span>{t('sidebar.financial_management')}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-1 pl-4">
-                        <SidebarMenuItem>
-                            <Link href="/expenses" className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-sidebar-accent text-sm", pathname.startsWith('/expenses') && "bg-sidebar-accent")}>{t('sidebar.expenses')}</Link>
-                        </SidebarMenuItem>
-                    </AccordionContent>
-                </AccordionItem>
-             </Accordion>
+            {isAdmin && (
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/expenses')} tooltip={t('sidebar.expenses')}>
+                        <Link href="/expenses">
+                        <Landmark />
+                        {t('sidebar.expenses')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
 
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/billing')} tooltip={t('sidebar.payment_center')}>
-                <Link href="/billing">
-                  <Wallet />
-                  {t('sidebar.payment_center')}
+            {isAdmin && (
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
+                        <Link href="/repairs">
+                        <Wrench />
+                        {t('sidebar.repairs')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
+
+            <SidebarSeparator className="my-4" />
+
+            <SidebarLabel>Analytics</SidebarLabel>
+             {isAdmin && (
+                <>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/reports/history')} tooltip={t('sidebar.sales_history')}>
+                        <Link href="/reports/history">
+                            <History />
+                            {t('sidebar.sales_history')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/stats'} tooltip={t('sidebar.stats')}>
+                        <Link href="/stats">
+                            <BarChart />
+                            {t('sidebar.stats')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/reports'} tooltip={t('reports.ai_reports')}>
+                        <Link href="/reports">
+                            <Bot />
+                            {t('reports.ai_reports')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                </>
+            )}
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/product-discovery')} tooltip={t('home.links.product_discovery.title')}>
+                <Link href="/product-discovery">
+                  <Package />
+                  {t('home.links.product_discovery.title')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -207,6 +199,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter>
            <SidebarMenu>
+             {isAdmin && (
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/settings/users')} tooltip={t('sidebar.staff_accounts')}>
+                        <Link href="/settings/users">
+                            <Contact />
+                            {t('sidebar.staff_accounts')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             )}
               <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={pathname.startsWith('/settings') && !pathname.startsWith('/settings/users')} tooltip={t('sidebar.settings')}>
                       <Link href="/settings">
@@ -215,6 +217,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                       </Link>
                   </SidebarMenuButton>
               </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/billing')} tooltip={t('sidebar.payment_center')}>
+                    <Link href="/billing">
+                    <Wallet />
+                    {t('sidebar.payment_center')}
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
            </SidebarMenu>
            {trialStatus && (
                <div className="p-2">
