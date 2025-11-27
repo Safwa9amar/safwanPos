@@ -42,10 +42,9 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
 
   const focusBarcode = useCallback(() => {
     setTimeout(() => {
-      console.log("focuesd")
       barcodeInputRef.current?.focus();
     }, 0);
-  }, [barcode]);
+  }, []);
 
   const handleBarcodeScan = useCallback(async () => {
     if (!barcode || !user) return;
@@ -319,3 +318,5 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     </div>
   );
 }
+
+    

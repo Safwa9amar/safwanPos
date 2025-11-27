@@ -167,3 +167,5 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
     </Dialog>
   );
 }
+
+    

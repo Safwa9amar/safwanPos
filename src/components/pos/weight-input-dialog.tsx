@@ -88,3 +88,5 @@ export function WeightInputDialog({ isOpen, onOpenChange, product, onConfirm }: 
         </Dialog>
     );
 }
+
+    

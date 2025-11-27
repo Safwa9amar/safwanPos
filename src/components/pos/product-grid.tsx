@@ -24,3 +24,5 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
         </div>
     )
 }
+
+    

@@ -79,3 +79,5 @@ export function CartItem({ item, cart }: { item: CartItemType, cart: ReturnType<
     </div>
   );
 }
+
+    

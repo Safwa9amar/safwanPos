@@ -22,7 +22,7 @@ export type CartItem = {
   price: number;
   quantity: number;
   stock: number;
-  unit: string;
+  unit: 'EACH' | 'KG' | 'G' | 'L' | 'ML';
 };
 
 export interface SaleItem extends PrismaSaleItem {
@@ -61,3 +61,5 @@ export interface CustomerWithDetails extends Customer {
     sales: SaleWithItemsAndCustomer[];
     payments: Payment[];
 }
+
+    

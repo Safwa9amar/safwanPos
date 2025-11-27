@@ -62,3 +62,5 @@ export function ProductCard({ product, onProductSelect }: ProductCardProps) {
         </Card>
     );
 }
+
+    
