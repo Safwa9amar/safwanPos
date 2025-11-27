@@ -8,8 +8,19 @@
   "sidebar.suppliers": "المورّدين",
   "sidebar.customers": "الزباين",
   "sidebar.repairs": "الصلّاحات",
-  "sidebar.sales_history": "السجل",
+  "sidebar.sales_history": "سجل البيع",
   "sidebar.expenses": "المصاريف",
+  "sidebar.pos_screen": "شاشة البيع",
+  "sidebar.dashboard": "لوحة التحكم",
+  "sidebar.inventory_management": "الأصناف والمخزون",
+  "sidebar.sales_management": "إدارة المبيعات",
+  "sidebar.purchases_management": "إدارة المشتريات",
+  "sidebar.customers_management": "إدارة العملاء",
+  "sidebar.staff_accounts": "حسابات الموظفين",
+  "sidebar.shipping_delivery": "الشحن والتوصيل",
+  "sidebar.financial_management": "الإدارة المالية",
+  "sidebar.payment_center": "مركز المدفوعات",
+  "sidebar.categories": "الفئات",
 
   "home.title": "لوحة القيادة",
   "home.description": "مرحبا {{name}}! اختار واش تحب تبدا بيه.",
@@ -405,5 +416,3 @@
   "users.deleteConfirmTitle": "تحذف المستخدم؟",
   "users.deleteConfirmDescription": "العملية نهائية وما تقدرش ترجّعها."
 }
-
-    

@@ -23,8 +23,8 @@ const allLinks = [
     { href: "/reports", icon: FileText, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: [UserRole.ADMIN] },
     { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: [UserRole.ADMIN] },
     { href: "/reports/ai-history", icon: Bot, titleKey: "home.links.ai_history.title", descriptionKey: "home.links.ai_history.description", role: [UserRole.ADMIN] },
-    { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: [UserRole.ADMIN, UserRole.CASHIER], isNew: true },
+    // { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    // { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: [UserRole.ADMIN, UserRole.CASHIER], isNew: true },
 ];
 
 export function HomePageClient() {
