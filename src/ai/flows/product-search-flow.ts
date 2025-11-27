@@ -99,47 +99,67 @@ const productSearchFlow = ai.defineFlow(
  * @returns A promise that resolves to the image URL.
  */
 async function scrapeGoogleImages(query: string): Promise<string> {
-    const searchQuery = encodeURIComponent(query);
-    const searchUrl = `https://www.google.com/search?q=${searchQuery}&tbm=isch`;
+  const searchQuery = encodeURIComponent(query);
+  const searchUrl = `https://www.google.com/search?q=${searchQuery}&tbm=isch`;
 
-    const response = await fetch(searchUrl, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-    });
+  const response = await fetch(searchUrl, {
+      headers: {
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+  });
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch Google Images page: ${response.statusText}`);
-    }
+  if (!response.ok) {
+      throw new Error(`Failed to fetch Google Images page: ${response.statusText}`);
+  }
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
+  const html = await response.text();
+  const $ = cheerio.load(html);
 
-    // Find the first link that looks like an image result.
-    const firstImageLink = $('a[href^="/imgres"]');
+  /** --------------------------------------------------------
+   * 1) المحاولة الأولى: الحصول على src base64 من <img>
+   * ------------------------------------------------------ */
+  const base64Img = $('img[src^="data:image"]')?.first()?.attr('src');
+  if (base64Img && base64Img.startsWith('data:image')) {
+    console.log(base64Img)
+      return base64Img; // <<=== هنا ترجع الـ base64 مباشرة
+  }
 
-    if (firstImageLink.length > 0) {
-        const href = firstImageLink.attr('href');
-        if (href) {
-            const urlParams = new URLSearchParams(href.split('?')[1]);
-            const imgurl = urlParams.get('imgurl');
-            if (imgurl) {
-                return imgurl;
-            }
-        }
-    }
+  /** --------------------------------------------------------
+   * 2) إذا لم نجد base64: تحليل روابط /imgres للحصول على imgurl
+   * ------------------------------------------------------ */
+  const firstImageLink = $('a[href^="/imgres"]').first();
+  if (firstImageLink.length > 0) {
+      const href = firstImageLink.attr('href');
+      if (href) {
+          const urlParams = new URLSearchParams(href.split('?')[1]);
+          const imgurl = urlParams.get('imgurl');
+          console.log(imgurl)
 
-    // Fallback if the primary method fails
-    const firstImgTag = $('img[src^="data:image"]');
-     if (firstImgTag.length > 0) {
-        const parentAnchor = firstImgTag.closest('a');
-        if (parentAnchor && parentAnchor.attr('href')?.startsWith('/imgres')) {
-             const href = parentAnchor.attr('href')!;
-             const urlParams = new URLSearchParams(href.split('?')[1]);
-             const imgurl = urlParams.get('imgurl');
-             if (imgurl) return imgurl;
-        }
-    }
+          if (imgurl) {
+              return imgurl;
+          }
+      }
+  }
 
-    throw new Error('Could not find a valid image URL in the search results.');
+  /** --------------------------------------------------------
+   * 3) fallback إضافي: إيجاد <img> داخل <a href="/imgres">
+   * ------------------------------------------------------ */
+  const imgInsideA = $('a[href^="/imgres"] img').first();
+  if (imgInsideA.length > 0) {
+      const parent = imgInsideA.closest('a');
+      const href = parent.attr('href');
+      if (href?.startsWith('/imgres')) {
+          const params = new URLSearchParams(href.split('?')[1]);
+          const imgurl = params.get('imgurl');
+          console.log(imgurl)
+          if (imgurl) return imgurl;
+      }
+  }
+
+  /** --------------------------------------------------------
+   * 4) آخر حل: فشل كامل
+   * ------------------------------------------------------ */
+  throw new Error('Could not find any base64 or valid image URL in Google Images.');
 }
+
