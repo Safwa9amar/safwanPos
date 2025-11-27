@@ -1,27 +1,31 @@
 
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
 model User {
-  id                        String    @id @default(cuid())
-  name                      String?
-  email                     String    @unique
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      UserRole @default(CASHIER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   emailVerified             DateTime?
-  password                  String
-  role                      UserRole  @default(CASHIER)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
   emailVerificationToken    String?   @unique
   passwordResetToken        String?   @unique
   passwordResetTokenExpires DateTime?
 
-  // Relations
+  inventory         Inventory[]
   sales             Sale[]
   purchaseOrders    PurchaseOrder[]
   customers         Customer[]
@@ -30,7 +34,6 @@ model User {
   expenseCategories ExpenseCategory[]
   repairJobs        RepairJob[]
   reports           Report[]
-  inventory         Inventory[]
   userBarcodes      UserBarcode[]
   suppliers         Supplier[]
   categories        Category[]
@@ -41,41 +44,83 @@ enum UserRole {
   CASHIER
 }
 
-// --- Global Product Catalog ---
-
+// Global catalog of products
 model Product {
-  id                 String   @id @default(cuid())
-  name               String
-  image              String?
-  unit               ProductUnit @default(EACH)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  image       String?
+  unit        ProductUnit @default(EACH)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
-  categoryId         String?
-  category           Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  // Relations
-  inventory          Inventory[]
-  barcodes           Barcode[]
+  // A global product can be in many users' inventories
+  inventory   Inventory[]
+  // A global product can have many global barcodes
+  barcodes Barcode[]
+  // A global product can be in many sale items and purchase order items
+  saleItems   SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
 }
 
-model Category {
-  id      String    @id @default(cuid())
-  name    String
-  
-  userId  String
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  products Product[]
+// User-specific inventory details for a global product
+model Inventory {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  price     Float
+  costPrice Float
+  stock     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([name, userId])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // A user can have their own barcodes for an inventory item
+  userBarcodes UserBarcode[]
+
+  @@unique([userId, productId])
 }
 
+// Global barcodes that map to a single global product
 model Barcode {
   id        String   @id @default(cuid())
   code      String   @unique
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// User-specific barcodes that map to their inventory item
+model UserBarcode {
+  id          String   @id @default(cuid())
+  code        String
+  userId      String
+  inventoryId String
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@unique([name, userId])
 }
 
 enum ProductUnit {
@@ -86,69 +131,30 @@ enum ProductUnit {
   ML
 }
 
-
-// --- User-Specific Inventory ---
-
-model Inventory {
-  id          String   @id @default(cuid())
-  price       Float
-  costPrice   Float    @default(0)
-  stock       Float
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  // Relations
-  saleItems      SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
-  userBarcodes     UserBarcode[]
-
-  @@unique([userId, productId])
-}
-
-model UserBarcode {
-  id          String    @id @default(cuid())
-  code        String
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  @@unique([code, userId])
-}
-
-
-// --- Sales & Customers ---
-
 model Sale {
-  id           String      @id @default(cuid())
-  totalAmount  Float
-  amountPaid   Float
-  saleDate     DateTime    @default(now())
-  paymentType  PaymentType
-  
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  
-  customerId   String?
-  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  
-  items        SaleItem[]
+  id          String      @id @default(cuid())
+  userId      String
+  totalAmount Float
+  amountPaid  Float       @default(0)
+  paymentType PaymentType
+  saleDate    DateTime    @default(now())
+  customerId  String?
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items    SaleItem[]
 }
 
 model SaleItem {
-  id          String    @id @default(cuid())
-  quantity    Float
-  price       Float // Price at the time of sale
-  
-  saleId      String
-  sale        Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  id        String   @id @default(cauid())
+  saleId    String
+  productId String
+  quantity  Float
+  price     Float    // Price at the time of sale
+  costPrice Float    // Cost at the time of sale
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 }
 
 enum PaymentType {
@@ -158,49 +164,45 @@ enum PaymentType {
 }
 
 model Customer {
-  id       String    @id @default(cuid())
-  name     String
-  phone    String?
-  email    String?
-  address  String?
-  balance  Float     @default(0)
-  
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  sales    Sale[]
+  id      String   @id @default(cuid())
+  name    String
+  phone   String?
+  email   String?  @unique
+  address String?
+  balance Float    @default(0)
+  userId  String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sales  Sale[]
   payments Payment[]
 
   @@index([userId])
 }
 
 model Payment {
-  id           String    @id @default(cuid())
-  amount       Float
-  paymentDate  DateTime  @default(now())
-  notes        String?
-  
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Restrict)
-  
-  customerId   String
-  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    id          String @id @default(cuid())
+    customerId  String
+    amount      Float
+    paymentDate DateTime @default(now())
+    notes       String?
+    userId      String
+
+    customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([customerId])
 }
 
-
-// --- Purchasing & Suppliers ---
-
 model Supplier {
-  id           String  @id @default(cuid())
-  name         String
-  contactName  String?
-  email        String?
-  phone        String?
-  address      String?
-  
-  userId       String
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  address     String?
+  userId      String
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
 
   @@index([userId])
@@ -208,58 +210,52 @@ model Supplier {
 
 model PurchaseOrder {
   id                   String   @id @default(cuid())
-  orderDate            DateTime @default(now())
-  expectedDeliveryDate DateTime?
+  supplierId           String
+  userId               String
   status               String
   totalCost            Float
-  
-  userId               String
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  
-  supplierId           String
-  supplier             Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  orderDate            DateTime @default(now())
+  expectedDeliveryDate DateTime?
 
-  items                PurchaseOrderItem[]
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    PurchaseOrderItem[]
+
+  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
-  id              String        @id @default(cuid())
-  quantity        Int
-  costPrice       Float // Cost at the time of purchase
-  
+  id              String @id @default(cuid())
   purchaseOrderId String
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  
-  inventoryId     String
-  inventory       Inventory     @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-}
+  productId       String
+  quantity        Int
+  costPrice       Float
 
-
-// --- Other Business Operations ---
-
-model Expense {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  expenseDate DateTime
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  categoryId  String
-  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
 }
 
 model ExpenseCategory {
-  id       String    @id @default(cuid())
-  name     String
-  
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  expenses Expense[]
+    id       String    @id @default(cuid())
+    name     String
+    userId   String
+    expenses Expense[]
 
-  @@unique([name, userId])
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([name, userId])
+}
+
+model Expense {
+    id          String   @id @default(cuid())
+    description String
+    amount      Float
+    expenseDate DateTime
+    userId      String
+    categoryId  String
+
+    user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }
 
 model RepairJob {
@@ -270,15 +266,15 @@ model RepairJob {
   imei            String?
   reportedProblem String
   notes           String?
-  status          String
-  boxNumber       Int?
+  status          String   @default("PENDING")
   estimatedCost   Float?
   finalCost       Float?
+  boxNumber       Int?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {
@@ -287,5 +283,6 @@ model Report {
     content   String   @db.Text
     createdAt DateTime @default(now())
     userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
