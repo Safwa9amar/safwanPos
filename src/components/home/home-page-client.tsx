@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/hooks/use-translation';
 import { 
-    CreditCard, FileText, Package, BarChart, Truck, Users, Wrench, User, 
+    CreditCard, FileText, Package, BarChart, Truck, Users, Wrench, 
     History, Landmark, Bot, Telescope, Star, Search, HomeIcon 
 } from "lucide-react";
 import Link from 'next/link';
@@ -14,17 +14,17 @@ import { useAuth } from '@/context/auth-context';
 import { UserRole } from '@prisma/client';
 
 const allLinks = [
-    { href: "/pos", icon: CreditCard, title: "sidebar.pos", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/inventory", icon: Package, title: "sidebar.inventory", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/suppliers", icon: Truck, title: "sidebar.suppliers", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/customers", icon: Users, title: "sidebar.customers", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/expenses", icon: Landmark, title: "sidebar.expenses", role: [UserRole.ADMIN] },
-    { href: "/stats", icon: BarChart, title: "sidebar.stats", role: [UserRole.ADMIN] },
-    { href: "/reports", icon: FileText, title: "reports.ai_reports", role: [UserRole.ADMIN] },
-    { href: "/reports/history", icon: History, title: "sidebar.sales_history", role: [UserRole.ADMIN] },
-    { href: "/reports/ai-history", icon: Bot, title: "reports.history.title", role: [UserRole.ADMIN] },
-    { href: "/repairs", icon: Wrench, title: "sidebar.repairs", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/product-discovery", icon: Telescope, title: "Product Discovery", role: [UserRole.ADMIN, UserRole.CASHIER], isNew: true },
+    { href: "/pos", icon: CreditCard, titleKey: "home.links.pos.title", descriptionKey: "home.links.pos.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    { href: "/inventory", icon: Package, titleKey: "home.links.inventory.title", descriptionKey: "home.links.inventory.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    { href: "/customers", icon: Users, titleKey: "home.links.customers.title", descriptionKey: "home.links.customers.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    { href: "/expenses", icon: Landmark, titleKey: "home.links.expenses.title", descriptionKey: "home.links.expenses.description", role: [UserRole.ADMIN] },
+    { href: "/stats", icon: BarChart, titleKey: "home.links.stats.title", descriptionKey: "home.links.stats.description", role: [UserRole.ADMIN] },
+    { href: "/reports", icon: FileText, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: [UserRole.ADMIN] },
+    { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: [UserRole.ADMIN] },
+    { href: "/reports/ai-history", icon: Bot, titleKey: "home.links.ai_history.title", descriptionKey: "home.links.ai_history.description", role: [UserRole.ADMIN] },
+    { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
+    { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: [UserRole.ADMIN, UserRole.CASHIER], isNew: true },
 ];
 
 export function HomePageClient() {
@@ -38,8 +38,10 @@ export function HomePageClient() {
         return false;
       }
       if (searchTerm) {
-        const title = link.title === 'Product Discovery' ? link.title : t(link.title);
-        return title.toLowerCase().includes(searchTerm.toLowerCase());
+        const title = t(link.titleKey);
+        const description = t(link.descriptionKey);
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        return title.toLowerCase().includes(lowerCaseSearchTerm) || description.toLowerCase().includes(lowerCaseSearchTerm);
       }
       return true;
     });
@@ -71,7 +73,8 @@ export function HomePageClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {availableLinks.map(link => {
             const Icon = link.icon;
-            const title = link.title === 'Product Discovery' ? link.title : t(link.title);
+            const title = t(link.titleKey);
+            const description = t(link.descriptionKey);
             return (
                 <Link href={link.href} key={link.href} passHref>
                     <Card className="hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative">
@@ -87,7 +90,7 @@ export function HomePageClient() {
                             <CardTitle className="text-lg">{title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                            <CardDescription>{t(`${link.title.split('.')[0]}.description`)}</CardDescription>
+                            <CardDescription>{description}</CardDescription>
                         </CardContent>
                     </Card>
                 </Link>
