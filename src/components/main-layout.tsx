@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot, Telescope } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot, Telescope, Star } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -31,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTranslation } from "@/hooks/use-translation";
+import { differenceInDays, formatDistanceToNow } from "date-fns";
+import { Badge } from "./ui/badge";
 
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -49,6 +51,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase();
   };
+  
+  const getTrialStatus = () => {
+      if (user?.subscriptionStatus === 'TRIAL' && user.trialEndsAt) {
+          const daysLeft = differenceInDays(new Date(user.trialEndsAt), new Date());
+          if (daysLeft > 0) {
+              return `${daysLeft} trial days left`;
+          } else if (daysLeft === 0) {
+              return "Trial ends today";
+          }
+      }
+      return null;
+  }
+
+  const trialStatus = getTrialStatus();
 
   return (
     <SidebarProvider>
@@ -172,6 +188,18 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
               </SidebarMenuItem>
            </SidebarMenu>
+           {trialStatus && (
+               <div className="p-2">
+                   <Button variant="outline" className="w-full h-auto py-2" asChild>
+                       <Link href="/billing">
+                        <div className="flex flex-col items-center text-center">
+                            <span className="text-xs font-semibold">{trialStatus}</span>
+                            <span className="text-xs text-primary">Upgrade to Pro</span>
+                        </div>
+                       </Link>
+                   </Button>
+               </div>
+           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 p-2 h-auto">
@@ -183,6 +211,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <span className="font-medium truncate">{user?.name || user?.email}</span>
                     <span className="text-muted-foreground text-xs">{user?.role}</span>
                 </div>
+                 {user?.subscriptionStatus === 'ACTIVE' && <Badge variant="secondary" className="ml-auto text-green-500">PRO</Badge>}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
@@ -191,6 +220,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>{t('user.profile')}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/billing')}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />

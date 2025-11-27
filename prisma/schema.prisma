@@ -9,50 +9,252 @@ generator client {
 }
 
 model User {
-  id                    String      @id @default(cuid())
-  name                  String?
-  email                 String   @unique
-  password              String
-  role                  UserRole @default(CASHIER)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  emailVerified   DateTime?
+  password        String
+  role            UserRole  @default(CASHIER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  emailVerified         DateTime?
-  emailVerificationToken String?   @unique
-  
-  passwordResetToken        String?   @unique
+  // For email verification
+  emailVerificationToken  String? @unique
+
+  // For password reset
+  passwordResetToken        String? @unique
   passwordResetTokenExpires DateTime?
 
-  sales                 Sale[]
-  purchaseOrders        PurchaseOrder[]
-  customers             Customer[]
-  payments              Payment[]
-  expenses              Expense[]
-  expenseCategories     ExpenseCategory[]
-  repairJobs            RepairJob[]
-  reports               Report[]
-  suppliers             Supplier[]
-  inventory             Inventory[]
-}
+  // For Subscriptions & Billing
+  subscriptionStatus      SubscriptionStatus @default(TRIAL)
+  trialEndsAt             DateTime?
 
-enum UserRole {
-  ADMIN
-  CASHIER
+  // Relationships
+  products          Product[]
+  categories        Category[]
+  sales             Sale[]
+  purchaseOrders    PurchaseOrder[]
+  customers         Customer[]
+  payments          Payment[]
+  expenses          Expense[]
+  expenseCategories ExpenseCategory[]
+  repairJobs        RepairJob[]
+  reports           Report[]
+  barcodes          Barcode[]
+  suppliers         Supplier[]
 }
 
 model Product {
-  id            String    @id @default(cuid())
-  name          String
-  image         String?
-  unit          ProductUnit @default(EACH)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  price       Float
+  costPrice   Float    @default(0)
+  stock       Float
+  unit        ProductUnit @default(EACH)
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
-  categoryId    String?
-  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onUpdate: NoAction, onDelete: SetNull)
+
+  barcodes    Barcode[]
+  saleItems   SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@unique([name, userId])
+}
+
+model Barcode {
+  id        String   @id @default(cuid())
+  code      String
   
-  inventory     Inventory[] // Link to user-specific inventory entries
-  barcodes      Barcode[]
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([code, userId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  products  Product[]
+
+  @@unique([name, userId])
+}
+
+model Sale {
+  id          String      @id @default(cuid())
+  saleDate    DateTime    @default(now())
+  totalAmount Float
+  amountPaid  Float       @default(0)
+  paymentType PaymentType @default(CASH)
+
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id], onUpdate: NoAction, onDelete: SetNull)
+
+  items       SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  quantity  Float
+  price     Float
+  
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+model Supplier {
+  id             String   @id @default(cuid())
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  purchaseOrders PurchaseOrder[]
+
+  @@unique([name, userId])
+}
+
+model PurchaseOrder {
+  id                   String   @id @default(cuid())
+  orderDate            DateTime @default(now())
+  expectedDeliveryDate DateTime?
+  status               String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  totalCost            Float
+
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  supplierId           String
+  supplier             Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  items                PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  quantity        Int
+  costPrice       Float
+
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  balance   Float    @default(0) // Positive for debt, negative for credit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sales     Sale[]
+  payments  Payment[]
+
+   @@unique([name, userId])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  paymentDate DateTime @default(now())
+  amount      Float
+  notes       String?
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id           String    @id @default(cuid())
+  description  String
+  amount       Float
+  expenseDate  DateTime
+  
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId   String
+  category     ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expenses  Expense[]
+
+  @@unique([name, userId])
+}
+
+model RepairJob {
+  id              String   @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  deviceModel     String
+  imei            String?
+  reportedProblem String
+  notes           String?
+  status          String   @default("PENDING")
+  estimatedCost   Float?
+  finalCost       Float?
+  boxNumber       Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum ProductUnit {
@@ -63,85 +265,9 @@ enum ProductUnit {
   ML
 }
 
-model Category {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  products  Product[]
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@unique([name, userId])
-}
-
-model Inventory {
-  id          String   @id @default(cuid())
-  price       Float
-  costPrice   Float    @default(0)
-  stock       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  saleItems   SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
-  userBarcodes UserBarcode[]
-
-  @@unique([userId, productId])
-}
-
-model Barcode {
-  id          String @id @default(cuid())
-  code        String @unique
-  
-  productId   String
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model UserBarcode {
-  id          String @id @default(cuid())
-  code        String
-  
-  userId      String
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  @@unique([code, userId])
-}
-
-model Sale {
-  id           String      @id @default(cuid())
-  saleDate     DateTime    @default(now())
-  totalAmount  Float
-  paymentType  PaymentType
-  amountPaid   Float
-
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-
-  customerId   String?
-  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  items        SaleItem[]
-}
-
-model SaleItem {
-  id          String   @id @default(cuid())
-  quantity    Float
-  price       Float
-  
-  saleId      String
-  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+enum UserRole {
+  ADMIN
+  CASHIER
 }
 
 enum PaymentType {
@@ -150,128 +276,9 @@ enum PaymentType {
   CREDIT
 }
 
-model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String?
-  email     String?
-  address   String?
-  balance   Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  sales     Sale[]
-  payments  Payment[]
-}
-
-model Payment {
-  id          String   @id @default(cuid())
-  amount      Float
-  paymentDate DateTime @default(now())
-  notes       String?
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-}
-
-model Supplier {
-  id           String   @id @default(cuid())
-  name         String
-  contactName  String?
-  email        String?
-  phone        String?
-  address      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  purchaseOrders PurchaseOrder[]
-}
-
-model PurchaseOrder {
-  id                   String   @id @default(cuid())
-  orderDate            DateTime @default(now())
-  expectedDeliveryDate DateTime?
-  totalCost            Float
-  status               String
-  
-  userId               String
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  supplierId           String
-  supplier             Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  
-  items                PurchaseOrderItem[]
-}
-
-model PurchaseOrderItem {
-  id              String   @id @default(cuid())
-  quantity        Int
-  costPrice       Float
-  
-  purchaseOrderId String
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-
-  inventoryId     String
-  inventory       Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
-}
-
-model Expense {
-  id          String    @id @default(cuid())
-  description String
-  amount      Float
-  expenseDate DateTime
-  
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  categoryId  String
-  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-}
-
-model ExpenseCategory {
-  id       String    @id @default(cuid())
-  name     String
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expenses Expense[]
-
-  @@unique([name, userId])
-}
-
-model RepairJob {
-  id              String    @id @default(cuid())
-  customerName    String
-  customerPhone   String
-  deviceModel     String
-  imei            String?
-  reportedProblem String    @db.Text
-  notes           String?   @db.Text
-  status          String
-  boxNumber       Int?
-  estimatedCost   Float?
-  finalCost       Float?
-
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model Report {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  INACTIVE
+  CANCELED
 }

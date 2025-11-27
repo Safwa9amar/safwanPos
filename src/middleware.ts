@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { UserRole } from '@prisma/client';
+import { UserRole, SubscriptionStatus } from '@prisma/client';
 import * as jose from 'jose';
 
 const protectedRoutes: { path: string, roles: UserRole[] }[] = [
@@ -10,29 +10,33 @@ const protectedRoutes: { path: string, roles: UserRole[] }[] = [
     { path: '/reports', roles: [UserRole.ADMIN] },
     { path: '/stats', roles: [UserRole.ADMIN] },
     { path: '/customers', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path
-: '/suppliers', roles: [UserRole.ADMIN, UserRole.CASHIER] },
+    { path: '/suppliers', roles: [UserRole.ADMIN, UserRole.CASHIER] },
     { path: '/repairs', roles: [UserRole.ADMIN, UserRole.CASHIER] },
     { path: '/expenses', roles: [UserRole.ADMIN] },
     { path: '/settings', roles: [UserRole.ADMIN] },
+    { path: '/billing', roles: [UserRole.ADMIN, UserRole.CASHIER] },
 ];
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route.path));
-  
-  if (pathname.startsWith('/login') && token) {
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
+
+  if (isAuthPage) {
+    if (token) {
       try {
         await jose.jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET as string));
         return NextResponse.redirect(new URL('/pos', request.url));
       } catch (error) {
-        // Invalid token, allow access to /login
+        // Invalid token, allow access to auth page
       }
+    }
+    return NextResponse.next();
   }
 
-
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route.path));
+  
   if (isProtectedRoute) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
@@ -46,6 +50,20 @@ export async function middleware(request: NextRequest) {
       
       if (requiredRoles && !requiredRoles.includes(userRole)) {
         return NextResponse.redirect(new URL('/pos', request.url)); // Redirect to a safe page
+      }
+      
+      // Subscription Check
+      const trialEndsAt = payload.trialEndsAt ? new Date(payload.trialEndsAt as string) : null;
+      const subscriptionStatus = payload.subscriptionStatus as SubscriptionStatus;
+
+      if (subscriptionStatus === SubscriptionStatus.TRIAL && trialEndsAt && new Date() > trialEndsAt) {
+          if (pathname !== '/billing' && !pathname.startsWith('/api/auth/logout')) {
+              return NextResponse.redirect(new URL('/billing', request.url));
+          }
+      } else if (subscriptionStatus === SubscriptionStatus.INACTIVE || subscriptionStatus === SubscriptionStatus.CANCELED) {
+          if (pathname !== '/billing' && !pathname.startsWith('/api/auth/logout')) {
+               return NextResponse.redirect(new URL('/billing', request.url));
+          }
       }
 
     } catch (error) {
@@ -61,13 +79,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|verify-email|forgot-password|reset-password).*)',
   ],
 };

@@ -56,7 +56,7 @@
     "register.confirmPasswordLabel": "تأكيد كلمة المرور",
     "register.createAccountButton": "إنشاء حساب",
     "register.successTitle": "تم التسجيل بنجاح",
-    "register.successDescription": "يمكنك الآن تسجيل الدخول بحسابك الجديد.",
+    "register.successDescription": "يرجى التحقق من بريدك الإلكتروني لتفعيل حسابك.",
     "register.failedTitle": "فشل التسجيل",
 
     "authGuard.securing": "جاري تأمين جلستك...",

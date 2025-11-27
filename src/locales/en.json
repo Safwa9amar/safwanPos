@@ -57,7 +57,7 @@
     "register.confirmPasswordLabel": "Confirm Password",
     "register.createAccountButton": "Create Account",
     "register.successTitle": "Registration Successful",
-    "register.successDescription": "You can now log in with your new account.",
+    "register.successDescription": "Please check your email to verify your account.",
     "register.failedTitle": "Registration Failed",
 
     "authGuard.securing": "Securing your session...",

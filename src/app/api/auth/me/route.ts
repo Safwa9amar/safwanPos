@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
         role: true,
         createdAt: true,
         updatedAt: true,
+        subscriptionStatus: true,
+        trialEndsAt: true,
       }
     });
 

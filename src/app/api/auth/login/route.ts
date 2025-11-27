@@ -42,7 +42,14 @@ export async function POST(req: NextRequest) {
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role, name: user.name, email: user.email },
+      { 
+        userId: user.id, 
+        role: user.role, 
+        name: user.name, 
+        email: user.email,
+        subscriptionStatus: user.subscriptionStatus,
+        trialEndsAt: user.trialEndsAt?.toISOString() 
+      },
       process.env.JWT_SECRET as string,
       { expiresIn: '7d' }
     );

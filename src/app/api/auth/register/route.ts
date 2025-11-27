@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
+import { UserRole, SubscriptionStatus } from '@prisma/client';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
+import { addDays } from 'date-fns';
 
 const RegisterSchema = z.object({
   name: z.string().min(1),
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         role: userCount === 0 ? UserRole.ADMIN : UserRole.CASHIER,
         emailVerificationToken,
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        trialEndsAt: addDays(new Date(), 14), // 14-day trial
       },
     });
 
