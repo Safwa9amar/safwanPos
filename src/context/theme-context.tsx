@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-type Theme = 'dark' | 'light';
+export type Theme = 'light' | 'dark' | 'dark-purple';
 
 interface ThemeContextType {
   theme: Theme;
@@ -26,8 +27,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
     const storedTheme = localStorage.getItem('theme') as Theme;
+    const validThemes: Theme[] = ['light', 'dark', 'dark-purple'];
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (storedTheme && ['light', 'dark'].includes(storedTheme)) {
+    
+    if (storedTheme && validThemes.includes(storedTheme)) {
       setTheme(storedTheme);
     } else {
       setTheme(prefersDark ? 'dark' : 'light');
@@ -41,7 +44,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     if (isMounted) {
-        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.remove('light', 'dark', 'dark-purple');
         document.documentElement.classList.add(theme);
     }
   }, [theme, isMounted]);

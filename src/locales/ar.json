@@ -18,6 +18,8 @@
 
     "settings.title": "الإعدادات",
     "settings.description": "إدارة حسابك وإعدادات التطبيق.",
+    "settings.theme": "المظهر",
+    "settings.themeDescription": "تخصيص شكل وأسلوب التطبيق.",
     "settings.darkMode": "الوضع الداكن",
     "settings.darkModeDescription": "تبديل مظهر التطبيق.",
     "settings.language": "اللغة",

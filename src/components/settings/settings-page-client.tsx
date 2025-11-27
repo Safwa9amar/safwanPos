@@ -3,9 +3,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/context/language-context';
-import { useTheme } from '@/context/theme-context';
+import { useTheme, type Theme } from '@/context/theme-context';
 import { useCurrency } from '@/context/currency-context';
 import {
   Select,
@@ -14,10 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTranslation } from '@/hooks/use-translation';
-import { Moon, Sun, Languages, Milestone, Users } from 'lucide-react';
+import { Moon, Sun, Languages, Milestone, Users, Palette } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '../ui/button';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
@@ -25,8 +24,8 @@ export function SettingsPageClient() {
     const { currency, setCurrency } = useCurrency();
     const { t } = useTranslation();
 
-    const handleThemeChange = (isChecked: boolean) => {
-        setTheme(isChecked ? 'dark' : 'light');
+    const handleThemeChange = (newTheme: Theme) => {
+        setTheme(newTheme);
     }
 
     return (
@@ -37,21 +36,37 @@ export function SettingsPageClient() {
                     <CardDescription>{t('settings.description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="rounded-lg border p-4 space-y-4">
                         <div className="space-y-0.5">
                             <Label htmlFor="dark-mode" className="text-base flex items-center">
-                                {theme === 'dark' ? <Moon className="mr-2 h-5 w-5" /> : <Sun className="mr-2 h-5 w-5" />}
-                                {t('settings.darkMode')}
+                                <Palette className="mr-2 h-5 w-5" />
+                                {t('settings.theme')}
                             </Label>
                             <p className="text-sm text-muted-foreground">
-                                {t('settings.darkModeDescription')}
+                                {t('settings.themeDescription')}
                             </p>
                         </div>
-                        <Switch 
-                            id="dark-mode" 
-                            checked={theme === 'dark'}
-                            onCheckedChange={handleThemeChange}
-                        />
+                        <RadioGroup 
+                            defaultValue={theme} 
+                            onValueChange={(value: Theme) => handleThemeChange(value)}
+                            className="flex flex-col sm:flex-row gap-4"
+                        >
+                            <Label htmlFor="light" className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer hover:bg-accent [&:has([data-state=checked])]:border-primary">
+                                <RadioGroupItem value="light" id="light"/>
+                                <Sun className="h-4 w-4" />
+                                Light
+                            </Label>
+                             <Label htmlFor="dark" className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer hover:bg-accent [&:has([data-state=checked])]:border-primary">
+                                <RadioGroupItem value="dark" id="dark" />
+                                <Moon className="h-4 w-4" />
+                                Dark
+                            </Label>
+                            <Label htmlFor="dark-purple" className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer hover:bg-accent [&:has([data-state=checked])]:border-primary">
+                                <RadioGroupItem value="dark-purple" id="dark-purple" />
+                                <Palette className="h-4 w-4" />
+                                Purple
+                            </Label>
+                        </RadioGroup>
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">

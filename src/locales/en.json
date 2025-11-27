@@ -18,6 +18,8 @@
 
     "settings.title": "Settings",
     "settings.description": "Manage your account and application settings.",
+    "settings.theme": "Theme",
+    "settings.themeDescription": "Customize the look and feel of the application.",
     "settings.darkMode": "Dark Mode",
     "settings.darkModeDescription": "Toggle the application's theme.",
     "settings.language": "Language",
