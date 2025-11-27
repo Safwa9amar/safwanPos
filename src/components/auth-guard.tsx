@@ -21,7 +21,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-           <Icons.logo className="h-16 w-16 animate-pulse text-primary"/>
+           <Icons.logo className="h-32 w-32 animate-pulse text-primary"/>
            <p className="text-muted-foreground">{t('authGuard.securing')}</p>
         </div>
       </div>

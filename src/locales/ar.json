@@ -11,6 +11,12 @@
     "sidebar.sales_history": "السجل",
     "sidebar.expenses": "المصروفات",
 
+    "home.title": "لوحة التحكم",
+    "home.description": "أهلاً بك، {{name}}! اختر قسمًا للبدء.",
+    "home.searchPlaceholder": "ابحث عن صفحة...",
+    "home.noResults": "لا توجد نتائج",
+    "home.noResultsDescription": "حاول البحث عن شيء آخر.",
+
     "user.role": "مدير المتجر",
     "user.myAccount": "حسابي",
     "user.logout": "تسجيل الخروج",
@@ -28,6 +34,8 @@
     "settings.currencyDescription": "تحديد العملة لجميع الأسعار.",
     "settings.userManagement": "إدارة المستخدمين",
     "settings.userManagementDescription": "إدارة حسابات الموظفين وصلاحياتهم.",
+    "settings.navStyle": "نمط التنقل",
+    "settings.navStyleDescription": "اختر كيف تريد التنقل في التطبيق.",
 
     "profile.title": "الملف الشخصي",
     "profile.description": "تحديث معلوماتك الشخصية وكلمة المرور.",

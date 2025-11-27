@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAuth } from "@/context/auth-context";
+import { getNavigationPreference } from "@/context/navigation-context";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -85,7 +86,8 @@ export default function LoginPageClient() {
       }
       
       await checkUser(); // Re-check user status to update context
-      router.push("/pos");
+      const preferredNav = getNavigationPreference();
+      router.push(preferredNav === 'launchpad' ? '/home' : '/pos');
       router.refresh(); // Force a refresh to update server-side data
     } catch (error: any) {
       toast({

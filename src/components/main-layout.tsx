@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot, Telescope, Star } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, Wrench, User, History, Landmark, Bot, Telescope, Star, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -71,13 +71,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <Sidebar collapsible="offcanvas">
         <SidebarRail />
         <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <Icons.logo className="size-8 text-primary" />
-            <span className="text-lg font-semibold">SafwanPOS</span>
-          </div>
+            <Icons.logo className="h-20 w-20 self-center text-primary" />
         </SidebarHeader>
+        <SidebarSeparator className="my-2" />
+
         <SidebarContent>
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/home'} tooltip={t('home.title')}>
+                <Link href="/home">
+                  <HomeIcon />
+                  {t('home.title')}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Storefront</div>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/pos'} tooltip={t('sidebar.pos')}>
@@ -96,22 +104,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Link href="/inventory">
                   <Package />
                   {t('sidebar.inventory')}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/product-discovery')} tooltip={'Product Discovery'}>
-                <Link href="/product-discovery">
-                  <Telescope />
-                  {'Product Discovery'}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
-                <Link href="/repairs">
-                  <Wrench />
-                  {t('sidebar.repairs')}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -204,7 +196,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 p-2 h-auto">
                 <Avatar className="h-8 w-8">
-                  {/* <AvatarImage src={user?.photoURL || undefined} /> */}
                   <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col text-sm text-left overflow-hidden">
@@ -237,7 +228,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 sticky top-0 z-30">
           <SidebarTrigger/>
           <div className="flex-1">
-             {/* You can add a page title here if needed */}
           </div>
         </header>
         {children}

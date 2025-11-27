@@ -15,17 +15,23 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTranslation } from '@/hooks/use-translation';
-import { Moon, Sun, Languages, Milestone, Users, Palette } from 'lucide-react';
+import { Moon, Sun, Languages, Milestone, Users, Palette, LayoutGrid, Sidebar } from 'lucide-react';
 import Link from 'next/link';
+import { useNavigation, type NavigationStyle } from '@/context/navigation-context';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
     const { currency, setCurrency } = useCurrency();
+    const { navigationStyle, setNavigationStyle } = useNavigation();
     const { t } = useTranslation();
 
     const handleThemeChange = (newTheme: Theme) => {
         setTheme(newTheme);
+    }
+    
+    const handleNavChange = (newNav: NavigationStyle) => {
+        setNavigationStyle(newNav);
     }
 
     return (
@@ -68,6 +74,35 @@ export function SettingsPageClient() {
                             </Label>
                         </RadioGroup>
                     </div>
+
+                    <div className="rounded-lg border p-4 space-y-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="nav-style" className="text-base flex items-center">
+                                <LayoutGrid className="mr-2 h-5 w-5" />
+                                {t('settings.navStyle')}
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                {t('settings.navStyleDescription')}
+                            </p>
+                        </div>
+                        <RadioGroup 
+                            defaultValue={navigationStyle}
+                            onValueChange={(value: NavigationStyle) => handleNavChange(value)}
+                            className="flex flex-col sm:flex-row gap-4"
+                        >
+                            <Label htmlFor="sidebar" className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer hover:bg-accent [&:has([data-state=checked])]:border-primary">
+                                <RadioGroupItem value="sidebar" id="sidebar"/>
+                                <Sidebar className="h-4 w-4" />
+                                Sidebar
+                            </Label>
+                             <Label htmlFor="launchpad" className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer hover:bg-accent [&:has([data-state=checked])]:border-primary">
+                                <RadioGroupItem value="launchpad" id="launchpad" />
+                                <LayoutGrid className="h-4 w-4" />
+                                Launchpad
+                            </Label>
+                        </RadioGroup>
+                    </div>
+
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                             <Label htmlFor="language" className="text-base flex items-center">

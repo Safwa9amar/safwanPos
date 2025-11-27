@@ -7,6 +7,7 @@ import React from "react";
 import { ThemeProvider } from "@/context/theme-context";
 import { CurrencyProvider } from "@/context/currency-context";
 import { AppWithDirection } from "@/components/root-layout-client";
+import { NavigationProvider } from "@/context/navigation-context";
 
 
 export default function RootLayout({
@@ -41,12 +42,14 @@ export default function RootLayout({
           <LanguageProvider>
             <ThemeProvider>
                 <AppWithDirection>
+                  <NavigationProvider>
                     <CurrencyProvider>
                         <AuthProvider>
                         {children}
                         <Toaster />
                         </AuthProvider>
                     </CurrencyProvider>
+                  </NavigationProvider>
                 </AppWithDirection>
             </ThemeProvider>
           </LanguageProvider>

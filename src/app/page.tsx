@@ -4,9 +4,9 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Icons } from '@/components/icons';
 import { useTranslation } from '@/hooks/use-translation';
+import { getNavigationPreference } from '@/context/navigation-context';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -16,7 +16,12 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/pos');
+        const preferredNav = getNavigationPreference();
+        if (preferredNav === 'launchpad') {
+            router.replace('/home');
+        } else {
+            router.replace('/pos');
+        }
       } else {
         router.replace('/login');
       }

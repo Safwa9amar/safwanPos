@@ -11,6 +11,12 @@
     "sidebar.sales_history": "History",
     "sidebar.expenses": "Expenses",
 
+    "home.title": "Launchpad",
+    "home.description": "Welcome, {{name}}! Choose a section to get started.",
+    "home.searchPlaceholder": "Search for a page...",
+    "home.noResults": "No Results Found",
+    "home.noResultsDescription": "Try searching for something else.",
+
     "user.role": "Store Manager",
     "user.myAccount": "My Account",
     "user.logout": "Log out",
@@ -28,6 +34,8 @@
     "settings.currencyDescription": "Set the currency for all prices.",
     "settings.userManagement": "User Management",
     "settings.userManagementDescription": "Manage staff accounts and permissions.",
+    "settings.navStyle": "Navigation Style",
+    "settings.navStyleDescription": "Choose how you want to navigate the app.",
     
     "profile.title": "Profile",
     "profile.description": "Update your personal information and password.",
