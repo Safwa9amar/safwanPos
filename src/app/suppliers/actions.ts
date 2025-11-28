@@ -21,6 +21,12 @@ const SupplierSchema = z.object({
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
   userId: z.string().min(1),
+  logoUrl: z.string().url().optional().or(z.literal('')),
+  contractStartDate: z.coerce.date().optional().nullable(),
+  contractEndDate: z.coerce.date().optional().nullable(),
+  monthlySupplyQuota: z.coerce.number().optional(),
+  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  notes: z.string().optional(),
 });
 
 export async function getSuppliers(userId: string) {
@@ -58,6 +64,13 @@ export async function getSupplierById(id: string, userId: string) {
 
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
+  // Clear empty string values so they become undefined and are not sent to prisma
+  Object.keys(values).forEach(key => {
+    if(values[key] === ''){
+        values[key] = undefined;
+    }
+  })
+  
   const validatedFields = SupplierSchema.safeParse(values);
 
   if (!validatedFields.success) {

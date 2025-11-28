@@ -10,11 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { upsertSupplier } from "@/app/suppliers/actions";
-import { Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "../ui/textarea";
 import { useAuth } from "@/context/auth-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar } from "../ui/calendar";
 
 const SupplierSchema = z.object({
   id: z.string().optional(),
@@ -29,6 +33,12 @@ const SupplierSchema = z.object({
   deliverySchedule: z.string().optional(),
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
+  logoUrl: z.string().url().optional().or(z.literal('')),
+  contractStartDate: z.date().optional().nullable(),
+  contractEndDate: z.date().optional().nullable(),
+  monthlySupplyQuota: z.coerce.number().optional(),
+  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  notes: z.string().optional(),
 });
 
 type SupplierFormValues = z.infer<typeof SupplierSchema>;
@@ -40,19 +50,12 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
   
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(SupplierSchema),
-    defaultValues: supplier || {
-      name: "",
-      contactName: "",
-      email: "",
-      phone: "",
-      address: "",
-      taxId: "",
-      category: "",
-      paymentTerms: "",
-      deliverySchedule: "",
-      communicationChannel: "",
-      status: "ACTIVE",
-    },
+    defaultValues: {
+        ...supplier,
+        contractStartDate: supplier?.contractStartDate ? new Date(supplier.contractStartDate) : null,
+        contractEndDate: supplier?.contractEndDate ? new Date(supplier.contractEndDate) : null,
+        status: supplier?.status || "ACTIVE",
+    } as SupplierFormValues,
   });
 
   const { formState, register, handleSubmit, setValue, watch } = form;
@@ -62,8 +65,12 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
+      if (value !== undefined && value !== null && value !== '') {
+          if(value instanceof Date){
+            formData.append(key, value.toISOString());
+          } else {
+            formData.append(key, String(value));
+          }
       }
     });
     formData.append("userId", user.id);
@@ -121,6 +128,11 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
         <Textarea id="address" {...form.register("address")} />
         {formState.errors.address && <p className="text-sm text-destructive">{formState.errors.address.message}</p>}
       </div>
+       <div className="space-y-2">
+        <Label htmlFor="logoUrl">Company Logo URL</Label>
+        <Input id="logoUrl" {...form.register("logoUrl")} placeholder="https://example.com/logo.png" />
+        {formState.errors.logoUrl && <p className="text-sm text-destructive">{formState.errors.logoUrl.message}</p>}
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="taxId">Tax ID</Label>
@@ -149,6 +161,75 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
         <Label htmlFor="deliverySchedule">Delivery Schedule</Label>
         <Textarea id="deliverySchedule" {...form.register("deliverySchedule")} placeholder="e.g., Mondays and Thursdays, 9am - 5pm"/>
         {formState.errors.deliverySchedule && <p className="text-sm text-destructive">{formState.errors.deliverySchedule.message}</p>}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+              <Label>Contract Start Date</Label>
+              <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !watch('contractStartDate') && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {watch('contractStartDate') ? format(watch('contractStartDate')!, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={watch('contractStartDate') || undefined}
+                        onSelect={(date) => setValue('contractStartDate', date)}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+          </div>
+           <div className="space-y-2">
+              <Label>Contract End Date</Label>
+              <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !watch('contractEndDate') && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {watch('contractEndDate') ? format(watch('contractEndDate')!, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={watch('contractEndDate') || undefined}
+                        onSelect={(date) => setValue('contractEndDate', date)}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+          </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="monthlySupplyQuota">Monthly Supply Quota</Label>
+            <Input id="monthlySupplyQuota" type="number" {...register("monthlySupplyQuota")} />
+            {formState.errors.monthlySupplyQuota && <p className="text-sm text-destructive">{formState.errors.monthlySupplyQuota.message}</p>}
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="qualityRating">Quality Rating (1-5)</Label>
+            <Input id="qualityRating" type="number" min="1" max="5" {...register("qualityRating")} />
+            {formState.errors.qualityRating && <p className="text-sm text-destructive">{formState.errors.qualityRating.message}</p>}
+          </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes & Remarks</Label>
+        <Textarea id="notes" {...register("notes")} />
+        {formState.errors.notes && <p className="text-sm text-destructive">{formState.errors.notes.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>
