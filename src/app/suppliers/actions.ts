@@ -20,20 +20,14 @@ const SupplierSchema = z.object({
   deliverySchedule: z.string().optional(),
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
-  userId: z.string().min(1),
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
-  monthlySupplyQuota: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().optional()
-  ),
-  qualityRating: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().min(1).max(5).optional()
-  ),
+  monthlySupplyQuota: z.coerce.number().optional(),
+  qualityRating: z.coerce.number().min(1).max(5).optional(),
   notes: z.string().optional(),
 });
+
 
 export async function getSuppliers(userId: string) {
   if (!userId) return { error: "User not authenticated" };
@@ -77,6 +71,13 @@ export async function getSupplierById(id: string, userId: string) {
 
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
+
+  // Manually clean up optional fields before validation
+  if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
+  if (values.qualityRating === '') delete values.qualityRating;
+  if (values.contractStartDate === '') values.contractStartDate = null;
+  if (values.contractEndDate === '') values.contractEndDate = null;
+  
   const validatedFields = SupplierSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -307,3 +308,5 @@ export async function completePurchaseOrder(purchaseOrderId: string, userId: str
         return { error: "An error occurred while completing the order." };
     }
 }
+
+    
