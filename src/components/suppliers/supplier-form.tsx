@@ -25,7 +25,7 @@ const SupplierSchema = z.object({
   name: z.string().min(1, "Name is required"),
   contactName: z.string().optional(),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
-  phone: z.string().optional(),
+  phone: z.string().min(1, "Phone number is required"),
   address: z.string().optional(),
   taxId: z.string().optional(),
   category: z.string().optional(),
@@ -238,8 +238,8 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
                 <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value={"ACTIVE"}>Active</SelectItem>
+                <SelectItem value={"INACTIVE"}>Inactive</SelectItem>
             </SelectContent>
         </Select>
         {formState.errors.status && <p className="text-sm text-destructive">{formState.errors.status.message}</p>}
