@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Supplier } from "@prisma/client";
