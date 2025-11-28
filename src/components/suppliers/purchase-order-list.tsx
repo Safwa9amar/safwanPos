@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { PurchaseOrder as POType, PurchaseOrderItem as POItemType } from "@prisma/client";
+import { PurchaseOrder as POType, PurchaseOrderItem as POItemType, Product } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -13,7 +13,8 @@ import { useAuth } from '@/context/auth-context';
 import { Truck } from 'lucide-react';
 import { ReceiveStockDialog } from './receive-stock-dialog';
 
-export type PurchaseOrderWithItems = POType & { items: POItemType[] };
+export type PurchaseOrderItemWithProduct = POItemType & { product: Product };
+export type PurchaseOrderWithItems = POType & { items: PurchaseOrderItemWithProduct[] };
 
 interface PurchaseOrderListProps {
     purchaseOrders: PurchaseOrderWithItems[];

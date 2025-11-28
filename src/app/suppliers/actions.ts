@@ -51,7 +51,11 @@ export async function getSupplierById(id: string, userId: string) {
             include: {
                 purchaseOrders: {
                     include: {
-                        items: true,
+                        items: {
+                          include: {
+                            product: true
+                          }
+                        },
                     },
                     orderBy: { orderDate: 'desc' }
                 }

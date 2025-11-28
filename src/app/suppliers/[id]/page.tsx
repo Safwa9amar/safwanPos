@@ -49,3 +49,4 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
     </AuthGuard>
   );
 }
+

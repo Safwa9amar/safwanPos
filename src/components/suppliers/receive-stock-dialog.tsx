@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ export function ReceiveStockDialog({ isOpen, onOpenChange, purchaseOrder }: Rece
   const [receivedItems, setReceivedItems] = useState<ReceivedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (purchaseOrder) {
       setReceivedItems(purchaseOrder.items.map(item => ({
         purchaseOrderItemId: item.id,
@@ -105,7 +105,7 @@ export function ReceiveStockDialog({ isOpen, onOpenChange, purchaseOrder }: Rece
                   const receivedItem = receivedItems.find(ri => ri.purchaseOrderItemId === item.id);
                   return (
                     <TableRow key={item.id}>
-                        <TableCell>{item.id.substring(0,8)}</TableCell>
+                        <TableCell>{(item as any).product?.name || item.productId}</TableCell>
                         <TableCell className="text-center">{item.quantity}</TableCell>
                         <TableCell className="text-center">{item.receivedQuantity}</TableCell>
                         <TableCell>
