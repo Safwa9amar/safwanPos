@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { PurchaseOrderItem } from "@/types";
+import { SupplierStatus } from "@prisma/client";
 
 const SupplierSchema = z.object({
   id: z.string().optional(),
@@ -13,6 +14,12 @@ const SupplierSchema = z.object({
   email: z.string().email("Invalid email").optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
+  taxId: z.string().optional(),
+  category: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  deliverySchedule: z.string().optional(),
+  communicationChannel: z.string().optional(),
+  status: z.nativeEnum(SupplierStatus),
   userId: z.string().min(1),
 });
 
