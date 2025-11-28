@@ -79,10 +79,11 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
 
+  // Handle empty optional fields before validation
   if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
   if (values.qualityRating === '') delete values.qualityRating;
-  if (values.contractStartDate === '') values.contractStartDate = null;
-  if (values.contractEndDate === '') values.contractEndDate = null;
+  if (values.contractStartDate === '') delete values.contractStartDate;
+  if (values.contractEndDate === '') delete values.contractEndDate;
   
   const validatedFields = SupplierSchema.safeParse(values);
 
