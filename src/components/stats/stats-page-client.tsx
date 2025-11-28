@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,11 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCurrency } from "@/hooks/use-currency";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/context/auth-context";
+import { cn } from "@/lib/utils";
 
 type StatsData = {
   totalRevenue: number;
   totalSales: number;
   totalItemsSold: number;
+  totalProfit: number;
   salesChartData: { date: string; total: number }[];
   topProducts: { name: string; quantity: number }[];
   totalSuppliers: number;
@@ -80,6 +83,7 @@ export function StatsPageClient() {
     totalRevenue,
     totalSales,
     totalItemsSold,
+    totalProfit,
     salesChartData,
     topProducts,
     totalSuppliers,
@@ -140,7 +144,7 @@ export function StatsPageClient() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('stats.totalRevenue')}</CardTitle>
@@ -148,6 +152,17 @@ export function StatsPageClient() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={cn("text-2xl font-bold", totalProfit >= 0 ? "text-green-600" : "text-red-600")}>
+                {formatCurrency(totalProfit)}
+            </div>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -162,7 +177,7 @@ export function StatsPageClient() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('stats.totalItemsSold')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <BarChartIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{totalItemsSold}</div>
