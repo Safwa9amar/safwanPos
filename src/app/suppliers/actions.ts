@@ -72,11 +72,17 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
   // Clear empty string values so they become undefined and are not sent to prisma
-  Object.keys(values).forEach(key => {
-    if(values[key] === ''){
+  for (const key in values) {
+    if (values[key] === '') {
+      if (key === 'monthlySupplyQuota' || key === 'qualityRating') {
+        // For optional numeric fields, delete the key if empty
+        delete values[key];
+      } else {
+        // For other optional fields, set to undefined
         values[key] = undefined;
+      }
     }
-  })
+  }
   
   const validatedFields = SupplierSchema.safeParse(values);
 
