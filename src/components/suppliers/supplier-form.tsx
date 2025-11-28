@@ -64,6 +64,8 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
     if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
 
     const formData = new FormData();
+    formData.append("userId", user.id); // Add the user ID to the form data
+
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
           if(value instanceof Date){
@@ -73,7 +75,6 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
           }
       }
     });
-    formData.append("userId", user.id);
 
     const result = await upsertSupplier(formData);
 
@@ -252,5 +253,3 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
     </form>
   );
 }
-
-    
