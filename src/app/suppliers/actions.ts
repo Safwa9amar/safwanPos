@@ -24,8 +24,14 @@ const SupplierSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
-  monthlySupplyQuota: z.coerce.number().optional(),
-  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  monthlySupplyQuota: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().optional()
+  ),
+  qualityRating: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().min(1).max(5).optional()
+  ),
   notes: z.string().optional(),
 });
 
@@ -71,22 +77,10 @@ export async function getSupplierById(id: string, userId: string) {
 
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
-  // Clear empty string values so they become undefined and are not sent to prisma
-  for (const key in values) {
-    if (values[key] === '') {
-      if (key === 'monthlySupplyQuota' || key === 'qualityRating') {
-        // For optional numeric fields, delete the key if empty
-        delete values[key];
-      } else {
-        // For other optional fields, set to undefined
-        values[key] = undefined;
-      }
-    }
-  }
-  
   const validatedFields = SupplierSchema.safeParse(values);
 
   if (!validatedFields.success) {
+    console.error(validatedFields.error.flatten().fieldErrors);
     return {
       errors: validatedFields.error.flatten().fieldErrors,
     };
