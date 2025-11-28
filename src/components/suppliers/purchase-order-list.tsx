@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { PurchaseOrder as POType, PurchaseOrderItem as POItemType, Product } from "@prisma/client";
+import { PurchaseOrder as POType, PurchaseOrderItem as POItemType, Product, SupplierPayment, SupplierCredit } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -10,22 +10,26 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from '../ui/button';
 import { useCurrency } from '@/hooks/use-currency';
 import { useAuth } from '@/context/auth-context';
-import { Truck } from 'lucide-react';
+import { Truck, HandCoins, DollarSign } from 'lucide-react';
 import { ReceiveStockDialog } from './receive-stock-dialog';
+import { format } from 'date-fns';
 
 export type PurchaseOrderItemWithProduct = POItemType & { product: Product };
 export type PurchaseOrderWithItems = POType & { items: PurchaseOrderItemWithProduct[] };
 
+type HistoryEntry = 
+    | { type: 'purchase', date: Date, data: PurchaseOrderWithItems }
+    | { type: 'payment', date: Date, data: SupplierPayment }
+    | { type: 'credit', date: Date, data: SupplierCredit };
+
+
 interface PurchaseOrderListProps {
-    purchaseOrders: PurchaseOrderWithItems[];
+    purchaseOrders: HistoryEntry[];
 }
 
 export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
     const { t } = useTranslation();
-    const { toast } = useToast();
-    const { user } = useAuth();
     const { formatCurrency } = useCurrency();
-    const [isCompleting, setIsCompleting] = useState<string | null>(null);
     const [receivingOrder, setReceivingOrder] = useState<PurchaseOrderWithItems | null>(null);
 
     if (purchaseOrders.length === 0) {
@@ -42,39 +46,64 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                 return 'outline';
         }
     };
+    
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+            case 'purchase': return <Truck className="h-5 w-5" />;
+            case 'payment': return <DollarSign className="h-5 w-5 text-green-600" />;
+            case 'credit': return <HandCoins className="h-5 w-5 text-red-600" />;
+            default: return null;
+        }
+    }
+    
+    const getTypeTitle = (entry: HistoryEntry) => {
+        switch (entry.type) {
+            case 'purchase': return `Order #${entry.data.id.substring(0, 8)}`;
+            case 'payment': return 'Payment Made';
+            case 'credit': return `Credit / Debt Adjustment`;
+            default: return 'Transaction';
+        }
+    }
 
     return (
         <div className="space-y-4">
-            {purchaseOrders.map(order => (
-                <Card key={order.id}>
+            {purchaseOrders.map((entry, index) => (
+                <Card key={index}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-lg">Order #{order.id.substring(0, 8)}</CardTitle>
-                                <CardDescription>
-                                    {t('po.orderDate')}: {new Date(order.orderDate).toLocaleDateString()}
-                                </CardDescription>
+                            <div className="flex items-center gap-3">
+                                {getTypeIcon(entry.type)}
+                                <div>
+                                    <CardTitle className="text-lg">{getTypeTitle(entry)}</CardTitle>
+                                    <CardDescription>
+                                        {format(new Date(entry.date), "PPP p")}
+                                    </CardDescription>
+                                </div>
                             </div>
-                            <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+                           {entry.type === 'purchase' && <Badge variant={getStatusVariant(entry.data.status)}>{entry.data.status}</Badge>}
+                           {entry.type === 'payment' && <span className="font-bold text-lg text-green-600">-{formatCurrency(entry.data.amount)}</span>}
+                           {entry.type === 'credit' && <span className="font-bold text-lg text-red-600">+{formatCurrency(entry.data.amount)}</span>}
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="flex justify-between text-sm">
-                            <p>{t('po.expectedDelivery')}: {order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</p>
-                            <p className="font-semibold">{t('po.totalCost')}: {formatCurrency(order.totalCost)}</p>
-                        </div>
-                    </CardContent>
-                     {order.status === 'PENDING' || order.status === 'PARTIALLY_RECEIVED' ? (
-                        <CardFooter>
-                            <Button className="w-full" onClick={() => setReceivingOrder(order)}>
-                                <Truck className="mr-2 h-4 w-4" />
-                                Receive Stock
-                            </Button>
-                        </CardFooter>
-                    ) : (
-                        <CardFooter>
-                           <p className="text-xs text-muted-foreground text-center w-full">{t('po.completedNotice')}</p>
-                        </CardFooter>
+                    {entry.type === 'purchase' && (
+                        <>
+                         <CardContent>
+                            <p className="font-semibold text-right">{t('po.totalCost')}: {formatCurrency(entry.data.totalCost)}</p>
+                        </CardContent>
+                        {entry.data.status === 'PENDING' || entry.data.status === 'PARTIALLY_RECEIVED' ? (
+                            <CardFooter>
+                                <Button className="w-full" onClick={() => setReceivingOrder(entry.data)}>
+                                    <Truck className="mr-2 h-4 w-4" />
+                                    Receive Stock
+                                </Button>
+                            </CardFooter>
+                        ) : null}
+                        </>
+                    )}
+                    {(entry.type === 'payment' || entry.type === 'credit') && entry.data.notes && (
+                         <CardContent>
+                             <p className="text-sm text-muted-foreground pt-2">Notes: {(entry.data as any).notes || (entry.data as any).reason}</p>
+                        </CardContent>
                     )}
                 </Card>
             ))}
@@ -87,3 +116,4 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
         </div>
     );
 }
+

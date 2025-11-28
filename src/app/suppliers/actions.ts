@@ -21,11 +21,12 @@ const SupplierSchema = z.object({
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
   logoUrl: z.string().url().optional().or(z.literal('')),
-  contractStartDate: z.coerce.date().optional().nullable(),
-  contractEndDate: z.coerce.date().optional().nullable(),
+  contractStartDate: z.date().optional().nullable(),
+  contractEndDate: z.date().optional().nullable(),
   monthlySupplyQuota: z.coerce.number().optional(),
   qualityRating: z.coerce.number().min(1).max(5).optional(),
   notes: z.string().optional(),
+  userId: z.string().min(1),
 });
 
 
@@ -58,6 +59,12 @@ export async function getSupplierById(id: string, userId: string) {
                         },
                     },
                     orderBy: { orderDate: 'desc' }
+                },
+                payments: {
+                  orderBy: { paymentDate: 'desc' }
+                },
+                credits: {
+                  orderBy: { adjustmentDate: 'desc' }
                 }
             }
         });
@@ -72,7 +79,6 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
 
-  // Manually clean up optional fields before validation
   if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
   if (values.qualityRating === '') delete values.qualityRating;
   if (values.contractStartDate === '') values.contractStartDate = null;
@@ -163,23 +169,38 @@ export async function createPurchaseOrder(
 
         const totalCost = items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0);
 
-        const purchaseOrder = await prisma.purchaseOrder.create({
-            data: {
-                userId,
-                supplierId,
-                expectedDeliveryDate: expectedDate,
-                totalCost,
-                status: 'PENDING',
-                items: {
-                    create: items.map(item => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        costPrice: item.costPrice,
-                        receivedQuantity: 0,
-                    }))
+        const purchaseOrder = await prisma.$transaction(async (tx) => {
+            const po = await tx.purchaseOrder.create({
+                data: {
+                    userId,
+                    supplierId,
+                    expectedDeliveryDate: expectedDate,
+                    totalCost,
+                    status: 'PENDING',
+                    items: {
+                        create: items.map(item => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            costPrice: item.costPrice,
+                            receivedQuantity: 0,
+                        }))
+                    }
                 }
-            }
+            });
+            
+            await tx.supplier.update({
+                where: { id: supplierId },
+                data: {
+                    balance: {
+                        increment: totalCost
+                    }
+                }
+            });
+
+            return po;
         });
+
+
         revalidatePath(`/suppliers/${supplierId}`);
         return { success: true, purchaseOrder };
     } catch (error) {
@@ -309,4 +330,83 @@ export async function completePurchaseOrder(purchaseOrderId: string, userId: str
     }
 }
 
+const SupplierPaymentSchema = z.object({
+    supplierId: z.string().min(1),
+    amount: z.coerce.number().positive("Amount must be positive"),
+    notes: z.string().optional(),
+    userId: z.string().min(1),
+});
+
+export async function addSupplierPayment(formData: FormData) {
+    const values = Object.fromEntries(formData.entries());
+    const validatedFields = SupplierPaymentSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        return { errors: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { supplierId, amount, notes, userId } = validatedFields.data;
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            const supplier = await tx.supplier.findFirst({ where: { id: supplierId, userId }});
+            if (!supplier) throw new Error("Supplier not found or access denied.");
+
+            await tx.supplierPayment.create({
+                data: { supplierId, userId, amount, notes }
+            });
+
+            await tx.supplier.update({
+                where: { id: supplierId },
+                data: { balance: { decrement: amount } }
+            });
+        });
+        revalidatePath(`/suppliers/${supplierId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to add supplier payment:", error);
+        return { error: error.message || "Failed to record payment." };
+    }
+}
+
+
+const SupplierCreditSchema = z.object({
+    supplierId: z.string().min(1),
+    amount: z.coerce.number().positive("Amount must be positive"),
+    reason: z.string().min(1, "Reason is required"),
+    userId: z.string().min(1),
+});
+
+export async function addSupplierCredit(formData: FormData) {
+    const values = Object.fromEntries(formData.entries());
+    const validatedFields = SupplierCreditSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        return { errors: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { supplierId, amount, reason, userId } = validatedFields.data;
     
+    try {
+        await prisma.$transaction(async (tx) => {
+            const supplier = await tx.supplier.findFirst({ where: { id: supplierId, userId }});
+            if (!supplier) throw new Error("Supplier not found or access denied.");
+            
+            await tx.supplierCredit.create({
+                data: { supplierId, userId, amount, reason }
+            });
+
+            await tx.supplier.update({
+                where: { id: supplierId },
+                data: { balance: { increment: amount } }
+            });
+        });
+
+        revalidatePath(`/suppliers/${supplierId}`);
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Failed to add supplier credit:", error);
+        return { error: error.message || "Failed to add credit." };
+    }
+}

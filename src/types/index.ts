@@ -1,5 +1,5 @@
 
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit } from '@prisma/client';
 
 export type Product = PrismaProduct;
 export type Category = PrismaCategory;
@@ -52,6 +52,12 @@ export interface PurchaseOrderItem extends PrismaPurchaseOrderItem {
 export interface PurchaseOrder extends PrismaPurchaseOrder {
     items: PurchaseOrderItem[];
     supplier: Supplier;
+}
+
+export interface SupplierWithDetails extends Supplier {
+    purchaseOrders: PurchaseOrder[];
+    payments: SupplierPayment[];
+    credits: SupplierCredit[];
 }
 
 export type Customer = PrismaCustomer;
