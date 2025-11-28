@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, SubscriptionStatus } from '@prisma/client';
 import * as jose from 'jose';

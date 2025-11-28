@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,7 +16,7 @@ import {
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { getStatsData } from "@/app/stats/actions";
-import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, endOfISOWeek, endOfMonth, endOfYear } from "date-fns";
+import { startOfDay, subDays, startOfWeek, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrency } from "@/hooks/use-currency";
 import { Separator } from "../ui/separator";

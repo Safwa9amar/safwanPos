@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AuthGuard } from "@/components/auth-guard";
