@@ -18,6 +18,7 @@ import { SupplierCreditSheet } from "./supplier-credit-sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { format } from "date-fns";
 import { Badge } from "../ui/badge";
+import { useRouter } from "next/navigation";
 
 interface SupplierWithDetails extends Supplier {
     purchaseOrders: PurchaseOrderWithItems[];
@@ -32,6 +33,7 @@ interface SupplierDetailPageClientProps {
 
 export function SupplierDetailPageClient({ initialSupplier, allProducts }: SupplierDetailPageClientProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { formatCurrency } = useCurrency();
   const [supplier, setSupplier] = useState<SupplierWithDetails>(initialSupplier);
   const [isSupplierSheetOpen, setIsSupplierSheetOpen] = useState(false);
@@ -44,6 +46,13 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
     ...supplier.payments.map(p => ({ type: 'payment' as const, date: p.paymentDate, data: p })),
     ...supplier.credits.map(c => ({ type: 'credit' as const, date: c.adjustmentDate, data: c }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  const handleSheetChange = (setter: React.Dispatch<React.SetStateAction<boolean>>) => (open: boolean) => {
+      setter(open);
+      if (!open) {
+          router.refresh();
+      }
+  }
 
 
   return (
@@ -120,26 +129,26 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
       
       <SupplierSheet 
         isOpen={isSupplierSheetOpen}
-        onOpenChange={setIsSupplierSheetOpen}
+        onOpenChange={handleSheetChange(setIsSupplierSheetOpen)}
         supplier={supplier}
       />
       
       <PurchaseOrderSheet 
         isOpen={isPOSheetOpen}
-        onOpenChange={setIsPOSheetOpen}
+        onOpenChange={handleSheetChange(setIsPOSheetOpen)}
         supplierId={supplier.id}
         products={allProducts}
       />
 
       <SupplierPaymentSheet
         isOpen={isPaymentSheetOpen}
-        onOpenChange={setIsPaymentSheetOpen}
+        onOpenChange={handleSheetChange(setIsPaymentSheetOpen)}
         supplier={supplier}
       />
       
       <SupplierCreditSheet
         isOpen={isCreditSheetOpen}
-        onOpenChange={setIsCreditSheetOpen}
+        onOpenChange={handleSheetChange(setIsCreditSheetOpen)}
         supplier={supplier}
       />
     </div>
