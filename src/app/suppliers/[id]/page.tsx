@@ -6,6 +6,7 @@ import { SupplierDetailPageClient } from "@/components/suppliers/supplier-detail
 import { getProducts } from "@/app/inventory/actions";
 import { redirect } from "next/navigation";
 import { getUserIdFromRequest } from "@/lib/server-auth";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 
 export default async function SupplierDetailPage({ params }: { params: { id: string } }) {
   const userId = await getUserIdFromRequest();
@@ -43,7 +44,7 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
   return (
     <AuthGuard>
       <MainLayout>
-        <SupplierDetailPageClient initialSupplier={supplierRes.supplier} allProducts={productsRes.products || []} />
+        <SupplierDetailPageClient initialSupplier={supplierRes.supplier} allProducts={productsRes.products as ProductWithCategoryAndBarcodes[] || []} />
       </MainLayout>
     </AuthGuard>
   );

@@ -2,19 +2,21 @@
 "use client";
 
 import { useState } from 'react';
-import { PurchaseOrder } from "@prisma/client";
+import { PurchaseOrder as POType, PurchaseOrderItem as POItemType } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { completePurchaseOrder } from "@/app/suppliers/actions";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { Button } from '../ui/button';
 import { useCurrency } from '@/hooks/use-currency';
 import { useAuth } from '@/context/auth-context';
+import { Truck } from 'lucide-react';
+import { ReceiveStockDialog } from './receive-stock-dialog';
+
+export type PurchaseOrderWithItems = POType & { items: POItemType[] };
 
 interface PurchaseOrderListProps {
-    purchaseOrders: PurchaseOrder[];
+    purchaseOrders: PurchaseOrderWithItems[];
 }
 
 export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
@@ -23,20 +25,7 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
     const { user } = useAuth();
     const { formatCurrency } = useCurrency();
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
-
-    const handleCompleteOrder = async (orderId: string) => {
-        if (!user) return toast({ variant: 'destructive', title: "Authentication Error" });
-
-        setIsCompleting(orderId);
-        const result = await completePurchaseOrder(orderId, user.id);
-        setIsCompleting(null);
-
-        if (result.success) {
-            toast({ title: "Order Completed", description: "Stock levels have been updated." });
-        } else {
-            toast({ variant: 'destructive', title: "Error", description: result.error });
-        }
-    };
+    const [receivingOrder, setReceivingOrder] = useState<PurchaseOrderWithItems | null>(null);
 
     if (purchaseOrders.length === 0) {
         return <p className="text-muted-foreground">{t('suppliers.noPurchaseOrders')}</p>;
@@ -46,9 +35,10 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
         switch (status) {
             case 'COMPLETED': return 'default';
             case 'CANCELLED': return 'destructive';
+            case 'PARTIALLY_RECEIVED': return 'secondary';
             case 'PENDING':
             default:
-                return 'secondary';
+                return 'outline';
         }
     };
 
@@ -73,40 +63,26 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                             <p className="font-semibold">{t('po.totalCost')}: {formatCurrency(order.totalCost)}</p>
                         </div>
                     </CardContent>
-                    {order.status === 'PENDING' && (
+                     {order.status === 'PENDING' || order.status === 'PARTIALLY_RECEIVED' ? (
                         <CardFooter>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button 
-                                        variant="secondary" 
-                                        className="w-full"
-                                        disabled={isCompleting === order.id}
-                                    >
-                                        {t('po.completeOrder')}
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('po.completeConfirmTitle')}</AlertDialogTitle>
-                                        <AlertDialogDescription>{t('po.completeConfirmDescription')}</AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('pos.cancelButton')}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleCompleteOrder(order.id)}>
-                                            {t('po.confirm')}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <Button className="w-full" onClick={() => setReceivingOrder(order)}>
+                                <Truck className="mr-2 h-4 w-4" />
+                                Receive Stock
+                            </Button>
                         </CardFooter>
-                    )}
-                     {order.status === 'COMPLETED' && (
+                    ) : (
                         <CardFooter>
                            <p className="text-xs text-muted-foreground text-center w-full">{t('po.completedNotice')}</p>
                         </CardFooter>
                     )}
                 </Card>
             ))}
+            
+            <ReceiveStockDialog
+                isOpen={!!receivingOrder}
+                onOpenChange={(isOpen) => !isOpen && setReceivingOrder(null)}
+                purchaseOrder={receivingOrder}
+            />
         </div>
     );
 }

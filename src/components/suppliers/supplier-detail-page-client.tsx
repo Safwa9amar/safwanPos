@@ -9,15 +9,16 @@ import { FilePlus2, Pencil } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { SupplierSheet } from "./supplier-sheet";
 import { PurchaseOrderSheet } from "./purchase-order-sheet";
-import { PurchaseOrderList } from "./purchase-order-list";
+import { PurchaseOrderList, PurchaseOrderWithItems } from "./purchase-order-list";
+import { ProductWithCategoryAndBarcodes } from "@/types";
 
 interface SupplierWithOrders extends Supplier {
-    purchaseOrders: PurchaseOrderType[];
+    purchaseOrders: PurchaseOrderWithItems[];
 }
 
 interface SupplierDetailPageClientProps {
   initialSupplier: SupplierWithOrders;
-  allProducts: Product[];
+  allProducts: ProductWithCategoryAndBarcodes[];
 }
 
 export function SupplierDetailPageClient({ initialSupplier, allProducts }: SupplierDetailPageClientProps) {

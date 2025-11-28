@@ -61,5 +61,3 @@ export interface CustomerWithDetails extends Customer {
     sales: SaleWithItemsAndCustomer[];
     payments: Payment[];
 }
-
-    

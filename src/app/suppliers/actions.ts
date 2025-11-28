@@ -50,6 +50,9 @@ export async function getSupplierById(id: string, userId: string) {
             where: { id, userId },
             include: {
                 purchaseOrders: {
+                    include: {
+                        items: true,
+                    },
                     orderBy: { orderDate: 'desc' }
                 }
             }
@@ -167,6 +170,7 @@ export async function createPurchaseOrder(
                         productId: item.productId,
                         quantity: item.quantity,
                         costPrice: item.costPrice,
+                        receivedQuantity: 0,
                     }))
                 }
             }
@@ -176,6 +180,82 @@ export async function createPurchaseOrder(
     } catch (error) {
         console.error(error);
         return { error: "Failed to create purchase order." };
+    }
+}
+
+
+export async function receivePurchaseOrderItems(
+    userId: string,
+    purchaseOrderId: string,
+    receivedItems: { purchaseOrderItemId: string, receivedNow: number }[]
+) {
+    if (!userId) return { error: "User not authenticated" };
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            const po = await tx.purchaseOrder.findFirst({
+                where: { id: purchaseOrderId, userId },
+                include: { items: true }
+            });
+            
+            if (!po) throw new Error("Purchase order not found or access denied.");
+            
+            let allItemsCompleted = true;
+
+            for (const receivedItem of receivedItems) {
+                if (receivedItem.receivedNow <= 0) continue;
+                
+                const poItem = po.items.find(i => i.id === receivedItem.purchaseOrderItemId);
+                if (!poItem) throw new Error(`Item with ID ${receivedItem.purchaseOrderItemId} not found in this purchase order.`);
+                
+                const newReceivedQuantity = poItem.receivedQuantity + receivedItem.receivedNow;
+                if (newReceivedQuantity > poItem.quantity) {
+                    throw new Error(`Cannot receive more items than ordered for ${poItem.id}.`);
+                }
+
+                // 1. Update the PurchaseOrderItem
+                await tx.purchaseOrderItem.update({
+                    where: { id: receivedItem.purchaseOrderItemId },
+                    data: {
+                        receivedQuantity: newReceivedQuantity
+                    }
+                });
+
+                // 2. Update the product stock
+                await tx.product.update({
+                    where: { id: poItem.productId },
+                    data: { stock: { increment: receivedItem.receivedNow } }
+                });
+            }
+
+            // 3. Check if all items in the PO are fully received and update PO status
+            const updatedPoItems = await tx.purchaseOrderItem.findMany({
+                where: { purchaseOrderId: purchaseOrderId }
+            });
+
+            for (const item of updatedPoItems) {
+                if (item.receivedQuantity < item.quantity) {
+                    allItemsCompleted = false;
+                    break;
+                }
+            }
+
+            const newStatus = allItemsCompleted ? 'COMPLETED' : 'PARTIALLY_RECEIVED';
+            
+            await tx.purchaseOrder.update({
+                where: { id: purchaseOrderId },
+                data: { status: newStatus }
+            });
+        });
+
+        const po = await prisma.purchaseOrder.findUnique({ where: { id: purchaseOrderId } });
+        revalidatePath(`/suppliers/${po?.supplierId}`);
+        revalidatePath('/inventory');
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Failed to receive stock:", error);
+        return { error: error.message || "An error occurred while receiving stock." };
     }
 }
 
