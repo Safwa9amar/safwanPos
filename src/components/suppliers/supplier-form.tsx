@@ -51,7 +51,7 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
       paymentTerms: "",
       deliverySchedule: "",
       communicationChannel: "",
-      status: SupplierStatus.ACTIVE,
+      status: "ACTIVE",
     },
   });
 
@@ -157,8 +157,8 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
                 <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value={SupplierStatus.ACTIVE}>Active</SelectItem>
-                <SelectItem value={SupplierStatus.INACTIVE}>Inactive</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
             </SelectContent>
         </Select>
         {formState.errors.status && <p className="text-sm text-destructive">{formState.errors.status.message}</p>}
