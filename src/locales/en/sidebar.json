@@ -1,4 +1,3 @@
-
 {
     "sidebar.pos": "Point of Sale",
     "sidebar.reports": "Sales Reports",
@@ -23,5 +22,7 @@
     "sidebar.purchases_management": "Purchasing",
     "sidebar.payment_center": "Payment Center",
     "sidebar.categories": "Categories",
-    "sidebar.core": "Core"
+    "sidebar.core": "Core",
+    "sidebar.management": "Management",
+    "sidebar.analytics": "Analytics & Reports"
 }

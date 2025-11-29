@@ -1,4 +1,3 @@
-
 {
     "sidebar.pos": "نقطة البيع",
     "sidebar.reports": "تقارير المبيعات",
@@ -23,5 +22,7 @@
     "sidebar.purchases_management": "المشتريات",
     "sidebar.payment_center": "مركز المدفوعات",
     "sidebar.categories": "الفئات",
-    "sidebar.core": "الأساسية"
+    "sidebar.core": "الأساسية",
+    "sidebar.management": "الإدارة",
+    "sidebar.analytics": "التحليلات والتقارير"
 }
