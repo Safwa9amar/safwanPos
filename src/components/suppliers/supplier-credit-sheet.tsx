@@ -19,10 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { upsertSupplierCredit } from "@/app/suppliers/actions";
-import { Loader2 } from "lucide-react";
+import { upsertSupplierCredit, deleteSupplierCredit } from "@/app/suppliers/actions";
+import { Loader2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/auth-context";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 
 const CreditSchema = z.object({
     id: z.string().optional(),
@@ -49,6 +50,9 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier, credit = n
     });
     
     const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = form;
+
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if(isOpen) {
@@ -79,7 +83,23 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier, credit = n
         }
     };
 
+    const handleDelete = async () => {
+        if (!credit || !user) return;
+        setIsDeleting(true);
+        const result = await deleteSupplierCredit(credit.id, user.id);
+        setIsDeleting(false);
+
+        if (result.success) {
+            toast({ title: "Credit Adjustment Deleted" });
+            setIsAlertOpen(false);
+            onOpenChange(false);
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.error });
+        }
+    }
+
     return (
+        <>
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent>
                 <form onSubmit={handleSubmit(onSubmit)}>
@@ -99,17 +119,44 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier, credit = n
                             {errors.reason && <p className="text-sm text-destructive">{errors.reason.message}</p>}
                         </div>
                     </div>
-                    <SheetFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-                            {t('pos.cancelButton')}
-                        </Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {t('inventory.save')}
-                        </Button>
+                    <SheetFooter className="flex-col sm:flex-row sm:justify-between w-full">
+                         <div>
+                             {credit && (
+                                <Button type="button" variant="destructive" onClick={() => setIsAlertOpen(true)} disabled={isSubmitting}>
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                                {t('pos.cancelButton')}
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {t('inventory.save')}
+                            </Button>
+                        </div>
                     </SheetFooter>
                 </form>
             </SheetContent>
         </Sheet>
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to delete this credit adjustment?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone and will reverse the adjustment's effect on the supplier's balance.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                         {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }

@@ -247,9 +247,9 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                             </Button>
                         </CardFooter>
                     )}
-                    {(entry.type === 'payment' || entry.type === 'credit') && (entry.data as any).notes && (
+                    {(entry.type === 'payment' || entry.type === 'credit') && ((entry.data as SupplierPayment).notes || (entry.data as SupplierCredit).reason) && (
                          <CardContent>
-                             <p className="text-sm text-muted-foreground pt-2">Notes: {(entry.data as any).notes || (entry.data as any).reason}</p>
+                             <p className="text-sm text-muted-foreground pt-2">Notes: {(entry.data as SupplierPayment).notes || (entry.data as SupplierCredit).reason}</p>
                         </CardContent>
                     )}
                 </Card>
