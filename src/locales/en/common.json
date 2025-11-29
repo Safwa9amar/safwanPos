@@ -1,0 +1,14 @@
+{
+    "actions.view": "View",
+    "actions.edit": "Edit",
+    "actions.delete": "Delete",
+    "actions.print": "Print",
+    "actions.actions": "Actions",
+    "actions.make_payment": "Make Payment",
+    "actions.add_credit_debt": "Add Credit/Debt",
+    "errors.unknown": "An unknown error occurred.",
+    "pos.cancelButton": "Cancel",
+    "inventory.save": "Save",
+    "inventory.saving": "Saving...",
+    "history.close": "Close"
+}

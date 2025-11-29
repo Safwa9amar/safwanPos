@@ -1,19 +1,22 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { UserRole, SubscriptionStatus } from '@prisma/client';
 import * as jose from 'jose';
 
+type UserRole = "ADMIN" | "CASHIER";
+type SubscriptionStatus = "TRIAL" | "ACTIVE" | "INACTIVE" | "CANCELED";
+
 const protectedRoutes: { path: string, roles: UserRole[] }[] = [
-    { path: '/inventory', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/product-discovery', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/pos', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/reports', roles: [UserRole.ADMIN] },
-    { path: '/stats', roles: [UserRole.ADMIN] },
-    { path: '/customers', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/suppliers', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/repairs', roles: [UserRole.ADMIN, UserRole.CASHIER] },
-    { path: '/expenses', roles: [UserRole.ADMIN] },
-    { path: '/settings', roles: [UserRole.ADMIN] },
-    { path: '/billing', roles: [UserRole.ADMIN, UserRole.CASHIER] },
+    { path: '/inventory', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/product-discovery', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/pos', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/reports', roles: ['ADMIN'] },
+    { path: '/stats', roles: ['ADMIN'] },
+    { path: '/customers', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/suppliers', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/repairs', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/expenses', roles: ['ADMIN'] },
+    { path: '/settings', roles: ['ADMIN'] },
+    { path: '/billing', roles: ['ADMIN', 'CASHIER'] },
 ];
 
 export async function middleware(request: NextRequest) {
@@ -59,8 +62,8 @@ export async function middleware(request: NextRequest) {
       const trialEndsAt = payload.trialEndsAt ? new Date(payload.trialEndsAt as string) : null;
       const subscriptionStatus = payload.subscriptionStatus as SubscriptionStatus;
 
-      const isTrialExpired = subscriptionStatus === SubscriptionStatus.TRIAL && trialEndsAt && new Date() > trialEndsAt;
-      const isSubscriptionInactive = subscriptionStatus === SubscriptionStatus.INACTIVE || subscriptionStatus === SubscriptionStatus.CANCELED;
+      const isTrialExpired = subscriptionStatus === 'TRIAL' && trialEndsAt && new Date() > trialEndsAt;
+      const isSubscriptionInactive = subscriptionStatus === 'INACTIVE' || subscriptionStatus === 'CANCELED';
 
       if (isTrialExpired || isSubscriptionInactive) {
           if (pathname !== '/billing' && !pathname.startsWith('/api/auth/logout')) {

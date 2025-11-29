@@ -11,20 +11,19 @@ import {
 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
-import { UserRole } from '@prisma/client';
 
 const allLinks = [
-    { href: "/pos", icon: CreditCard, titleKey: "home.links.pos.title", descriptionKey: "home.links.pos.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/inventory", icon: Package, titleKey: "home.links.inventory.title", descriptionKey: "home.links.inventory.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/customers", icon: Users, titleKey: "home.links.customers.title", descriptionKey: "home.links.customers.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    { href: "/expenses", icon: Landmark, titleKey: "home.links.expenses.title", descriptionKey: "home.links.expenses.description", role: [UserRole.ADMIN] },
-    { href: "/stats", icon: BarChart, titleKey: "home.links.stats.title", descriptionKey: "home.links.stats.description", role: [UserRole.ADMIN] },
-    { href: "/reports", icon: FileText, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: [UserRole.ADMIN] },
-    { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: [UserRole.ADMIN] },
-    { href: "/reports/ai-history", icon: Bot, titleKey: "home.links.ai_history.title", descriptionKey: "home.links.ai_history.description", role: [UserRole.ADMIN] },
-    // { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: [UserRole.ADMIN, UserRole.CASHIER] },
-    // { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: [UserRole.ADMIN, UserRole.CASHIER], isNew: true },
+    { href: "/pos", icon: CreditCard, titleKey: "home.links.pos.title", descriptionKey: "home.links.pos.description", role: ['ADMIN', 'CASHIER'] },
+    { href: "/inventory", icon: Package, titleKey: "home.links.inventory.title", descriptionKey: "home.links.inventory.description", role: ['ADMIN', 'CASHIER'] },
+    { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: ['ADMIN', 'CASHIER'] },
+    { href: "/customers", icon: Users, titleKey: "home.links.customers.title", descriptionKey: "home.links.customers.description", role: ['ADMIN', 'CASHIER'] },
+    { href: "/expenses", icon: Landmark, titleKey: "home.links.expenses.title", descriptionKey: "home.links.expenses.description", role: ['ADMIN'] },
+    { href: "/stats", icon: BarChart, titleKey: "home.links.stats.title", descriptionKey: "home.links.stats.description", role: ['ADMIN'] },
+    { href: "/reports", icon: FileText, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: ['ADMIN'] },
+    { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: ['ADMIN'] },
+    { href: "/reports/ai-history", icon: Bot, titleKey: "home.links.ai_history.title", descriptionKey: "home.links.ai_history.description", role: ['ADMIN'] },
+    // { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: ['ADMIN', 'CASHIER'] },
+    // { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: ['ADMIN', 'CASHIER'], isNew: true },
 ];
 
 export function HomePageClient() {
@@ -34,7 +33,7 @@ export function HomePageClient() {
 
   const availableLinks = useMemo(() => {
     return allLinks.filter(link => {
-      if (!link.role.includes(user?.role as UserRole)) {
+      if (!user?.role || !link.role.includes(user.role)) {
         return false;
       }
       if (searchTerm) {

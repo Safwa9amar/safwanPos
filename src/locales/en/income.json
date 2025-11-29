@@ -1,0 +1,17 @@
+{
+    "income.title": "Income Log",
+    "income.description": "Log capital or other non-sale related income.",
+    "income.add": "Add Income",
+    "income.addTitle": "Add New Income Entry",
+    "income.addDescription": "Fill in the details of the income entry.",
+    "income.noEntries": "No income entries recorded. Add one to get started.",
+    "income.details": "Details",
+    "income.amount": "Amount",
+    "income.date": "Date",
+    "income.deleteSuccess": "Income entry deleted.",
+    "income.deleteFailed": "Failed to delete income entry.",
+    "income.deleteConfirmTitle": "Delete Income Entry?",
+    "income.deleteConfirmDescription": "This will permanently delete this entry's record. This action cannot be undone.",
+    "income.saveSuccess": "Income entry saved.",
+    "income.saveFailed": "Failed to save income entry."
+}

@@ -34,7 +34,6 @@ import { useTranslation } from "@/hooks/use-translation";
 import { differenceInDays, formatDistanceToNow } from "date-fns";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
-import { UserRole } from "@prisma/client";
 import { Breadcrumbs } from "./breadcrumbs";
 
 const SidebarLabel = ({ children }: { children: React.ReactNode }) => (

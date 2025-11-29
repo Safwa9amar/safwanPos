@@ -1,0 +1,14 @@
+{
+    "settings.title": "الإعدادات",
+    "settings.description": "إدارة إعدادات وتفضيلات التطبيق الخاص بك.",
+    "settings.theme": "المظهر",
+    "settings.themeDescription": "تخصيص شكل وأسلوب التطبيق الخاص بك.",
+    "settings.navStyle": "نمط التنقل",
+    "settings.navStyleDescription": "اختر كيفية التنقل عبر التطبيق.",
+    "settings.language": "اللغة",
+    "settings.languageDescription": "اختر لغتك المفضلة للواجهة.",
+    "settings.currency": "العملة",
+    "settings.currencyDescription": "اختر عملتك المفضلة للقيم المالية.",
+    "settings.userManagement": "إدارة المستخدمين",
+    "settings.userManagementDescription": "إدارة حسابات الموظفين وأذوناتهم."
+}

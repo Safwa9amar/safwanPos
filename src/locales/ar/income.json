@@ -1,0 +1,17 @@
+{
+    "income.title": "سجل الدخل",
+    "income.description": "تسجيل رأس المال أو أي دخل آخر غير متعلق بالمبيعات.",
+    "income.add": "إضافة دخل",
+    "income.addTitle": "إضافة إدخال دخل جديد",
+    "income.addDescription": "املأ تفاصيل إدخال الدخل.",
+    "income.noEntries": "لم يتم تسجيل أي إدخالات دخل. أضف واحدة للبدء.",
+    "income.details": "التفاصيل",
+    "income.amount": "المبلغ",
+    "income.date": "التاريخ",
+    "income.deleteSuccess": "تم حذف إدخال الدخل.",
+    "income.deleteFailed": "فشل حذف إدخال الدخل.",
+    "income.deleteConfirmTitle": "حذف إدخال الدخل؟",
+    "income.deleteConfirmDescription": "سيؤدي هذا إلى حذف سجل هذا الإدخال نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+    "income.saveSuccess": "تم حفظ إدخال الدخل.",
+    "income.saveFailed": "فشل حفظ إدخال الدخل."
+}

@@ -1,0 +1,15 @@
+{
+    "purchases.title": "Direct Purchases",
+    "purchases.description": "Log purchases made without a formal supplier.",
+    "purchases.log_purchase": "Log Purchase",
+    "purchases.log_purchase_desc": "Record items purchased and their costs.",
+    "purchases.no_purchases_title": "No Direct Purchases",
+    "purchases.no_purchases_desc": "Get started by logging a new purchase.",
+    "purchases.store_name": "Store Name (Optional)",
+    "purchases.notes": "Notes (Optional)",
+    "purchases.notes_placeholder": "e.g., details about the purchase",
+    "purchases.log_and_update_stock": "Log & Update Stock",
+    "purchases.purchase_from": "Purchase from",
+    "purchases.delete_confirm_title": "Delete this Purchase?",
+    "purchases.delete_confirm_desc": "This action will permanently delete this purchase record and revert the stock quantities. This action cannot be undone."
+}

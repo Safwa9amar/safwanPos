@@ -1,0 +1,14 @@
+{
+    "settings.title": "Settings",
+    "settings.description": "Manage your application settings and preferences.",
+    "settings.theme": "Theme",
+    "settings.themeDescription": "Customize the look and feel of your application.",
+    "settings.navStyle": "Navigation Style",
+    "settings.navStyleDescription": "Choose how you navigate through the application.",
+    "settings.language": "Language",
+    "settings.languageDescription": "Set your preferred language for the interface.",
+    "settings.currency": "Currency",
+    "settings.currencyDescription": "Set your preferred currency for financial values.",
+    "settings.userManagement": "User Management",
+    "settings.userManagementDescription": "Manage staff accounts and permissions."
+}

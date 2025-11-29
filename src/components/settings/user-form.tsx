@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User, UserRole } from "@prisma/client";
+import { User } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/context/auth-context";
 
+const UserRoleEnum = z.enum(["ADMIN", "CASHIER"]);
+
 const UserFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  role: z.nativeEnum(UserRole),
+  role: UserRoleEnum,
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine(data => {
@@ -53,7 +56,7 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
       id: user?.id,
       name: user?.name || "",
       email: user?.email || "",
-      role: user?.role || UserRole.CASHIER,
+      role: user?.role === 'ADMIN' ? 'ADMIN' : 'CASHIER',
       password: "",
       confirmPassword: "",
     },
@@ -111,14 +114,13 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
 
        <div className="space-y-2">
             <Label htmlFor="role">{t('users.role')}</Label>
-            <Select value={watch('role')} onValueChange={(value: UserRole) => setValue('role', value)}>
+            <Select value={watch('role')} onValueChange={(value: "ADMIN" | "CASHIER") => setValue('role', value)}>
                 <SelectTrigger id="role">
                     <SelectValue placeholder={t('users.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
-                    {Object.values(UserRole).map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
+                    <SelectItem value="ADMIN">ADMIN</SelectItem>
+                    <SelectItem value="CASHIER">CASHIER</SelectItem>
                 </SelectContent>
             </Select>
             {formState.errors.role && <p className="text-sm text-destructive">{formState.errors.role.message}</p>}

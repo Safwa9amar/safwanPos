@@ -1,0 +1,15 @@
+{
+    "purchases.title": "المشتريات المباشرة",
+    "purchases.description": "تسجيل المشتريات التي تمت بدون مورد رسمي.",
+    "purchases.log_purchase": "تسجيل عملية شراء",
+    "purchases.log_purchase_desc": "سجل العناصر التي تم شراؤها وتكاليفها.",
+    "purchases.no_purchases_title": "لا توجد مشتريات مباشرة",
+    "purchases.no_purchases_desc": "ابدأ بتسجيل عملية شراء جديدة.",
+    "purchases.store_name": "اسم المتجر (اختياري)",
+    "purchases.notes": "ملاحظات (اختياري)",
+    "purchases.notes_placeholder": "على سبيل المثال، تفاصيل حول عملية الشراء",
+    "purchases.log_and_update_stock": "تسجيل وتحديث المخزون",
+    "purchases.purchase_from": "شراء من",
+    "purchases.delete_confirm_title": "حذف هذه العملية الشرائية؟",
+    "purchases.delete_confirm_desc": "سيؤدي هذا الإجراء إلى حذف سجل الشراء هذا بشكل دائم وإعادة الكميات إلى المخزون. لا يمكن التراجع عن هذا الإجراء."
+}

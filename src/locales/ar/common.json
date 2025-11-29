@@ -1,0 +1,14 @@
+{
+    "actions.view": "عرض",
+    "actions.edit": "تعديل",
+    "actions.delete": "حذف",
+    "actions.print": "طباعة",
+    "actions.actions": "إجراءات",
+    "actions.make_payment": "تسديد دفعة",
+    "actions.add_credit_debt": "إضافة دين/رصيد",
+    "errors.unknown": "حدث خطأ غير معروف.",
+    "pos.cancelButton": "إلغاء",
+    "inventory.save": "حفظ",
+    "inventory.saving": "جاري الحفظ...",
+    "history.close": "إغلاق"
+}

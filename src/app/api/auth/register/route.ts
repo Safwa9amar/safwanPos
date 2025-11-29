@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { UserRole, SubscriptionStatus } from '@prisma/client';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 import { addDays } from 'date-fns';
@@ -46,10 +45,10 @@ export async function POST(req: NextRequest) {
         name,
         email,
         password: hashedPassword,
-        role: isFirstUser ? UserRole.ADMIN : UserRole.CASHIER,
+        role: isFirstUser ? 'ADMIN' : 'CASHIER',
         emailVerificationToken: isFirstUser ? emailVerificationToken : null, // Only first user needs to verify
         emailVerified: isFirstUser ? null : new Date(), // Staff are auto-verified
-        subscriptionStatus: SubscriptionStatus.TRIAL,
+        subscriptionStatus: 'TRIAL',
         trialEndsAt: addDays(new Date(), 14), // 14-day trial
       },
     });
