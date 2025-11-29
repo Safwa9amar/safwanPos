@@ -1,3 +1,4 @@
+
 {
     "sidebar.pos": "نقطة البيع",
     "sidebar.reports": "تقارير المبيعات",
@@ -15,7 +16,6 @@
     "sidebar.dashboard": "لوحة التحكم",
     "sidebar.inventory_management": "الأصناف والمخزون",
     "sidebar.sales_management": "إدارة المبيعات",
-    "sidebar.purchases_management": "إدارة المشتريات",
     "sidebar.customers_management": "إدارة العملاء",
     "sidebar.staff_accounts": "حسابات الموظفين",
     "sidebar.shipping_delivery": "الشحن والتوصيل",

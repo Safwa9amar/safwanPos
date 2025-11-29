@@ -10,7 +10,12 @@ import { AppWithDirection } from "@/components/root-layout-client";
 import { NavigationProvider } from "@/context/navigation-context";
 import { Background } from "@/components/background";
 import { SoundProvider } from "@/context/sound-context";
+import type { Metadata } from 'next';
 
+export const metadata: Metadata = {
+  title: 'SafwanPOS',
+  description: 'A minimalist, fully functional Point-of-Sale (POS) system.',
+};
 
 export default function RootLayout({
   children,
@@ -19,27 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <title>SafwanPOS</title>
-        <meta
-          name="description"
-          content="A minimalist, fully functional Point-of-Sale (POS) system."
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+      <head />
       <body>
           <LanguageProvider>
             <ThemeProvider>

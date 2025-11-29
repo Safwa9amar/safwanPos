@@ -116,28 +116,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.purchases_management')}>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.suppliers')}>
                     <Link href="/suppliers">
                         <Truck />
-                        {t('sidebar.purchases_management')}
+                        {t('sidebar.suppliers')}
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
-                  <Link href="/purchases">
-                      <PackagePlus />
-                      {t('sidebar.direct_purchases')}
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
+                   <Link href="/customers">
+                      <Users />
+                      {t('sidebar.customers_management')}
                   </Link>
               </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
-                     <Link href="/customers">
-                        <Users />
-                        {t('sidebar.customers_management')}
-                    </Link>
-                </SidebarMenuButton>
             </SidebarMenuItem>
             
             {isAdmin && (
@@ -155,6 +147,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <>
                 <SidebarSeparator className="my-4" />
                 <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
+                        <Link href="/purchases">
+                            <PackagePlus />
+                            {t('sidebar.direct_purchases')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/income')} tooltip={t('sidebar.income')}>
                         <Link href="/income">

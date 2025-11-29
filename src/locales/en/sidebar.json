@@ -1,3 +1,4 @@
+
 {
     "sidebar.pos": "Point of Sale",
     "sidebar.reports": "Sales Reports",
@@ -15,7 +16,6 @@
     "sidebar.dashboard": "Dashboard",
     "sidebar.inventory_management": "Products & Inventory",
     "sidebar.sales_management": "Sales Management",
-    "sidebar.purchases_management": "Purchases Management",
     "sidebar.customers_management": "Customer Management",
     "sidebar.staff_accounts": "Staff Accounts",
     "sidebar.shipping_delivery": "Shipping & Delivery",
