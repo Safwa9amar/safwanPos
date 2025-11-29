@@ -10,17 +10,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from '../ui/button';
 import { useCurrency } from '@/hooks/use-currency';
 import { useAuth } from '@/context/auth-context';
-import { Truck, HandCoins, DollarSign, Printer } from 'lucide-react';
+import { Truck, HandCoins, DollarSign, Printer, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { ReceiveStockDialog } from './receive-stock-dialog';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cairoFont } from '@/lib/cairo-font';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { deletePurchaseOrder } from '@/app/suppliers/actions';
+import { useRouter } from 'next/navigation';
 
 export type PurchaseOrderItemWithProduct = POItemType & { product: Product };
 export type PurchaseOrderWithItems = POType & { items: PurchaseOrderItemWithProduct[] };
 
-type HistoryEntry = 
+export type HistoryEntry = 
     | { type: 'purchase', date: Date, data: PurchaseOrderWithItems }
     | { type: 'payment', date: Date, data: SupplierPayment }
     | { type: 'credit', date: Date, data: SupplierCredit };
@@ -28,12 +32,20 @@ type HistoryEntry =
 
 interface PurchaseOrderListProps {
     purchaseOrders: HistoryEntry[];
+    onEditPayment: (payment: SupplierPayment) => void;
+    onEditCredit: (credit: SupplierCredit) => void;
 }
 
-export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
+export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit }: PurchaseOrderListProps) {
     const { t, language } = useTranslation();
+    const { user } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
     const { formatCurrency } = useCurrency();
     const [receivingOrder, setReceivingOrder] = useState<PurchaseOrderWithItems | null>(null);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedPo, setSelectedPo] = useState<PurchaseOrderWithItems | null>(null);
 
     const handlePrint = (po: PurchaseOrderWithItems) => {
         const doc = new jsPDF();
@@ -113,6 +125,27 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
         window.open(doc.output('bloburl'), '_blank');
     };
 
+    const handleDeleteClick = (po: PurchaseOrderWithItems) => {
+        setSelectedPo(po);
+        setIsAlertOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedPo || !user) return;
+
+        setIsDeleting(true);
+        const result = await deletePurchaseOrder(selectedPo.id, user.id);
+        setIsDeleting(false);
+
+        if (result.success) {
+            toast({ title: "Purchase Order Deleted" });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+        setIsAlertOpen(false);
+    };
+
     if (purchaseOrders.length === 0) {
         return <p className="text-muted-foreground">{t('suppliers.noPurchaseOrders')}</p>;
     }
@@ -161,32 +194,60 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                                     </CardDescription>
                                 </div>
                             </div>
-                           {entry.type === 'purchase' && <Badge variant={getStatusVariant(entry.data.status)}>{entry.data.status}</Badge>}
-                           {entry.type === 'payment' && <span className="font-bold text-lg text-green-600">-{formatCurrency(entry.data.amount)}</span>}
-                           {entry.type === 'credit' && <span className="font-bold text-lg text-red-600">+{formatCurrency(entry.data.amount)}</span>}
+                           <div className="flex items-center gap-2">
+                               {entry.type === 'purchase' && <Badge variant={getStatusVariant(entry.data.status)}>{entry.data.status}</Badge>}
+                               {entry.type === 'payment' && <span className="font-bold text-lg text-green-600">-{formatCurrency(entry.data.amount)}</span>}
+                               {entry.type === 'credit' && <span className="font-bold text-lg text-red-600">+{formatCurrency(entry.data.amount)}</span>}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        {entry.type === 'purchase' && (
+                                            <>
+                                                <DropdownMenuItem onSelect={() => handlePrint(entry.data)}>
+                                                    <Printer className="mr-2 h-4 w-4" /> Print
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                    onSelect={() => handleDeleteClick(entry.data)} 
+                                                    disabled={entry.data.status !== 'PENDING'}
+                                                    className="text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
+                                        {entry.type === 'payment' && (
+                                            <DropdownMenuItem onSelect={() => onEditPayment(entry.data)}>
+                                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                                            </DropdownMenuItem>
+                                        )}
+                                         {entry.type === 'credit' && (
+                                            <DropdownMenuItem onSelect={() => onEditCredit(entry.data)}>
+                                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                           </div>
                         </div>
                     </CardHeader>
-                    {entry.type === 'purchase' && (
-                        <>
+                    {entry.type === 'purchase' && entry.data.status !== 'CANCELLED' && (
                          <CardContent>
-                            <div className="flex justify-between items-center">
-                                <Button variant="outline" size="icon" onClick={() => handlePrint(entry.data)}>
-                                    <Printer className="h-4 w-4" />
-                                </Button>
-                                <p className="font-semibold text-right">{t('po.totalCost')}: {formatCurrency(entry.data.totalCost)}</p>
-                            </div>
+                            <p className="font-semibold text-right">{t('po.totalCost')}: {formatCurrency(entry.data.totalCost)}</p>
                         </CardContent>
-                        {entry.data.status === 'PENDING' || entry.data.status === 'PARTIALLY_RECEIVED' ? (
-                            <CardFooter>
-                                <Button className="w-full" onClick={() => setReceivingOrder(entry.data)}>
-                                    <Truck className="mr-2 h-4 w-4" />
-                                    Receive Stock
-                                </Button>
-                            </CardFooter>
-                        ) : null}
-                        </>
                     )}
-                    {(entry.type === 'payment' || entry.type === 'credit') && entry.data.notes && (
+                    {entry.type === 'purchase' && (entry.data.status === 'PENDING' || entry.data.status === 'PARTIALLY_RECEIVED') && (
+                        <CardFooter>
+                            <Button className="w-full" onClick={() => setReceivingOrder(entry.data)}>
+                                <Truck className="mr-2 h-4 w-4" />
+                                Receive Stock
+                            </Button>
+                        </CardFooter>
+                    )}
+                    {(entry.type === 'payment' || entry.type === 'credit') && (entry.data as any).notes && (
                          <CardContent>
                              <p className="text-sm text-muted-foreground pt-2">Notes: {(entry.data as any).notes || (entry.data as any).reason}</p>
                         </CardContent>
@@ -199,6 +260,23 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                 onOpenChange={(isOpen) => !isOpen && setReceivingOrder(null)}
                 purchaseOrder={receivingOrder}
             />
+
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Purchase Order?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete PO #{selectedPo?.id.substring(0,8)}. This action cannot be undone and will reverse the balance increase on the supplier.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

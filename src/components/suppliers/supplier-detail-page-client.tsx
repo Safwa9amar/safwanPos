@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { PurchaseOrder as PurchaseOrderType, Supplier, Product, SupplierPayment, SupplierCredit } from "@prisma/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FilePlus2, Pencil, DollarSign, HandCoins, Truck, Contact, Info } from "lucide-react";
+import { FilePlus2, Pencil, DollarSign, HandCoins, Truck, Contact, Info, MoreVertical } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { SupplierSheet } from "./supplier-sheet";
 import { PurchaseOrderSheet } from "./purchase-order-sheet";
@@ -57,10 +57,16 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
   const router = useRouter();
   const { formatCurrency } = useCurrency();
   const [supplier, setSupplier] = useState<SupplierWithDetails>(initialSupplier);
+  
   const [isSupplierSheetOpen, setIsSupplierSheetOpen] = useState(false);
   const [isPOSheetOpen, setIsPOSheetOpen] = useState(false);
+  
   const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
+
   const [isCreditSheetOpen, setIsCreditSheetOpen] = useState(false);
+  const [editingCredit, setEditingCredit] = useState<SupplierCredit | null>(null);
+
 
   useEffect(() => {
     setSupplier(initialSupplier);
@@ -71,6 +77,16 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
       if (!open) {
           router.refresh();
       }
+  }
+
+  const handleEditPayment = (payment: SupplierPayment) => {
+      setEditingPayment(payment);
+      setIsPaymentSheetOpen(true);
+  }
+  
+  const handleEditCredit = (credit: SupplierCredit) => {
+      setEditingCredit(credit);
+      setIsCreditSheetOpen(true);
   }
 
   const sortedHistory = [
@@ -111,13 +127,15 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
                 </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline">Actions</Button>
+                        <Button variant="outline">
+                            <MoreVertical className="mr-2 h-4 w-4" /> Actions
+                        </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => setIsPaymentSheetOpen(true)}>
+                        <DropdownMenuItem onSelect={() => { setEditingPayment(null); setIsPaymentSheetOpen(true);}}>
                             <DollarSign className="mr-2 h-4 w-4"/> Make Payment
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setIsCreditSheetOpen(true)}>
+                        <DropdownMenuItem onSelect={() => { setEditingCredit(null); setIsCreditSheetOpen(true);}}>
                              <HandCoins className="mr-2 h-4 w-4"/> Add Credit/Debt
                         </DropdownMenuItem>
                          <DropdownMenuSeparator />
@@ -146,7 +164,11 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
                     </TabsList>
                 </div>
                 <TabsContent value="history" className="p-4 md:p-6">
-                    <PurchaseOrderList purchaseOrders={sortedHistory} />
+                    <PurchaseOrderList 
+                        purchaseOrders={sortedHistory} 
+                        onEditPayment={handleEditPayment}
+                        onEditCredit={handleEditCredit}
+                    />
                 </TabsContent>
                 <TabsContent value="profile" className="p-4 md:p-6">
                     <div className="space-y-6">
@@ -194,12 +216,14 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
         isOpen={isPaymentSheetOpen}
         onOpenChange={handleSheetChange(setIsPaymentSheetOpen)}
         supplier={supplier}
+        payment={editingPayment}
       />
       
       <SupplierCreditSheet
         isOpen={isCreditSheetOpen}
         onOpenChange={handleSheetChange(setIsCreditSheetOpen)}
         supplier={supplier}
+        credit={editingCredit}
       />
     </div>
   );

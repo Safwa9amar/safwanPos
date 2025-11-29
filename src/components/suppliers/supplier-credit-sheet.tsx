@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Supplier } from "@prisma/client";
+import { Supplier, SupplierCredit } from "@prisma/client";
 import {
   Sheet,
   SheetContent,
@@ -19,33 +19,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { addSupplierCredit } from "@/app/suppliers/actions";
+import { upsertSupplierCredit } from "@/app/suppliers/actions";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/auth-context";
 
 const CreditSchema = z.object({
+    id: z.string().optional(),
     amount: z.coerce.number().positive("Amount must be positive"),
     reason: z.string().min(1, "A reason is required for this adjustment."),
 });
 
 type CreditFormValues = z.infer<typeof CreditSchema>;
 
-export function SupplierCreditSheet({ isOpen, onOpenChange, supplier }: { isOpen: boolean, onOpenChange: (open: boolean) => void, supplier: Supplier }) {
+interface SupplierCreditSheetProps {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    supplier: Supplier;
+    credit?: SupplierCredit | null;
+}
+
+export function SupplierCreditSheet({ isOpen, onOpenChange, supplier, credit = null }: SupplierCreditSheetProps) {
     const { t } = useTranslation();
     const { toast } = useToast();
     const { user } = useAuth();
-    const [isSaving, setIsSaving] = useState(false);
-
+    
     const form = useForm<CreditFormValues>({
         resolver: zodResolver(CreditSchema),
-        defaultValues: {
-            amount: undefined,
-            reason: ""
-        }
     });
     
-    const { register, handleSubmit, formState: { errors }, reset } = form;
+    const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = form;
+
+    useEffect(() => {
+        if(isOpen) {
+            reset(credit || { amount: undefined, reason: "" });
+        }
+    }, [isOpen, credit, reset]);
 
     const onSubmit = async (data: CreditFormValues) => {
         if (!user) {
@@ -53,20 +62,18 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier }: { isOpen
             return;
         }
 
-        setIsSaving(true);
         const formData = new FormData();
+        if(credit?.id) formData.append('id', credit.id);
         formData.append('supplierId', supplier.id);
         formData.append('amount', data.amount.toString());
         formData.append('reason', data.reason);
         formData.append('userId', user.id);
         
-        const result = await addSupplierCredit(formData);
-        setIsSaving(false);
+        const result = await upsertSupplierCredit(formData);
         
         if (result.success) {
-            toast({ title: 'Credit/Debt Recorded' });
+            toast({ title: credit ? 'Credit Updated' : 'Credit Recorded' });
             onOpenChange(false);
-            reset();
         } else {
             toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
         }
@@ -77,8 +84,8 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier }: { isOpen
             <SheetContent>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <SheetHeader>
-                        <SheetTitle>Adjust Balance for {supplier.name}</SheetTitle>
-                        <SheetDescription>Manually increase the amount you owe to this supplier (add debt).</SheetDescription>
+                        <SheetTitle>{credit ? "Edit" : "Add"} Credit/Debt for {supplier.name}</SheetTitle>
+                        <SheetDescription>Manually increase the amount you owe to this supplier.</SheetDescription>
                     </SheetHeader>
                     <div className="py-4 space-y-4">
                         <div className="space-y-2">
@@ -93,11 +100,11 @@ export function SupplierCreditSheet({ isOpen, onOpenChange, supplier }: { isOpen
                         </div>
                     </div>
                     <SheetFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                             {t('pos.cancelButton')}
                         </Button>
-                        <Button type="submit" disabled={isSaving}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {t('inventory.save')}
                         </Button>
                     </SheetFooter>

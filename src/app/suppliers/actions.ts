@@ -4,14 +4,13 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { PurchaseOrderItem } from "@/types";
 import { SupplierStatus } from "@prisma/client";
 
 const SupplierSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   contactName: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").optional().or(z.literal('')),
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().optional(),
   taxId: z.string().optional(),
@@ -21,12 +20,17 @@ const SupplierSchema = z.object({
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
   logoUrl: z.string().url().optional().or(z.literal('')),
-  contractStartDate: z.date().optional().nullable(),
-  contractEndDate: z.date().optional().nullable(),
-  monthlySupplyQuota: z.coerce.number().optional(),
-  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  contractStartDate: z.coerce.date().optional().nullable(),
+  contractEndDate: z.coerce.date().optional().nullable(),
+  monthlySupplyQuota: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().optional()
+  ),
+  qualityRating: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().min(1).max(5).optional()
+  ),
   notes: z.string().optional(),
-  userId: z.string().min(1),
 });
 
 
@@ -79,12 +83,12 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
 
-  // Handle empty optional fields before validation
+  // Manually remove empty strings for optional fields before validation
   if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
   if (values.qualityRating === '') delete values.qualityRating;
   if (values.contractStartDate === '') delete values.contractStartDate;
   if (values.contractEndDate === '') delete values.contractEndDate;
-  
+
   const validatedFields = SupplierSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -94,7 +98,8 @@ export async function upsertSupplier(formData: FormData) {
     };
   }
 
-  const { id, userId, ...data } = validatedFields.data;
+  const { id, ...data } = validatedFields.data;
+  const userId = formData.get('userId') as string;
   if (!userId) return { message: "Authentication error." };
 
   try {
@@ -115,6 +120,7 @@ export async function upsertSupplier(formData: FormData) {
     return { message: "Failed to save supplier." };
   }
 }
+
 
 export async function deleteSupplier(supplierId: string, userId: string) {
     if (!userId) return { error: "User not authenticated" };
@@ -211,6 +217,39 @@ export async function createPurchaseOrder(
 }
 
 
+export async function deletePurchaseOrder(purchaseOrderId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+    try {
+        return await prisma.$transaction(async (tx) => {
+            const po = await tx.purchaseOrder.findFirst({
+                where: { id: purchaseOrderId, userId }
+            });
+
+            if (!po) {
+                throw new Error("Purchase order not found or access denied.");
+            }
+
+            if (po.status !== 'PENDING') {
+                throw new Error("Only PENDING purchase orders can be deleted.");
+            }
+
+            await tx.supplier.update({
+                where: { id: po.supplierId },
+                data: { balance: { decrement: po.totalCost } }
+            });
+
+            await tx.purchaseOrder.delete({ where: { id: purchaseOrderId } });
+
+            revalidatePath(`/suppliers/${po.supplierId}`);
+            return { success: true };
+        });
+    } catch (error: any) {
+        console.error("Failed to delete purchase order:", error);
+        return { error: error.message };
+    }
+}
+
+
 export async function receivePurchaseOrderItems(
     userId: string,
     purchaseOrderId: string,
@@ -240,7 +279,6 @@ export async function receivePurchaseOrderItems(
                     throw new Error(`Cannot receive more items than ordered for ${poItem.id}.`);
                 }
 
-                // 1. Update the PurchaseOrderItem
                 await tx.purchaseOrderItem.update({
                     where: { id: receivedItem.purchaseOrderItemId },
                     data: {
@@ -248,14 +286,12 @@ export async function receivePurchaseOrderItems(
                     }
                 });
 
-                // 2. Update the product stock
                 await tx.product.update({
                     where: { id: poItem.productId },
                     data: { stock: { increment: receivedItem.receivedNow } }
                 });
             }
 
-            // 3. Check if all items in the PO are fully received and update PO status
             const updatedPoItems = await tx.purchaseOrderItem.findMany({
                 where: { purchaseOrderId: purchaseOrderId }
             });
@@ -286,59 +322,15 @@ export async function receivePurchaseOrderItems(
     }
 }
 
-export async function completePurchaseOrder(purchaseOrderId: string, userId: string) {
-    if (!userId) return { error: "User not authenticated" };
-    try {
-        const purchaseOrder = await prisma.purchaseOrder.findFirst({
-            where: { id: purchaseOrderId, userId },
-            include: { items: true },
-        });
-
-        if (!purchaseOrder) {
-            return { error: "Purchase order not found." };
-        }
-
-        if(purchaseOrder.status === 'COMPLETED'){
-            return { error: "Purchase order is already completed."}
-        }
-
-        await prisma.$transaction(async (tx) => {
-            // Update the product stock for each item in the purchase order
-            for (const item of purchaseOrder.items) {
-                await tx.product.update({
-                    where: { id: item.productId },
-                    data: {
-                        stock: {
-                            increment: item.quantity,
-                        },
-                    },
-                });
-            }
-
-            // Update the status of the purchase order
-            await tx.purchaseOrder.update({
-                where: { id: purchaseOrderId },
-                data: { status: 'COMPLETED' },
-            });
-        });
-
-        revalidatePath(`/suppliers/${purchaseOrder.supplierId}`);
-        revalidatePath('/inventory');
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to complete purchase order:", error);
-        return { error: "An error occurred while completing the order." };
-    }
-}
-
 const SupplierPaymentSchema = z.object({
+    id: z.string().optional(),
     supplierId: z.string().min(1),
     amount: z.coerce.number().positive("Amount must be positive"),
     notes: z.string().optional(),
     userId: z.string().min(1),
 });
 
-export async function addSupplierPayment(formData: FormData) {
+export async function upsertSupplierPayment(formData: FormData) {
     const values = Object.fromEntries(formData.entries());
     const validatedFields = SupplierPaymentSchema.safeParse(values);
 
@@ -346,39 +338,76 @@ export async function addSupplierPayment(formData: FormData) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { supplierId, amount, notes, userId } = validatedFields.data;
+    const { id, supplierId, amount, notes, userId } = validatedFields.data;
 
     try {
         await prisma.$transaction(async (tx) => {
             const supplier = await tx.supplier.findFirst({ where: { id: supplierId, userId }});
             if (!supplier) throw new Error("Supplier not found or access denied.");
+            
+            let amountDifference = amount;
 
-            await tx.supplierPayment.create({
-                data: { supplierId, userId, amount, notes }
-            });
+            if (id) {
+                const oldPayment = await tx.supplierPayment.findUnique({ where: { id }});
+                if(!oldPayment) throw new Error("Payment to update not found.");
+                if(oldPayment.supplierId !== supplierId) throw new Error("Cannot change the supplier of a payment.");
+                amountDifference = amount - oldPayment.amount;
+                
+                await tx.supplierPayment.update({
+                    where: { id },
+                    data: { amount, notes }
+                });
+            } else {
+                await tx.supplierPayment.create({
+                    data: { supplierId, userId, amount, notes }
+                });
+            }
 
             await tx.supplier.update({
                 where: { id: supplierId },
-                data: { balance: { decrement: amount } }
+                data: { balance: { decrement: amountDifference } }
             });
         });
         revalidatePath(`/suppliers/${supplierId}`);
         return { success: true };
     } catch (error: any) {
-        console.error("Failed to add supplier payment:", error);
+        console.error("Failed to save supplier payment:", error);
         return { error: error.message || "Failed to record payment." };
     }
 }
 
+export async function deleteSupplierPayment(paymentId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+    try {
+        return await prisma.$transaction(async (tx) => {
+            const payment = await tx.supplierPayment.findFirst({ where: { id: paymentId, userId }});
+            if (!payment) throw new Error("Payment not found or access denied.");
+
+            await tx.supplier.update({
+                where: { id: payment.supplierId },
+                data: { balance: { increment: payment.amount } } // Reverse the payment
+            });
+
+            await tx.supplierPayment.delete({ where: { id: paymentId } });
+            
+            revalidatePath(`/suppliers/${payment.supplierId}`);
+            return { success: true };
+        });
+    } catch (error: any) {
+        console.error("Failed to delete supplier payment:", error);
+        return { error: error.message || "Failed to delete payment." };
+    }
+}
 
 const SupplierCreditSchema = z.object({
+    id: z.string().optional(),
     supplierId: z.string().min(1),
     amount: z.coerce.number().positive("Amount must be positive"),
     reason: z.string().min(1, "Reason is required"),
     userId: z.string().min(1),
 });
 
-export async function addSupplierCredit(formData: FormData) {
+export async function upsertSupplierCredit(formData: FormData) {
     const values = Object.fromEntries(formData.entries());
     const validatedFields = SupplierCreditSchema.safeParse(values);
 
@@ -386,20 +415,34 @@ export async function addSupplierCredit(formData: FormData) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { supplierId, amount, reason, userId } = validatedFields.data;
+    const { id, supplierId, amount, reason, userId } = validatedFields.data;
     
     try {
         await prisma.$transaction(async (tx) => {
             const supplier = await tx.supplier.findFirst({ where: { id: supplierId, userId }});
             if (!supplier) throw new Error("Supplier not found or access denied.");
             
-            await tx.supplierCredit.create({
-                data: { supplierId, userId, amount, reason }
-            });
+            let amountDifference = amount;
+
+            if (id) {
+                const oldCredit = await tx.supplierCredit.findUnique({ where: { id } });
+                if (!oldCredit) throw new Error("Credit to update not found.");
+                if (oldCredit.supplierId !== supplierId) throw new Error("Cannot change the supplier of a credit.");
+                amountDifference = amount - oldCredit.amount;
+
+                await tx.supplierCredit.update({
+                    where: { id },
+                    data: { amount, reason }
+                });
+            } else {
+                await tx.supplierCredit.create({
+                    data: { supplierId, userId, amount, reason }
+                });
+            }
 
             await tx.supplier.update({
                 where: { id: supplierId },
-                data: { balance: { increment: amount } }
+                data: { balance: { increment: amountDifference } }
             });
         });
 
@@ -407,7 +450,31 @@ export async function addSupplierCredit(formData: FormData) {
         return { success: true };
 
     } catch (error: any) {
-        console.error("Failed to add supplier credit:", error);
+        console.error("Failed to save supplier credit:", error);
         return { error: error.message || "Failed to add credit." };
+    }
+}
+
+
+export async function deleteSupplierCredit(creditId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+    try {
+        return await prisma.$transaction(async (tx) => {
+            const credit = await tx.supplierCredit.findFirst({ where: { id: creditId, userId } });
+            if (!credit) throw new Error("Credit not found or access denied.");
+
+            await tx.supplier.update({
+                where: { id: credit.supplierId },
+                data: { balance: { decrement: credit.amount } } // Reverse the credit
+            });
+
+            await tx.supplierCredit.delete({ where: { id: creditId } });
+            
+            revalidatePath(`/suppliers/${credit.supplierId}`);
+            return { success: true };
+        });
+    } catch (error: any) {
+        console.error("Failed to delete supplier credit:", error);
+        return { error: error.message || "Failed to delete credit." };
     }
 }
