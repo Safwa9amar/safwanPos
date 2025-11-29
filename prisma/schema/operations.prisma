@@ -49,11 +49,11 @@ model RepairJob {
 }
 
 model CapitalEntry {
-  id        String   @id @default(cuid())
-  details   String
-  amount    Float
-  date      DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+    id        String   @id @default(cuid())
+    details   String
+    amount    Float
+    entryDate DateTime @default(now())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
 }

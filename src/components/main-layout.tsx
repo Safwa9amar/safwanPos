@@ -115,14 +115,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.suppliers')}>
-                    <Link href="/suppliers">
-                        <Truck />
-                        {t('sidebar.suppliers')}
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
                    <Link href="/customers">
@@ -143,11 +135,18 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuItem>
             )}
 
+            <SidebarSeparator className="my-4" />
+            <SidebarLabel>{t('sidebar.purchases_management')}</SidebarLabel>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.suppliers')}>
+                    <Link href="/suppliers">
+                        <Truck />
+                        {t('sidebar.suppliers')}
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             {isAdmin && (
-              <>
-                <SidebarSeparator className="my-4" />
-                <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
-                 <SidebarMenuItem>
+                <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
                         <Link href="/purchases">
                             <PackagePlus />
@@ -155,6 +154,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
+            )}
+
+
+            {isAdmin && (
+              <>
+                <SidebarSeparator className="my-4" />
+                <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/income')} tooltip={t('sidebar.income')}>
                         <Link href="/income">
@@ -303,3 +309,5 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    
