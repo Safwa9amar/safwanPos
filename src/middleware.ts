@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as jose from 'jose';
 
-type UserRole = "ADMIN" | "CASHIER";
+type UserRole = "ADMIN" | "CASHIER" | "PHONE_REPAIR";
 type SubscriptionStatus = "TRIAL" | "ACTIVE" | "INACTIVE" | "CANCELED";
 
 const protectedRoutes: { path: string, roles: UserRole[] }[] = [
@@ -13,10 +13,12 @@ const protectedRoutes: { path: string, roles: UserRole[] }[] = [
     { path: '/stats', roles: ['ADMIN'] },
     { path: '/customers', roles: ['ADMIN', 'CASHIER'] },
     { path: '/suppliers', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/repairs', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/purchases', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/repairs', roles: ['ADMIN', 'PHONE_REPAIR'] },
     { path: '/expenses', roles: ['ADMIN'] },
     { path: '/settings', roles: ['ADMIN'] },
-    { path: '/billing', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/billing', roles: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
+    { path: '/income', roles: ['ADMIN'] },
 ];
 
 export async function middleware(request: NextRequest) {

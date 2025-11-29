@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/context/auth-context";
 
-const UserRoleEnum = z.enum(["ADMIN", "CASHIER"]);
+const UserRoleEnum = z.enum(["ADMIN", "CASHIER", "PHONE_REPAIR"]);
 
 const UserFormSchema = z.object({
   id: z.string().optional(),
@@ -56,7 +56,7 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
       id: user?.id,
       name: user?.name || "",
       email: user?.email || "",
-      role: user?.role === 'ADMIN' ? 'ADMIN' : 'CASHIER',
+      role: user?.role as 'ADMIN' | 'CASHIER' | 'PHONE_REPAIR' || 'CASHIER',
       password: "",
       confirmPassword: "",
     },
@@ -114,13 +114,14 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
 
        <div className="space-y-2">
             <Label htmlFor="role">{t('users.role')}</Label>
-            <Select value={watch('role')} onValueChange={(value: "ADMIN" | "CASHIER") => setValue('role', value)}>
+            <Select value={watch('role')} onValueChange={(value: "ADMIN" | "CASHIER" | "PHONE_REPAIR") => setValue('role', value)}>
                 <SelectTrigger id="role">
                     <SelectValue placeholder={t('users.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="ADMIN">ADMIN</SelectItem>
                     <SelectItem value="CASHIER">CASHIER</SelectItem>
+                    <SelectItem value="PHONE_REPAIR">PHONE_REPAIR</SelectItem>
                 </SelectContent>
             </Select>
             {formState.errors.role && <p className="text-sm text-destructive">{formState.errors.role.message}</p>}

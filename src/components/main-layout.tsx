@@ -73,6 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   const trialStatus = getTrialStatus();
   const isAdmin = user?.role === "ADMIN";
+  const isPhoneRepair = user?.role === "PHONE_REPAIR";
 
   return (
     <SidebarProvider>
@@ -124,7 +125,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {isAdmin && (
+            {(isAdmin || isPhoneRepair) && (
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
                         <Link href="/repairs">
@@ -145,16 +146,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-            {isAdmin && (
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
-                        <Link href="/purchases">
-                            <PackagePlus />
-                            {t('sidebar.direct_purchases')}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
+                    <Link href="/purchases">
+                        <PackagePlus />
+                        {t('sidebar.direct_purchases')}
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
 
 
             {isAdmin && (
