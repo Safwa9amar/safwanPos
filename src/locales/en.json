@@ -10,6 +10,7 @@
   "sidebar.repairs": "Repairs",
   "sidebar.sales_history": "Sales History",
   "sidebar.expenses": "Expenses",
+  "sidebar.income": "Income",
   "sidebar.pos_screen": "POS Screen",
   "sidebar.dashboard": "Dashboard",
   "sidebar.inventory_management": "Products & Inventory",
@@ -236,14 +237,23 @@
   "suppliers.contractStart": "Contract Start",
   "suppliers.contractEnd": "Contract End",
   "suppliers.qualityRating": "Quality Rating",
+  "suppliers.paymentMade": "Payment Made",
+  "suppliers.creditAdjustment": "Credit/Debt Adjustment",
+  "suppliers.paymentNotes": "Notes",
 
   "po.title": "New Purchase Order",
+  "po.order": "Order",
+  "po.orderId": "Order ID",
   "po.description": "Add products to this order.",
   "po.addProduct": "Add Product",
   "po.noProducts": "No products in this order yet.",
   "po.orderDate": "Order Date",
   "po.expectedDelivery": "Expected Delivery",
   "po.status": "Status",
+  "po.statuses.PENDING": "Pending",
+  "po.statuses.PARTIALLY_RECEIVED": "Partially Received",
+  "po.statuses.COMPLETED": "Completed",
+  "po.statuses.CANCELLED": "Cancelled",
   "po.totalCost": "Total Cost",
   "po.saveOrder": "Save Order",
   "po.item": "Item",
@@ -256,6 +266,8 @@
   "po.completedNotice": "This order is complete and stock has been updated. No further edits are possible.",
   "po.completeConfirmTitle": "Complete Purchase Order?",
   "po.completeConfirmDescription": "This will add the ordered quantities to your product stock levels. This action cannot be undone.",
+  "po.deleteConfirmTitle": "Delete Purchase Order?",
+  "po.deleteConfirmDescription": "This will permanently delete purchase order #{{id}}. This action cannot be undone and will reverse the balance increase on the supplier.",
   "po.confirm": "Confirm",
   "po.receiveStock": "Receive Stock",
   "po.receiveStockDescription": "Enter the quantity of items received in this delivery. Stock levels will be updated automatically.",
@@ -264,7 +276,7 @@
   "po.received": "Received",
   "po.receivingNow": "Receiving Now",
   "po.updateStock": "Confirm & Update Stock",
-
+  
   "customers.title": "Customer Management",
   "customers.description": "View, add, and manage your customers and their debts.",
   "customers.add": "Add Customer",
@@ -393,3 +405,5 @@
   "users.deleteConfirmTitle": "Delete User?",
   "users.deleteConfirmDescription": "This will permanently delete the user's account. This action cannot be undone."
 }
+
+    

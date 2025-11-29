@@ -10,6 +10,7 @@
     "sidebar.repairs": "الإصلاحات",
     "sidebar.sales_history": "سجل المبيعات",
     "sidebar.expenses": "المصروفات",
+    "sidebar.income": "الدخل",
     "sidebar.pos_screen": "شاشة البيع",
     "sidebar.dashboard": "لوحة التحكم",
     "sidebar.inventory_management": "الأصناف والمخزون",
@@ -241,8 +242,8 @@
     "suppliers.paymentNotes": "ملاحظات",
 
     "po.title": "طلب شراء جديد",
-    "po.order": "طلب",
-    "po.orderId": "معرف الطلب",
+    "po.order": "طلب شراء",
+    "po.orderId": "رقم الطلب",
     "po.description": "أضف منتجات إلى هذا الطلب.",
     "po.addProduct": "إضافة منتج",
     "po.noProducts": "لا توجد منتجات في هذا الطلب حتى الآن.",

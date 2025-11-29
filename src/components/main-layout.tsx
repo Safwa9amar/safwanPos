@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -132,17 +133,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             
             {isAdmin && (
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/expenses')} tooltip={t('sidebar.expenses')}>
-                        <Link href="/expenses">
-                        <Landmark />
-                        {t('sidebar.expenses')}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
-
-            {isAdmin && (
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
                         <Link href="/repairs">
@@ -152,6 +142,30 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             )}
+
+            {isAdmin && (
+              <>
+                <SidebarSeparator className="my-4" />
+                <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/stats')} tooltip={t('sidebar.income')}>
+                        <Link href="/stats">
+                        <Banknote />
+                        {t('sidebar.income')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/expenses')} tooltip={t('sidebar.expenses')}>
+                        <Link href="/expenses">
+                        <Landmark />
+                        {t('sidebar.expenses')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
+
 
             <SidebarSeparator className="my-4" />
 
@@ -163,14 +177,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/reports/history">
                             <History />
                             {t('sidebar.sales_history')}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === '/stats'} tooltip={t('sidebar.stats')}>
-                        <Link href="/stats">
-                            <BarChart />
-                            {t('sidebar.stats')}
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -280,3 +286,5 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    

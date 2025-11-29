@@ -10,6 +10,7 @@
   "sidebar.repairs": "الصلّاحات",
   "sidebar.sales_history": "سجل البيع",
   "sidebar.expenses": "المصاريف",
+  "sidebar.income": "الدخل",
   "sidebar.pos_screen": "شاشة البيع",
   "sidebar.dashboard": "لوحة التحكم",
   "sidebar.inventory_management": "الأصناف والمخزون",
@@ -241,7 +242,7 @@
   "suppliers.paymentNotes": "ملاحظات",
 
   "po.title": "طلب شراء جديد",
-  "po.order": "طلب",
+  "po.order": "طلب شراء",
   "po.orderId": "رقم الطلب",
   "po.description": "زيد المنتجات للطلب.",
   "po.addProduct": "زيد منتوج",
@@ -405,3 +406,4 @@
   "users.deleteConfirmDescription": "العملية نهائية وما تقدرش ترجّعها."
 }
 
+    
