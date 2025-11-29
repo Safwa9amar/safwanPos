@@ -1,0 +1,38 @@
+model User {
+  id                        String   @id @default(cuid())
+  name                      String?
+  email                     String   @unique
+  password                  String
+  emailVerified             DateTime?
+  emailVerificationToken    String?  @unique
+  passwordResetToken        String?  @unique
+  passwordResetTokenExpires DateTime?
+  role                      String   @default("CASHIER")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  subscriptionStatus        String   @default("TRIAL")
+  trialEndsAt               DateTime?
+
+  // For multi-tenancy: users created by an admin
+  createdById String?
+  createdBy   User?    @relation("UserCreations", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  createdUsers User[]   @relation("UserCreations")
+
+  // Relations
+  products         Product[]
+  categories       Category[]
+  barcodes         Barcode[]
+  sales            Sale[]
+  customers        Customer[]
+  payments         Payment[]
+  reports          Report[]
+  expenses         Expense[]
+  expenseCategories ExpenseCategory[]
+  repairJobs       RepairJob[]
+  suppliers        Supplier[]
+  purchaseOrders   PurchaseOrder[]
+  supplierPayments SupplierPayment[]
+  supplierCredits  SupplierCredit[]
+  directPurchases  DirectPurchase[]
+  capitalEntries   CapitalEntry[]
+}

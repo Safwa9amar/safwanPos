@@ -1,0 +1,42 @@
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  price       Float
+  costPrice   Float     @default(0)
+  stock       Float
+  unit        String    @default("EACH") // EACH, KG, G, L, ML
+  image       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onUpdate: NoAction, onDelete: SetNull)
+
+  barcodes           Barcode[]
+  saleItems          SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  directPurchaseItems DirectPurchaseItem[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@unique([name, userId])
+}
+
+model Barcode {
+  id        String   @id @default(cuid())
+  code      String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+  createdAt DateTime @default(now())
+
+  @@unique([code, userId])
+}

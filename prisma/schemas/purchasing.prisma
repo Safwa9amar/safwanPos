@@ -1,0 +1,101 @@
+model Supplier {
+  id                   String          @id @default(cuid())
+  name                 String
+  contactName          String?
+  email                String?
+  phone                String
+  address              String?
+  taxId                String?
+  category             String?
+  balance              Float           @default(0)
+  paymentTerms         String?
+  deliverySchedule     String?
+  communicationChannel String?
+  status               String          @default("ACTIVE") // ACTIVE, INACTIVE
+  logoUrl              String?
+  contractStartDate    DateTime?
+  contractEndDate      DateTime?
+  monthlySupplyQuota   Float?
+  qualityRating        Int?
+  notes                String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  userId               String
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchaseOrders       PurchaseOrder[]
+  payments             SupplierPayment[]
+  credits              SupplierCredit[]
+}
+
+model SupplierPayment {
+    id          String   @id @default(cuid())
+    paymentDate DateTime @default(now())
+    amount      Float
+    notes       String?
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    supplierId  String
+    supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+    @@index([supplierId])
+}
+
+model SupplierCredit {
+    id             String   @id @default(cuid())
+    adjustmentDate DateTime @default(now())
+    amount         Float
+    reason         String
+    userId         String
+    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    supplierId     String
+    supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+    @@index([supplierId])
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(cuid())
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime?
+  status               String              @default("PENDING") // PENDING, PARTIALLY_RECEIVED, COMPLETED, CANCELLED
+  totalCost            Float
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  items                PurchaseOrderItem[]
+
+  @@index([supplierId])
+}
+
+model PurchaseOrderItem {
+  id                String        @id @default(cuid())
+  purchaseOrderId   String
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity          Int
+  receivedQuantity  Int           @default(0)
+  costPrice         Float
+}
+
+model DirectPurchase {
+  id            String   @id @default(cuid())
+  purchaseDate  DateTime @default(now())
+  storeName     String?
+  notes         String?
+  totalCost     Float
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         DirectPurchaseItem[]
+}
+
+model DirectPurchaseItem {
+  id                String          @id @default(cuid())
+  directPurchaseId  String
+  directPurchase    DirectPurchase  @relation(fields: [directPurchaseId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity          Float
+  costPrice         Float
+}
