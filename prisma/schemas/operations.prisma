@@ -1,0 +1,61 @@
+model ExpenseCategory {
+    id        String   @id @default(cuid())
+    name      String
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    expenses  Expense[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([name, userId])
+}
+
+model Expense {
+    id           String          @id @default(cuid())
+    description  String
+    amount       Float
+    expenseDate  DateTime
+    userId       String
+    user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    categoryId   String
+    category     ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+    createdAt    DateTime        @default(now())
+    updatedAt    DateTime        @updatedAt
+}
+
+model RepairJob {
+    id              String    @id @default(cuid())
+    customerName    String
+    customerPhone   String
+    deviceModel     String
+    imei            String?
+    reportedProblem String
+    notes           String?
+    status          String    @default("PENDING")
+    estimatedCost   Float?
+    finalCost       Float?
+    boxNumber       Int?
+    userId          String
+    user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+}
+
+model Report {
+    id        String   @id @default(cuid())
+    title     String
+    content   String   @db.Text
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+}
+
+model CapitalEntry {
+    id        String   @id @default(cuid())
+    details   String
+    amount    Float
+    entryDate DateTime @default(now())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+}
