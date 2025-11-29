@@ -6,18 +6,21 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Home } from 'lucide-react';
 
 export function Breadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
 
-  // Don't show breadcrumbs on root-level pages like /home or /pos
-  if (segments.length <= 1) {
-    return null;
-  }
-
   const capitalize = (s: string) => {
-    return s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' ');
+    // Handle special cases
+    if (s.toLowerCase() === 'pos') return 'POS';
+    if (s.toLowerCase() === 'ai-history') return 'AI History';
+    
+    return s
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -25,7 +28,8 @@ export function Breadcrumbs() {
       <ol className="flex items-center gap-1.5">
         <li>
           <Link href="/home" className="text-muted-foreground hover:text-foreground">
-            Home
+            <Home className="h-4 w-4" />
+            <span className="sr-only">Home</span>
           </Link>
         </li>
         {segments.map((segment, index) => {
