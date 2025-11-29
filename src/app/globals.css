@@ -5,7 +5,8 @@
 
 @layer base {
   :root {
-    --background: 220 60% 97%;
+    --background-hsl: 220 60% 97%;
+    --background: hsl(var(--background-hsl));
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -40,7 +41,8 @@
     --sidebar-ring: 222.2 84% 4.9%;
   }
   .dark {
-    --background: 240 10% 10%;
+    --background-hsl: 240 10% 10%;
+    --background: hsla(var(--background-hsl), 0.85);
     --foreground: 210 40% 98%;
     --card: 240 10% 12%;
     --card-foreground: 210 40% 98%;
@@ -74,7 +76,8 @@
     --sidebar-ring: 217 91% 60%;
   }
   .dark-purple {
-    --background: 260 20% 10%;
+    --background-hsl: 260 20% 10%;
+    --background: hsla(var(--background-hsl), 0.85);
     --foreground: 260 10% 95%;
     --card: 260 20% 12%;
     --card-foreground: 260 10% 95%;

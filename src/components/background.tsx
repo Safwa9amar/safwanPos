@@ -10,8 +10,7 @@ export function Background() {
   return (
     <div
       className={cn(
-        "fixed inset-0 -z-10 bg-background transition-all",
-        backgroundImage ? "opacity-100" : "opacity-0"
+        "fixed inset-0 -z-10 transition-all"
       )}
       style={{
         backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none',
