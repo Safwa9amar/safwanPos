@@ -149,7 +149,7 @@
     "inventory.price": "سعر البيع",
     "inventory.costPrice": "سعر التكلفة",
     "inventory.stock": "المخزون",
-    "inventory.actions": "الإجراءات",
+    "inventory.actions": "إجراءات",
     "inventory.edit": "تعديل",
     "inventory.delete": "حذف",
     "inventory.noProducts": "لم يتم العثور على منتجات.",
@@ -236,6 +236,20 @@
     "suppliers.contractStart": "بداية العقد",
     "suppliers.contractEnd": "نهاية العقد",
     "suppliers.qualityRating": "تقييم الجودة",
+    "suppliers.makePayment": "تسديد دفعة",
+    "suppliers.addCredit": "إضافة دين/رصيد",
+    "suppliers.paymentSheetTitle": "تسديد دفعة لـ {{name}}",
+    "suppliers.paymentSheetDescription": "سجل دفعة لتقليل رصيدك المستحق لهذا المورد.",
+    "suppliers.creditSheetTitle": "إضافة دين/رصيد لـ {{name}}",
+    "suppliers.creditSheetDescription": "زيادة رصيدك المستحق لهذا المورد يدويًا.",
+    "suppliers.paymentAmount": "مبلغ الدفعة",
+    "suppliers.creditAmount": "مبلغ الدين/الرصيد",
+    "suppliers.paymentNotes": "ملاحظات (اختياري)",
+    "suppliers.creditReason": "سبب التعديل",
+    "suppliers.paymentSuccess": "تم تسجيل الدفعة بنجاح.",
+    "suppliers.paymentFailed": "فشل تسجيل الدفعة.",
+    "suppliers.creditSuccess": "تم تسجيل الدين/الرصيد بنجاح.",
+    "suppliers.creditFailed": "فشل تسجيل الدين/الرصيد.",
 
     "po.title": "طلب شراء جديد",
     "po.description": "أضف منتجات إلى هذا الطلب.",
@@ -393,3 +407,5 @@
     "users.deleteConfirmTitle": "حذف المستخدم؟",
     "users.deleteConfirmDescription": "سيؤدي هذا إلى حذف حساب المستخدم نهائيًا. لا يمكن التراجع عن هذا الإجراء."
 }
+
+    
