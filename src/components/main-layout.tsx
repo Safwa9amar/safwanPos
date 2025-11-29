@@ -35,6 +35,7 @@ import { differenceInDays, formatDistanceToNow } from "date-fns";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@prisma/client";
+import { Breadcrumbs } from "./breadcrumbs";
 
 const SidebarLabel = ({ children }: { children: React.ReactNode }) => (
     <p className="px-4 pt-4 pb-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">
@@ -278,6 +279,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 sticky top-0 z-30">
           <SidebarTrigger/>
+          <Breadcrumbs />
           <div className="flex-1">
           </div>
         </header>
@@ -286,5 +288,3 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    
