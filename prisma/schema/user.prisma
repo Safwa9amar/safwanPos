@@ -1,38 +1,63 @@
+/// User, authentication, and session-related models
+
 model User {
-  id                        String   @id @default(cuid())
+  id                        String    @id @default(cuid())
   name                      String?
-  email                     String   @unique
-  password                  String
+  email                     String    @unique
   emailVerified             DateTime?
-  emailVerificationToken    String?  @unique
-  passwordResetToken        String?  @unique
-  passwordResetTokenExpires DateTime?
-  role                      String   @default("CASHIER")
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  subscriptionStatus        String   @default("TRIAL")
+  password                  String
+  role                      UserRole  @default(ADMIN)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  subscriptionStatus        SubscriptionStatus?
   trialEndsAt               DateTime?
+  emailVerificationToken    String?   @unique
+  passwordResetToken        String?   @unique
+  passwordResetTokenExpires DateTime?
+  createdById               String?
+  createdBy                 User?     @relation("UserCreations", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers              User[]    @relation("UserCreations")
 
-  // For multi-tenancy: users created by an admin
-  createdById String?
-  createdBy   User?    @relation("UserCreations", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  createdUsers User[]   @relation("UserCreations")
-
-  // Relations
-  products         Product[]
-  categories       Category[]
-  barcodes         Barcode[]
-  sales            Sale[]
-  customers        Customer[]
-  payments         Payment[]
-  reports          Report[]
-  expenses         Expense[]
+  sales         Sale[]
+  reports       Report[]
+  barcodes      Barcode[]
+  categories    Category[]
+  products      Product[]
+  customers     Customer[]
+  payments      Payment[]
   expenseCategories ExpenseCategory[]
-  repairJobs       RepairJob[]
-  suppliers        Supplier[]
-  purchaseOrders   PurchaseOrder[]
+  expenses      Expense[]
+  capitalEntries CapitalEntry[]
+  repairJobs    RepairJob[]
+  suppliers     Supplier[]
+  purchaseOrders PurchaseOrder[]
   supplierPayments SupplierPayment[]
   supplierCredits  SupplierCredit[]
   directPurchases  DirectPurchase[]
-  capitalEntries   CapitalEntry[]
+
+  @@index([createdById])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum UserRole {
+  ADMIN
+  CASHIER
+  PHONE_REPAIR
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  INACTIVE
+  CANCELED
 }

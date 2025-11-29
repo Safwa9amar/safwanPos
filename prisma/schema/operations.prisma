@@ -1,59 +1,61 @@
-model Report {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+/// Models for operational data like expenses and repairs
 
 model ExpenseCategory {
-    id       String    @id @default(cuid())
-    name     String
-    userId   String
-    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    expenses Expense[]
+  id      String    @id @default(cuid())
+  name    String
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
 
-    @@unique([name, userId])
+  @@unique([name, userId])
+  @@index([userId])
 }
 
 model Expense {
-    id            String          @id @default(cuid())
-    description   String
-    amount        Float
-    expenseDate   DateTime
-    userId        String
-    user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    categoryId    String
-    category      ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-    createdAt     DateTime        @default(now())
-    updatedAt     DateTime        @updatedAt
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  description  String
+  amount       Float
+  expenseDate  DateTime        @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details   String
+  amount    Float
+  entryDate DateTime @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  @@index([userId])
 }
 
 model RepairJob {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   customerName    String
   customerPhone   String
   deviceModel     String
   imei            String?
   reportedProblem String
   notes           String?
-  status          String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
+  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, COLLECTED
   estimatedCost   Float?
   finalCost       Float?
   boxNumber       Int?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-model CapitalEntry {
-    id        String   @id @default(cuid())
-    details   String
-    amount    Float
-    entryDate DateTime @default(now())
-    userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([status])
 }

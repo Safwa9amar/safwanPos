@@ -125,7 +125,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {(isAdmin || isPhoneRepair) && (
+            {isPhoneRepair && (
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
                         <Link href="/repairs">
@@ -308,5 +308,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    
 
     
