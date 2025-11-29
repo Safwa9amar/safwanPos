@@ -76,14 +76,14 @@ const productSearchFlow = ai.defineFlow(
     
     // Step 2: For each product idea, scrape Google Images to find a real image URL
     const productsWithImages = await Promise.all(
-        productIdeas.map(async (product) => {
+        productIdeas.map(async (product, index) => {
             try {
                 const imageUrl = await scrapeGoogleImages(product.name);
                 return { ...product, imageUrl };
             } catch (error) {
                 console.error(`Failed to get image for ${product.name}:`, error);
-                // Fallback or skip if image scraping fails
-                return { ...product, imageUrl: 'https://picsum.photos/seed/placeholder/400/400' };
+                // Fallback to a unique placeholder image for each product
+                return { ...product, imageUrl: `https://picsum.photos/seed/${input.query}${index}/400/400` };
             }
         })
     );
@@ -104,6 +104,7 @@ async function scrapeGoogleImages(query: string): Promise<string> {
 
   const response = await fetch(searchUrl, {
       headers: {
+          // Using a standard user-agent can help avoid blocks
           'User-Agent':
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       },
@@ -116,50 +117,28 @@ async function scrapeGoogleImages(query: string): Promise<string> {
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  /** --------------------------------------------------------
-   * 1) المحاولة الأولى: الحصول على src base64 من <img>
-   * ------------------------------------------------------ */
-  const base64Img = $('img[src^="data:image"]')?.first()?.attr('src');
-  if (base64Img && base64Img.startsWith('data:image')) {
-    console.log(base64Img)
-      return base64Img; // <<=== هنا ترجع الـ base64 مباشرة
+  // Selector for the image search results container
+  const imageElements = $('img');
+  let imageUrl: string | undefined;
+
+  for (let i = 0; i < imageElements.length; i++) {
+    const src = $(imageElements[i]).attr('src');
+    // We look for a base64 encoded image, which is often used for the first few results for performance
+    if (src && src.startsWith('data:image')) {
+        imageUrl = src;
+        break;
+    }
+    // As a fallback, look for a direct https link if no base64 image is found first
+    if(src && src.startsWith('https://') && !imageUrl){
+        imageUrl = src;
+    }
   }
 
-  /** --------------------------------------------------------
-   * 2) إذا لم نجد base64: تحليل روابط /imgres للحصول على imgurl
-   * ------------------------------------------------------ */
-  const firstImageLink = $('a[href^="/imgres"]').first();
-  if (firstImageLink.length > 0) {
-      const href = firstImageLink.attr('href');
-      if (href) {
-          const urlParams = new URLSearchParams(href.split('?')[1]);
-          const imgurl = urlParams.get('imgurl');
-          console.log(imgurl)
 
-          if (imgurl) {
-              return imgurl;
-          }
-      }
+  if (imageUrl) {
+    return imageUrl;
   }
-
-  /** --------------------------------------------------------
-   * 3) fallback إضافي: إيجاد <img> داخل <a href="/imgres">
-   * ------------------------------------------------------ */
-  const imgInsideA = $('a[href^="/imgres"] img').first();
-  if (imgInsideA.length > 0) {
-      const parent = imgInsideA.closest('a');
-      const href = parent.attr('href');
-      if (href?.startsWith('/imgres')) {
-          const params = new URLSearchParams(href.split('?')[1]);
-          const imgurl = params.get('imgurl');
-          console.log(imgurl)
-          if (imgurl) return imgurl;
-      }
-  }
-
-  /** --------------------------------------------------------
-   * 4) آخر حل: فشل كامل
-   * ------------------------------------------------------ */
-  throw new Error('Could not find any base64 or valid image URL in Google Images.');
+  
+  throw new Error('Could not find any valid image URL in Google Images.');
 }
 
