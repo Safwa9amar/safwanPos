@@ -10,9 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from '../ui/button';
 import { useCurrency } from '@/hooks/use-currency';
 import { useAuth } from '@/context/auth-context';
-import { Truck, HandCoins, DollarSign } from 'lucide-react';
+import { Truck, HandCoins, DollarSign, Printer } from 'lucide-react';
 import { ReceiveStockDialog } from './receive-stock-dialog';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { cairoFont } from '@/lib/cairo-font';
 
 export type PurchaseOrderItemWithProduct = POItemType & { product: Product };
 export type PurchaseOrderWithItems = POType & { items: PurchaseOrderItemWithProduct[] };
@@ -28,9 +31,87 @@ interface PurchaseOrderListProps {
 }
 
 export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [receivingOrder, setReceivingOrder] = useState<PurchaseOrderWithItems | null>(null);
+
+    const handlePrint = (po: PurchaseOrderWithItems) => {
+        const doc = new jsPDF();
+        const isArabic = language === 'ar';
+
+        doc.addFileToVFS('Cairo-Regular-normal.ttf', cairoFont);
+        doc.addFont('Cairo-Regular-normal.ttf', 'Cairo', 'normal');
+
+        if (isArabic) {
+            doc.setFont('Cairo');
+            doc.setR2L(true);
+        }
+        
+        doc.setFontSize(22);
+        doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text("Purchase Order", doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+
+        doc.setFontSize(10);
+        const poIdText = `PO ID: #${po.id.substring(0,8)}`;
+        const dateText = `Order Date: ${new Date(po.orderDate).toLocaleDateString()}`;
+        
+        if (isArabic) {
+            doc.text(poIdText, doc.internal.pageSize.getWidth() - 15, 40, { align: 'right' });
+            doc.text(dateText, doc.internal.pageSize.getWidth() - 15, 45, { align: 'right' });
+        } else {
+            doc.text(poIdText, 15, 40);
+            doc.text(dateText, 15, 45);
+        }
+
+        const tableData = po.items.map(item => [
+            isArabic ? (item.product.name.split('').reverse().join('')) : item.product.name,
+            item.quantity,
+            formatCurrency(item.costPrice),
+            formatCurrency(item.quantity * item.costPrice)
+        ]);
+
+        const head = [[t('po.item'), t('po.quantity'), t('po.costPrice'), t('po.total')]];
+        
+        autoTable(doc, {
+            startY: 55,
+            head: head,
+            body: tableData,
+            theme: 'striped',
+            headStyles: {
+                font: isArabic ? 'Cairo' : 'helvetica',
+                halign: isArabic ? 'right' : 'left'
+            },
+            bodyStyles: {
+                font: isArabic ? 'Cairo' : 'helvetica',
+                halign: isArabic ? 'right' : 'left'
+            },
+            didDrawPage: (data) => {
+                 if (isArabic) {
+                    data.table.body.forEach(row => {
+                        row.cells[1].styles.halign = 'left';
+                        row.cells[2].styles.halign = 'left';
+                        row.cells[3].styles.halign = 'left';
+                    });
+                }
+            }
+        });
+        
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        if(isArabic) doc.setFont('Cairo', 'bold');
+
+        const totalText = `${t('po.totalCost')}: ${formatCurrency(po.totalCost)}`;
+        if (isArabic) {
+             doc.text(totalText, 15, finalY, { align: 'left' });
+        } else {
+            doc.text(totalText, doc.internal.pageSize.getWidth() - 15, finalY, { align: 'right' });
+        }
+
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
+    };
 
     if (purchaseOrders.length === 0) {
         return <p className="text-muted-foreground">{t('suppliers.noPurchaseOrders')}</p>;
@@ -88,7 +169,12 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
                     {entry.type === 'purchase' && (
                         <>
                          <CardContent>
-                            <p className="font-semibold text-right">{t('po.totalCost')}: {formatCurrency(entry.data.totalCost)}</p>
+                            <div className="flex justify-between items-center">
+                                <Button variant="outline" size="icon" onClick={() => handlePrint(entry.data)}>
+                                    <Printer className="h-4 w-4" />
+                                </Button>
+                                <p className="font-semibold text-right">{t('po.totalCost')}: {formatCurrency(entry.data.totalCost)}</p>
+                            </div>
                         </CardContent>
                         {entry.data.status === 'PENDING' || entry.data.status === 'PARTIALLY_RECEIVED' ? (
                             <CardFooter>
@@ -116,4 +202,3 @@ export function PurchaseOrderList({ purchaseOrders }: PurchaseOrderListProps) {
         </div>
     );
 }
-
