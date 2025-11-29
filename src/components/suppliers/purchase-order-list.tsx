@@ -62,11 +62,11 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
         doc.setFontSize(22);
         doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
         doc.setFontSize(12);
-        doc.text("Purchase Order", doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+        doc.text(t('po.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
 
         doc.setFontSize(10);
-        const poIdText = `PO ID: #${po.id.substring(0,8)}`;
-        const dateText = `Order Date: ${new Date(po.orderDate).toLocaleDateString()}`;
+        const poIdText = `${t('po.orderId')}: #${po.id.substring(0,8)}`;
+        const dateText = `${t('po.orderDate')}: ${new Date(po.orderDate).toLocaleDateString()}`;
         
         if (isArabic) {
             doc.text(poIdText, doc.internal.pageSize.getWidth() - 15, 40, { align: 'right' });
@@ -172,9 +172,9 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
     
     const getTypeTitle = (entry: HistoryEntry) => {
         switch (entry.type) {
-            case 'purchase': return `Order #${entry.data.id.substring(0, 8)}`;
-            case 'payment': return 'Payment Made';
-            case 'credit': return `Credit / Debt Adjustment`;
+            case 'purchase': return `${t('po.order')} #${entry.data.id.substring(0, 8)}`;
+            case 'payment': return t('suppliers.paymentMade');
+            case 'credit': return t('suppliers.creditAdjustment');
             default: return 'Transaction';
         }
     }
@@ -195,7 +195,7 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                                 </div>
                             </div>
                            <div className="flex items-center gap-2">
-                               {entry.type === 'purchase' && <Badge variant={getStatusVariant(entry.data.status)}>{entry.data.status}</Badge>}
+                               {entry.type === 'purchase' && <Badge variant={getStatusVariant(entry.data.status)}>{t(`po.statuses.${entry.data.status}`)}</Badge>}
                                {entry.type === 'payment' && <span className="font-bold text-lg text-green-600">-{formatCurrency(entry.data.amount)}</span>}
                                {entry.type === 'credit' && <span className="font-bold text-lg text-red-600">+{formatCurrency(entry.data.amount)}</span>}
                                 <DropdownMenu>
@@ -208,25 +208,25 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                                         {entry.type === 'purchase' && (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handlePrint(entry.data)}>
-                                                    <Printer className="mr-2 h-4 w-4" /> Print
+                                                    <Printer className="mr-2 h-4 w-4" /> {t('actions.print')}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem 
                                                     onSelect={() => handleDeleteClick(entry.data)} 
                                                     disabled={entry.data.status !== 'PENDING'}
                                                     className="text-destructive"
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    <Trash2 className="mr-2 h-4 w-4" /> {t('actions.delete')}
                                                 </DropdownMenuItem>
                                             </>
                                         )}
                                         {entry.type === 'payment' && (
                                             <DropdownMenuItem onSelect={() => onEditPayment(entry.data)}>
-                                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                                                <Pencil className="mr-2 h-4 w-4"/> {t('actions.edit')}
                                             </DropdownMenuItem>
                                         )}
                                          {entry.type === 'credit' && (
                                             <DropdownMenuItem onSelect={() => onEditCredit(entry.data)}>
-                                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                                                <Pencil className="mr-2 h-4 w-4"/> {t('actions.edit')}
                                             </DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>
@@ -243,13 +243,13 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                         <CardFooter>
                             <Button className="w-full" onClick={() => setReceivingOrder(entry.data)}>
                                 <Truck className="mr-2 h-4 w-4" />
-                                Receive Stock
+                                {t('po.receiveStock')}
                             </Button>
                         </CardFooter>
                     )}
                     {(entry.type === 'payment' || entry.type === 'credit') && ((entry.data as SupplierPayment).notes || (entry.data as SupplierCredit).reason) && (
                          <CardContent>
-                             <p className="text-sm text-muted-foreground pt-2">Notes: {(entry.data as SupplierPayment).notes || (entry.data as SupplierCredit).reason}</p>
+                             <p className="text-sm text-muted-foreground pt-2">{t('suppliers.paymentNotes')}: {(entry.data as SupplierPayment).notes || (entry.data as SupplierCredit).reason}</p>
                         </CardContent>
                     )}
                 </Card>
@@ -264,15 +264,13 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Purchase Order?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently delete PO #{selectedPo?.id.substring(0,8)}. This action cannot be undone and will reverse the balance increase on the supplier.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>{t('po.deleteConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('po.deleteConfirmDescription', {id: selectedPo?.id.substring(0,8)})}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
-                            {isDeleting ? "Deleting..." : "Delete"}
+                        <AlertDialogCancel disabled={isDeleting}>{t('pos.cancelButton')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                             {isDeleting ? t('inventory.saving') : t('actions.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

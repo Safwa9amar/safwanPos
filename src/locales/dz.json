@@ -236,14 +236,23 @@
   "suppliers.contractStart": "بداية العقد",
   "suppliers.contractEnd": "نهاية العقد",
   "suppliers.qualityRating": "تقييم الجودة",
+  "suppliers.paymentMade": "دفعة مدفوعة",
+  "suppliers.creditAdjustment": "تسوية دين/رصيد",
+  "suppliers.paymentNotes": "ملاحظات",
 
   "po.title": "طلب شراء جديد",
+  "po.order": "طلب",
+  "po.orderId": "رقم الطلب",
   "po.description": "زيد المنتجات للطلب.",
   "po.addProduct": "زيد منتوج",
   "po.noProducts": "ما كاش منتجات فالطلب.",
   "po.orderDate": "تاريخ الطلب",
   "po.expectedDelivery": "التسليم المتوقع",
   "po.status": "الحالة",
+  "po.statuses.PENDING": "ينتظر",
+  "po.statuses.PARTIALLY_RECEIVED": "وصل جزء",
+  "po.statuses.COMPLETED": "كامل",
+  "po.statuses.CANCELLED": "ملغي",
   "po.totalCost": "المجموع",
   "po.saveOrder": "حفظ الطلب",
   "po.item": "الصنف",
@@ -256,6 +265,8 @@
   "po.completedNotice": "الطلب راهو كامل. ما تقدرش تبدّل فيه.",
   "po.completeConfirmTitle": "تكمل الطلب؟",
   "po.completeConfirmDescription": "هذا يزيد المخزون تاعك. ما تقدرش ترجّع العملية.",
+  "po.deleteConfirmTitle": "تحذف طلب الشراء؟",
+  "po.deleteConfirmDescription": "هذا رح يحذف الطلب رقم #{{id}} نهائياً وما تقدرش ترجعو.",
   "po.confirm": "تأكيد",
   "po.receiveStock": "استلم السلعة",
   "po.receiveStockDescription": "دخل الكمية لي وصلتك. المخزون رح يتحدّث.",
@@ -393,3 +404,4 @@
   "users.deleteConfirmTitle": "تحذف المستخدم؟",
   "users.deleteConfirmDescription": "العملية نهائية وما تقدرش ترجّعها."
 }
+

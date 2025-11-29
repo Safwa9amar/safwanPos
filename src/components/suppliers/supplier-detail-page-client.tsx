@@ -128,19 +128,19 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                            <MoreVertical className="mr-2 h-4 w-4" /> Actions
+                            <MoreVertical className="mr-2 h-4 w-4" /> {t('actions.actions')}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         <DropdownMenuItem onSelect={() => { setEditingPayment(null); setIsPaymentSheetOpen(true);}}>
-                            <DollarSign className="mr-2 h-4 w-4"/> Make Payment
+                            <DollarSign className="mr-2 h-4 w-4"/> {t('actions.make_payment')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => { setEditingCredit(null); setIsCreditSheetOpen(true);}}>
-                             <HandCoins className="mr-2 h-4 w-4"/> Add Credit/Debt
+                             <HandCoins className="mr-2 h-4 w-4"/> {t('actions.add_credit_debt')}
                         </DropdownMenuItem>
                          <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => setIsSupplierSheetOpen(true)}>
-                            <Pencil className="mr-2 h-4 w-4"/> Edit Supplier
+                            <Pencil className="mr-2 h-4 w-4"/> {t('actions.edit')} {t('suppliers.title')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -149,9 +149,9 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
       </Card>
       
       <div className="grid gap-4 md:grid-cols-3">
-          <StatCard title="Balance Due" value={formatCurrency(supplier.balance)} icon={<DollarSign className={cn("h-4 w-4", supplier.balance > 0 ? "text-destructive" : "text-green-600")} />} />
-          <StatCard title="Total Purchase Value" value={formatCurrency(totalPurchaseValue)} icon={<Truck className="h-4 w-4 text-muted-foreground"/>} />
-          <StatCard title="Total Paid" value={formatCurrency(totalPayments)} icon={<HandCoins className="h-4 w-4 text-muted-foreground"/>} />
+          <StatCard title={t('suppliers.balanceDue')} value={formatCurrency(supplier.balance)} icon={<DollarSign className={cn("h-4 w-4", supplier.balance > 0 ? "text-destructive" : "text-green-600")} />} />
+          <StatCard title={t('suppliers.totalPurchaseValue')} value={formatCurrency(totalPurchaseValue)} icon={<Truck className="h-4 w-4 text-muted-foreground"/>} />
+          <StatCard title={t('suppliers.totalPaid')} value={formatCurrency(totalPayments)} icon={<HandCoins className="h-4 w-4 text-muted-foreground"/>} />
       </div>
 
       <Card>
@@ -159,8 +159,8 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
             <Tabs defaultValue="history">
                 <div className="p-4 border-b">
                     <TabsList>
-                        <TabsTrigger value="history">Transaction History</TabsTrigger>
-                        <TabsTrigger value="profile">Profile Details</TabsTrigger>
+                        <TabsTrigger value="history">{t('suppliers.history')}</TabsTrigger>
+                        <TabsTrigger value="profile">{t('suppliers.profile')}</TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="history" className="p-4 md:p-6">
@@ -173,24 +173,24 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
                 <TabsContent value="profile" className="p-4 md:p-6">
                     <div className="space-y-6">
                         <div>
-                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Contact /> Contact Information</h3>
+                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Contact /> {t('suppliers.contactInfo')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <DetailItem label={t('suppliers.contactName')} value={supplier.contactName} />
                                 <DetailItem label={t('suppliers.email')} value={supplier.email} />
                                 <DetailItem label={t('suppliers.phone')} value={supplier.phone} />
                                 <DetailItem label={t('suppliers.address')} value={supplier.address} />
-                                <DetailItem label="Preferred Communication" value={supplier.communicationChannel} />
+                                <DetailItem label={t('suppliers.commChannel')} value={supplier.communicationChannel} />
                             </div>
                         </div>
                          <div>
-                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Info /> Business Information</h3>
+                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Info /> {t('suppliers.businessInfo')}</h3>
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <DetailItem label="Tax ID" value={supplier.taxId} />
-                                <DetailItem label="Payment Terms" value={supplier.paymentTerms} />
-                                <DetailItem label="Delivery Schedule" value={supplier.deliverySchedule} />
-                                <DetailItem label="Contract Start" value={supplier.contractStartDate ? format(new Date(supplier.contractStartDate), 'PPP') : 'N/A'} />
-                                <DetailItem label="Contract End" value={supplier.contractEndDate ? format(new Date(supplier.contractEndDate), 'PPP') : 'N/A'} />
-                                <DetailItem label="Quality Rating" value={supplier.qualityRating ? `${supplier.qualityRating} / 5` : 'N/A'} />
+                                <DetailItem label={t('suppliers.taxId')} value={supplier.taxId} />
+                                <DetailItem label={t('suppliers.paymentTerms')} value={supplier.paymentTerms} />
+                                <DetailItem label={t('suppliers.deliverySchedule')} value={supplier.deliverySchedule} />
+                                <DetailItem label={t('suppliers.contractStart')} value={supplier.contractStartDate ? format(new Date(supplier.contractStartDate), 'PPP') : 'N/A'} />
+                                <DetailItem label={t('suppliers.contractEnd')} value={supplier.contractEndDate ? format(new Date(supplier.contractEndDate), 'PPP') : 'N/A'} />
+                                <DetailItem label={t('suppliers.qualityRating')} value={supplier.qualityRating ? `${supplier.qualityRating} / 5` : 'N/A'} />
                             </div>
                         </div>
                     </div>
