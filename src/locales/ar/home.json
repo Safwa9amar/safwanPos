@@ -1,3 +1,4 @@
+
 {
     "home.title": "لوحة التحكم",
     "home.description": "أهلاً بك، {{name}}! اختر قسمًا للبدء.",
@@ -7,6 +8,7 @@
     "home.noResultsDescription": "حاول البحث عن شيء آخر.",
     "home.links.pos.title": "نقطة البيع",
     "home.links.pos.description": "معالجة المبيعات، ومسح المنتجات، وإدارة سجل النقدية.",
+    "home.links.dashboard.description": "الوصول السريع إلى جميع ميزات التطبيق.",
     "home.links.inventory.title": "المخزون",
     "home.links.inventory.description": "إضافة وتعديل وإدارة مستويات مخزون المنتجات والفئات.",
     "home.links.suppliers.title": "الموردون",
@@ -26,5 +28,7 @@
     "home.links.repairs.title": "الإصلاحات",
     "home.links.repairs.description": "إدارة وتتبع مهام إصلاح الأجهزة لعملائك.",
     "home.links.product_discovery.title": "اكتشاف المنتجات",
-    "home.links.product_discovery.description": "استخدم الذكاء الاصطناعي لاكتشاف منتجات جديدة لإضافتها إلى مخزونك."
+    "home.links.product_discovery.description": "استخدم الذكاء الاصطناعي لاكتشاف منتجات جديدة لإضافتها إلى مخزونك.",
+    "home.links.income.description": "تسجيل الدخل من مصادر غير المبيعات، مثل ضخ رأس المال.",
+    "home.links.purchases.description": "تسجيل المشتريات المباشرة من المتاجر وتحديث المخزون."
 }

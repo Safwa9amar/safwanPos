@@ -13,16 +13,15 @@
     "sidebar.income": "Income",
     "sidebar.direct_purchases": "Direct Purchases",
     "sidebar.pos_screen": "POS Screen",
-    "sidebar.dashboard": "Dashboard",
+    "sidebar.dashboard": "Launchpad",
     "sidebar.inventory_management": "Products & Inventory",
     "sidebar.sales_management": "Sales Management",
     "sidebar.customers_management": "Customer Management",
     "sidebar.staff_accounts": "Staff Accounts",
     "sidebar.shipping_delivery": "Shipping & Delivery",
     "sidebar.financial_management": "Financial Management",
-    "sidebar.purchases_management": "Purchases",
+    "sidebar.purchases_management": "Purchasing",
     "sidebar.payment_center": "Payment Center",
-    "sidebar.categories": "Categories"
+    "sidebar.categories": "Categories",
+    "sidebar.core": "Core"
 }
-
-    

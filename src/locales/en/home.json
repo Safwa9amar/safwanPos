@@ -1,3 +1,4 @@
+
 {
     "home.title": "Launchpad",
     "home.description": "Welcome, {{name}}! Choose a section to get started.",
@@ -7,6 +8,7 @@
     "home.loading": "Loading your experience...",
     "home.links.pos.title": "Point of Sale",
     "home.links.pos.description": "Process sales, scan products, and manage your cash register.",
+    "home.links.dashboard.description": "Quickly access all application features.",
     "home.links.inventory.title": "Inventory",
     "home.links.inventory.description": "Add, edit, and manage your product stock levels and categories.",
     "home.links.suppliers.title": "Suppliers",
@@ -26,5 +28,7 @@
     "home.links.repairs.title": "Repairs",
     "home.links.repairs.description": "Manage and track device repair jobs for your customers.",
     "home.links.product_discovery.title": "Product Discovery",
-    "home.links.product_discovery.description": "Use AI to discover new products to add to your inventory."
+    "home.links.product_discovery.description": "Use AI to discover new products to add to your inventory.",
+    "home.links.income.description": "Log income from non-sale sources, like capital injections.",
+    "home.links.purchases.description": "Record direct purchases from stores and update stock."
 }
