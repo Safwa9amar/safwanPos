@@ -123,7 +123,7 @@ export function HomePageClient() {
       </Card>
       
       {availableSections.map(section => (
-        <div key={section.titleKey} className="space-y-4">
+        <div key={section.titleKey} className="space-y-4 bg-card/50 backdrop-blur-lg rounded-xl p-4">
             <h2 className="text-2xl font-bold tracking-tight">{t(section.titleKey)}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {section.links.map(link => {
@@ -132,14 +132,14 @@ export function HomePageClient() {
                     const description = t(link.descriptionKey);
                     return (
                         <Link href={link.href} key={link.href} passHref>
-                            <Card className={cn("hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative backdrop-blur-sm", link.colorClass)}>
+                            <Card className={cn("hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative", link.colorClass)}>
                                 {link.isNew && (
                                     <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
                                         <Star className="h-4 w-4" />
                                     </div>
                                 )}
                                 <CardHeader className="flex-row items-center gap-4 space-y-0">
-                                    <div className="p-3 bg-background/50 dark:bg-black/20 rounded-lg">
+                                    <div className="p-3 bg-background/50 dark:bg-black/40 rounded-lg">
                                         <Icon className="h-6 w-6 text-primary" />
                                     </div>
                                     <CardTitle className="text-lg">{title}</CardTitle>
@@ -156,7 +156,7 @@ export function HomePageClient() {
       ))}
       
       {availableSections.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
+          <div className="text-center py-16 text-muted-foreground bg-card/50 backdrop-blur-lg rounded-xl p-4">
               <p className="text-lg font-semibold">{t('home.noResults')}</p>
               <p>{t('home.noResultsDescription')}</p>
           </div>
