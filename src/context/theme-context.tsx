@@ -70,22 +70,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [theme, isMounted]);
 
-  useEffect(() => {
-      if (isMounted) {
-          if (backgroundImage) {
-              document.body.style.backgroundImage = `url('${backgroundImage}')`;
-              document.body.style.backgroundSize = 'cover';
-              document.body.style.backgroundPosition = 'center';
-              document.body.style.backgroundAttachment = 'fixed';
-          } else {
-              document.body.style.backgroundImage = '';
-              document.body.style.backgroundSize = '';
-              document.body.style.backgroundPosition = '';
-              document.body.style.backgroundAttachment = '';
-          }
-      }
-  }, [backgroundImage, isMounted]);
-
   const contextValue = {
     theme,
     setTheme: handleSetTheme,

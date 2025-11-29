@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/context/theme-context";
 import { CurrencyProvider } from "@/context/currency-context";
 import { AppWithDirection } from "@/components/root-layout-client";
 import { NavigationProvider } from "@/context/navigation-context";
+import { Background } from "@/components/background";
 
 
 export default function RootLayout({
@@ -45,8 +46,9 @@ export default function RootLayout({
                   <NavigationProvider>
                     <CurrencyProvider>
                         <AuthProvider>
-                        {children}
-                        <Toaster />
+                          <Background />
+                          {children}
+                          <Toaster />
                         </AuthProvider>
                     </CurrencyProvider>
                   </NavigationProvider>
