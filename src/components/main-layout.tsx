@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingBag, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingCart, Folder, Wrench } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingBag, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingCart, Folder, Wrench, PackagePlus } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -73,7 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   const trialStatus = getTrialStatus();
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <SidebarProvider>
@@ -124,6 +124,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
+                  <Link href="/purchases">
+                      <PackagePlus />
+                      {t('sidebar.direct_purchases')}
+                  </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
              <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
                      <Link href="/customers">
@@ -148,9 +156,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <>
                 <SidebarSeparator className="my-4" />
                 <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/stats')} tooltip={t('sidebar.income')}>
-                        <Link href="/stats">
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/income')} tooltip={t('sidebar.income')}>
+                        <Link href="/income">
                         <Banknote />
                         {t('sidebar.income')}
                         </Link>
@@ -173,6 +181,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <SidebarLabel>Analytics</SidebarLabel>
              {isAdmin && (
                 <>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/stats')} tooltip={t('sidebar.stats')}>
+                        <Link href="/stats">
+                        <BarChart />
+                        {t('sidebar.stats')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/reports/history')} tooltip={t('sidebar.sales_history')}>
                         <Link href="/reports/history">

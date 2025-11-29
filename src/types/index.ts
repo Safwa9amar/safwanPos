@@ -1,12 +1,12 @@
 
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry } from '@prisma/client';
 
 export type Product = PrismaProduct;
 export type Category = PrismaCategory;
 export type User = Omit<PrismaUser, 'password'>;
 export type Report = PrismaReport;
 export type Barcode = PrismaBarcode;
-
+export type CapitalEntry = PrismaCapitalEntry;
 
 export interface ProductWithCategory extends PrismaProduct {
     category: PrismaCategory | null;
@@ -66,4 +66,11 @@ export type Payment = PrismaPayment;
 export interface CustomerWithDetails extends Customer {
     sales: SaleWithItemsAndCustomer[];
     payments: Payment[];
+}
+
+export interface DirectPurchaseItem extends PrismaDirectPurchaseItem {
+    product: Product;
+}
+export interface DirectPurchase extends PrismaDirectPurchase {
+    items: DirectPurchaseItem[];
 }
