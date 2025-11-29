@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { UserRole } from '@prisma/client';
+import { cn } from '@/lib/utils';
 
 type LinkItem = {
   href: string;
@@ -21,6 +22,7 @@ type LinkItem = {
   descriptionKey: string;
   role: UserRole[];
   isNew?: boolean;
+  colorClass: string;
 };
 
 type LinkSection = {
@@ -32,39 +34,39 @@ const allSections: LinkSection[] = [
   {
     titleKey: 'sidebar.core',
     links: [
-      { href: "/pos", icon: ShoppingBag, titleKey: "home.links.pos.title", descriptionKey: "home.links.pos.description", role: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
-      { href: "/home", icon: LayoutGrid, titleKey: "sidebar.dashboard", descriptionKey: "home.links.dashboard.description", role: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
+      { href: "/pos", icon: ShoppingBag, titleKey: "home.links.pos.title", descriptionKey: "home.links.pos.description", role: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'], colorClass: "bg-blue-100 dark:bg-blue-900/30" },
+      { href: "/home", icon: LayoutGrid, titleKey: "sidebar.dashboard", descriptionKey: "home.links.dashboard.description", role: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'], colorClass: "bg-green-100 dark:bg-green-900/30" },
     ]
   },
   {
     titleKey: 'sidebar.management',
     links: [
-      { href: "/inventory", icon: Package, titleKey: "home.links.inventory.title", descriptionKey: "home.links.inventory.description", role: ['ADMIN', 'CASHIER'] },
-      { href: "/customers", icon: Users, titleKey: "home.links.customers.title", descriptionKey: "home.links.customers.description", role: ['ADMIN', 'CASHIER'] },
-      { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: ['PHONE_REPAIR'] },
+      { href: "/inventory", icon: Package, titleKey: "home.links.inventory.title", descriptionKey: "home.links.inventory.description", role: ['ADMIN', 'CASHIER'], colorClass: "bg-orange-100 dark:bg-orange-900/30" },
+      { href: "/customers", icon: Users, titleKey: "home.links.customers.title", descriptionKey: "home.links.customers.description", role: ['ADMIN', 'CASHIER'], colorClass: "bg-purple-100 dark:bg-purple-900/30" },
+      { href: "/repairs", icon: Wrench, titleKey: "home.links.repairs.title", descriptionKey: "home.links.repairs.description", role: ['PHONE_REPAIR'], colorClass: "bg-gray-200 dark:bg-gray-800/50" },
     ]
   },
    {
     titleKey: 'sidebar.purchases_management',
     links: [
-        { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: ['ADMIN', 'CASHIER'] },
-        { href: "/purchases", icon: PackagePlus, titleKey: "sidebar.direct_purchases", descriptionKey: "home.links.purchases.description", role: ['ADMIN', 'CASHIER'] },
+        { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: ['ADMIN', 'CASHIER'], colorClass: "bg-yellow-100 dark:bg-yellow-900/30" },
+        { href: "/purchases", icon: PackagePlus, titleKey: "sidebar.direct_purchases", descriptionKey: "home.links.purchases.description", role: ['ADMIN', 'CASHIER'], colorClass: "bg-teal-100 dark:bg-teal-900/30" },
     ]
   },
   {
     titleKey: 'sidebar.financial_management',
     links: [
-       { href: "/income", icon: Banknote, titleKey: "sidebar.income", descriptionKey: "home.links.income.description", role: ['ADMIN'] },
-       { href: "/expenses", icon: Landmark, titleKey: "home.links.expenses.title", descriptionKey: "home.links.expenses.description", role: ['ADMIN'] },
+       { href: "/income", icon: Banknote, titleKey: "sidebar.income", descriptionKey: "home.links.income.description", role: ['ADMIN'], colorClass: "bg-lime-100 dark:bg-lime-900/30" },
+       { href: "/expenses", icon: Landmark, titleKey: "home.links.expenses.title", descriptionKey: "home.links.expenses.description", role: ['ADMIN'], colorClass: "bg-red-100 dark:bg-red-900/30" },
     ]
   },
   {
     titleKey: 'sidebar.analytics',
     links: [
-      { href: "/stats", icon: BarChart, titleKey: "home.links.stats.title", descriptionKey: "home.links.stats.description", role: ['ADMIN'] },
-      { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: ['ADMIN'] },
-      { href: "/reports", icon: Bot, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: ['ADMIN'] },
-      { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: ['ADMIN', 'CASHIER'], isNew: true },
+      { href: "/stats", icon: BarChart, titleKey: "home.links.stats.title", descriptionKey: "home.links.stats.description", role: ['ADMIN'], colorClass: "bg-cyan-100 dark:bg-cyan-900/30" },
+      { href: "/reports/history", icon: History, titleKey: "home.links.sales_history.title", descriptionKey: "home.links.sales_history.description", role: ['ADMIN'], colorClass: "bg-indigo-100 dark:bg-indigo-900/30" },
+      { href: "/reports", icon: Bot, titleKey: "home.links.ai_reports.title", descriptionKey: "home.links.ai_reports.description", role: ['ADMIN'], colorClass: "bg-pink-100 dark:bg-pink-900/30" },
+      { href: "/product-discovery", icon: Telescope, titleKey: "home.links.product_discovery.title", descriptionKey: "home.links.product_discovery.description", role: ['ADMIN', 'CASHIER'], isNew: true, colorClass: "bg-amber-100 dark:bg-amber-900/30" },
     ]
   }
 ];
@@ -130,14 +132,14 @@ export function HomePageClient() {
                     const description = t(link.descriptionKey);
                     return (
                         <Link href={link.href} key={link.href} passHref>
-                            <Card className="bg-card/70 hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative backdrop-blur-sm">
+                            <Card className={cn("hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative backdrop-blur-sm", link.colorClass)}>
                                 {link.isNew && (
                                     <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
                                         <Star className="h-4 w-4" />
                                     </div>
                                 )}
                                 <CardHeader className="flex-row items-center gap-4 space-y-0">
-                                    <div className="p-3 bg-muted rounded-lg">
+                                    <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                                         <Icon className="h-6 w-6 text-primary" />
                                     </div>
                                     <CardTitle className="text-lg">{title}</CardTitle>
