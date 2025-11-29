@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { UserRole } from '@prisma/client';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 type LinkItem = {
   href: string;
@@ -46,7 +47,7 @@ const allSections: LinkSection[] = [
     ]
   },
    {
-    titleKey: 'sidebar.purchases_management',
+    titleKey: 'sidebar.purchases',
     links: [
         { href: "/suppliers", icon: Truck, titleKey: "home.links.suppliers.title", descriptionKey: "home.links.suppliers.description", role: ['ADMIN', 'CASHIER'] },
         { href: "/purchases", icon: PackagePlus, titleKey: "sidebar.direct_purchases", descriptionKey: "home.links.purchases.description", role: ['ADMIN', 'CASHIER'] },
@@ -69,6 +70,24 @@ const allSections: LinkSection[] = [
     ]
   }
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+  },
+};
 
 
 export function HomePageClient() {
@@ -122,36 +141,47 @@ export function HomePageClient() {
       </Card>
       
       {availableSections.map(section => (
-        <div key={section.titleKey} className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">{t(section.titleKey)}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <motion.div 
+            key={section.titleKey} 
+            className="space-y-4"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            <motion.h2 variants={itemVariants} className="text-2xl font-bold tracking-tight">{t(section.titleKey)}</motion.h2>
+            <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                variants={containerVariants}
+            >
                 {section.links.map(link => {
                     const Icon = link.icon;
                     const title = t(link.titleKey);
                     const description = t(link.descriptionKey);
                     return (
-                        <Link href={link.href} key={link.href} passHref>
-                            <Card className="hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative">
-                                {link.isNew && (
-                                    <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
-                                        <Star className="h-4 w-4" />
-                                    </div>
-                                )}
-                                <CardHeader className="flex-row items-center gap-4 space-y-0">
-                                    <div className="p-3 bg-muted rounded-lg">
-                                        <Icon className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <CardTitle className="text-lg">{title}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                    <CardDescription>{description}</CardDescription>
-                                </CardContent>
-                            </Card>
-                        </Link>
+                        <motion.div key={link.href} variants={itemVariants}>
+                            <Link href={link.href} passHref>
+                                <Card className="hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col relative bg-card/60 dark:bg-card/40 backdrop-blur-sm">
+                                    {link.isNew && (
+                                        <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
+                                            <Star className="h-4 w-4" />
+                                        </div>
+                                    )}
+                                    <CardHeader className="flex-row items-center gap-4 space-y-0">
+                                        <div className="p-3 bg-background/70 rounded-lg">
+                                            <Icon className="h-6 w-6 text-primary" />
+                                        </div>
+                                        <CardTitle className="text-lg">{title}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow">
+                                        <CardDescription>{description}</CardDescription>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        </motion.div>
                     )
                 })}
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
       ))}
       
       {availableSections.length === 0 && (
