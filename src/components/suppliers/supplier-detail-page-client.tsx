@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { Badge } from "../ui/badge";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "../ui/dropdown-menu";
 
 interface SupplierWithDetails extends Supplier {
     purchaseOrders: PurchaseOrderWithItems[];
