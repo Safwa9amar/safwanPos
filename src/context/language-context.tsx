@@ -6,7 +6,7 @@ import i18n from '@/lib/i18n';
 import { useTheme } from './theme-context';
 
 // --- Language Context ---
-type Language = 'en' | 'ar' | 'dz';
+type Language = 'en' | 'ar';
 type Direction = 'ltr' | 'rtl';
 
 interface LanguageContextType {
@@ -54,7 +54,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const dir = (language === 'ar' || language === 'dz') ? 'rtl' : 'ltr';
+  const dir = (language === 'ar') ? 'rtl' : 'ltr';
 
   const contextValue = { language, setLanguage: handleSetLanguage, dir };
 
