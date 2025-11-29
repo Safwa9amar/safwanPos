@@ -12,6 +12,7 @@ export const AppWithDirection = ({
   const { language, dir } = useLanguage();
 
   useEffect(() => {
+    console.log("klsjadkljklj",dir)
     document.documentElement.lang = language;
     document.documentElement.dir = dir;
     const bodyClass = language === "ar" ? "font-cairo" : "font-inter";

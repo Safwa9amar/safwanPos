@@ -77,11 +77,22 @@ const resources = {
   },
 };
 
+const getInitialLanguage = () => {
+    if (typeof window !== 'undefined') {
+        const storedLang = localStorage.getItem('language');
+        if (storedLang === 'en' || storedLang === 'ar') {
+            return storedLang;
+        }
+    }
+    return 'en';
+}
+
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // default language
+    lng: getInitialLanguage(), // default language
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // react already safes from xss
