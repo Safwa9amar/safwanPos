@@ -6,6 +6,7 @@ import { CartItem } from '@/types';
 import { Product } from '@prisma/client';
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
+import { useSound } from '@/context/sound-context';
 
 type Cart = {
   items: CartItem[];
@@ -54,6 +55,7 @@ export const useMultiCart = () => {
   const [state, setState] = useState(getInitialState);
   const { toast } = useToast();
   const { t } = useTranslation("translation");
+  const { playScanBeep } = useSound();
 
   const { carts, activeCartIndex } = state;
 
@@ -97,7 +99,7 @@ export const useMultiCart = () => {
       }
     } else {
       if (product.stock >= quantity) {
-        newItems = [...activeCartItems, { productId: product.id, name: product.name, price: product.price, quantity, stock: product.stock, unit: product.unit }];
+        newItems = [...activeCartItems, { productId: product.id, name: product.name, price: product.price, quantity, stock: product.stock, unit: product.unit as 'EACH' | 'KG' | 'G' | 'L' | 'ML' }];
       } else {
         toast({
           variant: "destructive",
@@ -107,8 +109,9 @@ export const useMultiCart = () => {
         return;
       }
     }
+    playScanBeep();
     updateCart(activeCartIndex, newItems);
-  }, [carts, activeCartIndex, toast, t]);
+  }, [carts, activeCartIndex, toast, t, playScanBeep]);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     const activeCartItems = carts[activeCartIndex].items;
@@ -155,7 +158,7 @@ export const useMultiCart = () => {
         const newActiveIndex = prev.activeCartIndex >= indexToRemove ? Math.max(0, prev.activeCartIndex - 1) : prev.activeCartIndex;
         return { carts: newCarts, activeCartIndex: newActiveIndex };
     });
-  }, [carts.length, activeCartIndex]);
+  }, [carts.length]);
 
   const switchCart = useCallback((index: number) => {
     if (index >= 0 && index < carts.length) {
@@ -195,5 +198,3 @@ export const useMultiCart = () => {
     switchToOrAddCart,
   };
 };
-
-    
