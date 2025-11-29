@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,13 +14,14 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTranslation } from '@/hooks/use-translation';
-import { Moon, Sun, Languages, Milestone, Users, Palette, LayoutGrid, Sidebar } from 'lucide-react';
+import { Moon, Sun, Languages, Milestone, Users, Palette, LayoutGrid, Sidebar, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useNavigation, type NavigationStyle } from '@/context/navigation-context';
+import { Input } from '../ui/input';
 
 export function SettingsPageClient() {
     const { language, setLanguage } = useLanguage();
-    const { theme, setTheme } = useTheme();
+    const { theme, setTheme, backgroundImage, setBackgroundImage } = useTheme();
     const { currency, setCurrency } = useCurrency();
     const { navigationStyle, setNavigationStyle } = useNavigation();
     const { t } = useTranslation();
@@ -102,6 +102,26 @@ export function SettingsPageClient() {
                             </Label>
                         </RadioGroup>
                     </div>
+
+                     <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="background" className="text-base flex items-center">
+                                <ImageIcon className="mr-2 h-5 w-5" />
+                                Background Image
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                Set a custom background URL for the app.
+                            </p>
+                        </div>
+                        <Input 
+                            id="background"
+                            placeholder="Enter image URL..."
+                            className="w-[280px]"
+                            value={backgroundImage || ''}
+                            onChange={(e) => setBackgroundImage(e.target.value)}
+                        />
+                    </div>
+
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
