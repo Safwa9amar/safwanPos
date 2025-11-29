@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PurchaseOrder as PurchaseOrderType, Supplier, Product, SupplierPayment, SupplierCredit } from "@prisma/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,10 +41,14 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
   const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
   const [isCreditSheetOpen, setIsCreditSheetOpen] = useState(false);
 
+  useEffect(() => {
+    setSupplier(initialSupplier);
+  }, [initialSupplier]);
+
   const sortedHistory = [
-    ...supplier.purchaseOrders.map(po => ({ type: 'purchase' as const, date: po.orderDate, data: po })),
-    ...supplier.payments.map(p => ({ type: 'payment' as const, date: p.paymentDate, data: p })),
-    ...supplier.credits.map(c => ({ type: 'credit' as const, date: c.adjustmentDate, data: c }))
+    ...(supplier.purchaseOrders || []).map(po => ({ type: 'purchase' as const, date: po.orderDate, data: po })),
+    ...(supplier.payments || []).map(p => ({ type: 'payment' as const, date: p.paymentDate, data: p })),
+    ...(supplier.credits || []).map(c => ({ type: 'credit' as const, date: c.adjustmentDate, data: c }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   const handleSheetChange = (setter: React.Dispatch<React.SetStateAction<boolean>>) => (open: boolean) => {
