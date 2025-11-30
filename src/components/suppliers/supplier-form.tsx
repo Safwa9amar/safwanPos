@@ -68,6 +68,10 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
         status: "ACTIVE",
         logoUrl: "",
         notes: "",
+        contractStartDate: null,
+        contractEndDate: null,
+        monthlySupplyQuota: undefined,
+        qualityRating: undefined,
     },
   });
 
