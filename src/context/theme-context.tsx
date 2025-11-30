@@ -3,10 +3,19 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'light' | 'dark' | 'dark-purple';
+export type Theme = 
+  | 'light' 
+  | 'dark' 
+  | 'dark-purple'
+  | 'theme-ocean-light'
+  | 'theme-ocean-dark'
+  | 'theme-forest-light'
+  | 'theme-forest-dark'
+  | 'theme-desert-light'
+  | 'theme-desert-dark';
 
 // Define a default background image URL
-const DEFAULT_BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1554189097-9497412497a4?q=80&w=2940&auto=format&fit=crop";
+const DEFAULT_BACKGROUND_IMAGE = "https://server.wallpaperalchemy.com/storage/wallpapers/60/stunning-sunset-wallpaper-4k-high-resolution.jpg";
 
 
 interface ThemeContextType {
@@ -27,6 +36,18 @@ export const useTheme = () => {
   return context;
 };
 
+const validThemes: Theme[] = [
+    'light', 
+    'dark', 
+    'dark-purple',
+    'theme-ocean-light',
+    'theme-ocean-dark',
+    'theme-forest-light',
+    'theme-forest-dark',
+    'theme-desert-light',
+    'theme-desert-dark'
+];
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>('light');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
@@ -37,7 +58,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     
     // Theme setup
     const storedTheme = localStorage.getItem('theme') as Theme;
-    const validThemes: Theme[] = ['light', 'dark', 'dark-purple'];
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (storedTheme && validThemes.includes(storedTheme)) {
@@ -74,7 +94,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isMounted) {
-        document.documentElement.classList.remove('light', 'dark', 'dark-purple');
+        document.documentElement.className = ''; // Clear all classes
         document.documentElement.classList.add(theme);
     }
   }, [theme, isMounted]);
