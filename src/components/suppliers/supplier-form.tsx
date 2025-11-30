@@ -89,18 +89,16 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
     if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
 
     const formData = new FormData();
-    formData.append("userId", user.id); // Add the user ID to the form data
+    formData.append("userId", user.id); 
 
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-          if(value instanceof Date){
-            formData.append(key, value.toISOString());
-          } else {
-            formData.append(key, String(value));
-          }
+      if (value instanceof Date) {
+        formData.append(key, value.toISOString());
+      } else if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
       }
     });
-
+    
     const result = await upsertSupplier(formData);
 
     if (result.success) {

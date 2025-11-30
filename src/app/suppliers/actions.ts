@@ -22,8 +22,14 @@ const SupplierSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
-  monthlySupplyQuota: z.coerce.number().optional(),
-  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  monthlySupplyQuota: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().optional()
+  ),
+  qualityRating: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().min(1).max(5).optional()
+  ),
   notes: z.string().optional(),
 });
 
@@ -77,11 +83,8 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
 
-  // Manually remove empty strings for optional fields before validation
-  if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
-  if (values.qualityRating === '') delete values.qualityRating;
-  if (values.contractStartDate === '') delete values.contractStartDate;
-  if (values.contractEndDate === '') delete values.contractEndDate;
+  if (values.contractStartDate === 'null') values.contractStartDate = null;
+  if (values.contractEndDate === 'null') values.contractEndDate = null;
 
   const validatedFields = SupplierSchema.safeParse(values);
 
