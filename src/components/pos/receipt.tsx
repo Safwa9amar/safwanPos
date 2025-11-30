@@ -31,10 +31,6 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     // Switch to English for PDF generation
     const printT = (key: string) => i18n.getFixedT('en')(key);
 
-    // Add Cairo font for Arabic support
-    doc.addFileToVFS('Cairo-Regular-normal.ttf', cairoFont);
-    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo', 'normal');
-
     // --- Header ---
     doc.setFontSize(22);
     doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
