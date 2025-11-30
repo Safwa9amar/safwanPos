@@ -224,34 +224,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-           <SidebarMenu>
-             {isAdmin && (
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith('/settings/users')} tooltip={t('sidebar.staff_accounts')}>
-                        <Link href="/settings/users">
-                            <Contact />
-                            {t('sidebar.staff_accounts')}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-             )}
-              <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/settings') && !pathname.startsWith('/settings/users')} tooltip={t('sidebar.settings')}>
-                      <Link href="/settings">
-                          <Settings />
-                          {t('sidebar.settings')}
-                      </Link>
-                  </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/billing')} tooltip={t('sidebar.payment_center')}>
-                    <Link href="/billing">
-                    <Wallet />
-                    {t('sidebar.payment_center')}
-                    </Link>
-                </SidebarMenuButton>
-                </SidebarMenuItem>
-           </SidebarMenu>
            {trialStatus && (
                <div className="p-2">
                    <Button variant="outline" className="w-full h-auto py-2" asChild>
@@ -264,43 +236,53 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                    </Button>
                </div>
            )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start gap-2 p-2 h-auto">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col text-sm text-left overflow-hidden">
-                    <span className="font-medium truncate">{user?.name || user?.email}</span>
-                    <span className="text-muted-foreground text-xs">{user?.role}</span>
-                </div>
-                 {user?.subscriptionStatus === 'ACTIVE' && <Badge variant="secondary" className="ml-auto text-green-500">PRO</Badge>}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
-              <DropdownMenuLabel>{t('user.myAccount')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
-                <User className="mr-2 h-4 w-4" />
-                <span>{t('user.profile')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/billing')}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Billing</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('user.logout')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 sticky top-0 z-30">
           <SidebarTrigger/>
           <Breadcrumbs />
-          <div className="flex-1">
+          <div className="flex-1 flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-auto justify-start gap-2 p-1 h-auto rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col text-sm text-left overflow-hidden">
+                      <span className="font-medium truncate">{user?.name || user?.email}</span>
+                  </div>
+                   {user?.subscriptionStatus === 'ACTIVE' && <Badge variant="secondary" className="ml-auto text-green-500">PRO</Badge>}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 mt-2" align="end">
+                <DropdownMenuLabel>{t('user.myAccount')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>{t('user.profile')}</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => router.push('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>{t('sidebar.settings')}</span>
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => router.push('/settings/users')}>
+                    <Contact className="mr-2 h-4 w-4" />
+                    <span>{t('sidebar.staff_accounts')}</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => router.push('/billing')}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t('user.logout')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
         {children}
@@ -308,7 +290,3 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    
-
-    
