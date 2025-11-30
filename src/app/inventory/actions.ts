@@ -265,7 +265,6 @@ export async function upsertCategory(formData: FormData) {
             where: { 
                 name: {
                     equals: name,
-                    mode: 'insensitive'
                 }, 
                 userId,
                 NOT: { id: id || undefined }
@@ -428,5 +427,7 @@ export async function importCategories(userId: string, categories: any[]) {
     
     return { success: true, processed, errors };
 }
+
+    
 
     
