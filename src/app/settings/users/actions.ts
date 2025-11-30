@@ -5,14 +5,17 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from 'bcryptjs';
+import { SubscriptionStatus, UserRole } from "@prisma/client";
 
 const UserFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["ADMIN", "CASHIER", "PHONE_REPAIR"]),
+  role: z.nativeEnum(UserRole),
   password: z.string().optional(),
   adminId: z.string().min(1),
+  subscriptionStatus: z.nativeEnum(SubscriptionStatus).optional(),
+  trialEndsAt: z.coerce.date().optional().nullable(),
 });
 
 export async function getUsers(adminId: string) {
@@ -40,13 +43,19 @@ export async function getUsers(adminId: string) {
 
 export async function upsertUser(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
+  
+  // Handle empty strings for optional date
+  if (values.trialEndsAt === '') {
+      values.trialEndsAt = null;
+  }
+
   const validatedFields = UserFormSchema.safeParse(values);
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { id, name, email, role, password, adminId } = validatedFields.data;
+  const { id, name, email, role, password, adminId, subscriptionStatus, trialEndsAt } = validatedFields.data;
 
   try {
     if (id) {
@@ -65,7 +74,7 @@ export async function upsertUser(formData: FormData) {
             return { error: "User not found or you do not have permission to edit this user." };
         }
 
-        const updateData: { name: string; email: string; role: 'ADMIN' | 'CASHIER' | 'PHONE_REPAIR'; password?: string } = { name, email, role };
+        const updateData: any = { name, email, role, subscriptionStatus, trialEndsAt };
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
         }
@@ -98,6 +107,8 @@ export async function upsertUser(formData: FormData) {
           password: hashedPassword,
           createdById: adminId, // Link new user to the creating admin
           emailVerified: new Date(), // Staff accounts are pre-verified
+          subscriptionStatus: subscriptionStatus || 'TRIAL',
+          trialEndsAt: trialEndsAt
         },
       });
       revalidatePath("/settings/users");
