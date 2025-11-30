@@ -34,7 +34,7 @@ export function ProductSheet({ isOpen, onOpenChange, product, categories }: Prod
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-80px)]">
-            <div className="py-4 pr-6">
+            <div className="py-4 pr-4">
                 <ProductForm product={product} categories={categories} onFinished={() => onOpenChange(false)} />
             </div>
         </ScrollArea>
