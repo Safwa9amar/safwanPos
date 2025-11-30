@@ -15,10 +15,6 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 import { ProductWithCategoryAndBarcodes } from "@/types";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Calendar } from "../ui/calendar";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 const units = ["EACH", "KG", "G", "L", "ML"] as const;
 
@@ -47,26 +43,66 @@ const formatDateForInput = (date: Date | null | undefined): string => {
   return localDate.toISOString().split('T')[0];
 };
 
-export function ProductForm({ product, categories, onFinished }: { product: ProductWithCategoryAndBarcodes | null, categories: Category[], onFinished: () => void }) {
+interface ProductFormProps {
+    product: ProductWithCategoryAndBarcodes | null;
+    categories: Category[];
+    onFinished: () => void;
+    initialData?: Partial<ProductWithCategoryAndBarcodes>;
+}
+
+export function ProductForm({ product, categories, onFinished, initialData }: ProductFormProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const getDefaultValues = () => {
+    if (product) { // Editing existing product
+        return {
+            id: product.id,
+            name: product.name || "",
+            barcodes: product.barcodes?.map(b => ({ value: b.code })) || [{ value: "" }],
+            price: product.price || 0,
+            costPrice: product.costPrice || 0,
+            stock: product.stock || 0,
+            categoryId: product.categoryId || "__none__",
+            unit: (product.unit as ProductFormValues['unit']) || "EACH",
+            image: product.image || "",
+            productionDate: product.productionDate ? new Date(product.productionDate) : null,
+            expiryDate: product.expiryDate ? new Date(product.expiryDate) : null,
+        }
+    }
+    if (initialData) { // Creating new product with pre-filled data
+        return {
+            name: initialData.name || "",
+            image: initialData.image || "",
+            barcodes: [{ value: "" }],
+            price: 0,
+            costPrice: 0,
+            stock: 0,
+            categoryId: "__none__",
+            unit: "EACH",
+            productionDate: null,
+            expiryDate: null,
+        }
+    }
+    // Creating a new product from scratch
+    return {
+        name: "",
+        barcodes: [{ value: "" }],
+        price: 0,
+        costPrice: 0,
+        stock: 0,
+        categoryId: "__none__",
+        unit: "EACH",
+        image: "",
+        productionDate: null,
+        expiryDate: null,
+    }
+  }
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
-    defaultValues: {
-      id: product?.id,
-      name: product?.name || "",
-      barcodes: product?.barcodes?.map(b => ({ value: b.code })) || [{ value: "" }],
-      price: product?.price || 0,
-      costPrice: product?.costPrice || 0,
-      stock: product?.stock || 0,
-      categoryId: product?.categoryId || "__none__",
-      unit: (product?.unit as ProductFormValues['unit']) || "EACH",
-      image: product?.image || "",
-      productionDate: product?.productionDate ? new Date(product.productionDate) : null,
-      expiryDate: product?.expiryDate ? new Date(product.expiryDate) : null,
-    },
+    defaultValues: getDefaultValues(),
   });
 
   const { control, formState, register, handleSubmit, setValue, watch } = form;
@@ -233,5 +269,3 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
     </form>
   );
 }
-
-    

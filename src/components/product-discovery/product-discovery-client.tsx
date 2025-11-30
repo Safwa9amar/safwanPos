@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,6 +13,7 @@ import { Loader2, PackagePlus, Search, Telescope } from 'lucide-react';
 import { findProducts, ProductSearchOutput } from '@/ai/flows/product-search-flow';
 import { ProductSheet } from '../inventory/product-sheet';
 import { Category, Product } from '@prisma/client';
+import { ProductWithCategoryAndBarcodes } from '@/types';
 
 const searchSchema = z.object({
   query: z.string().min(3, 'Please enter at least 3 characters.'),
@@ -24,7 +26,7 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ProductSearchOutput['products']>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [productToAdd, setProductToAdd] = useState<Partial<Product> | null>(null);
+  const [productInitialData, setProductInitialData] = useState<Partial<ProductWithCategoryAndBarcodes> | null>(null);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
@@ -56,7 +58,7 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
   };
 
   const handleAddToInventory = (product: ProductSearchOutput['products'][0]) => {
-    setProductToAdd({
+    setProductInitialData({
         name: product.name,
         image: product.imageUrl,
     });
@@ -65,7 +67,7 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
   
   const onSheetClose = () => {
     setIsSheetOpen(false);
-    setProductToAdd(null);
+    setProductInitialData(null);
   }
 
   return (
@@ -151,7 +153,8 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
       <ProductSheet 
         isOpen={isSheetOpen}
         onOpenChange={onSheetClose}
-        product={productToAdd as Product | null}
+        product={null} // Always pass null to ensure it's in 'add' mode
+        initialData={productInitialData}
         categories={categories}
       />
     </div>

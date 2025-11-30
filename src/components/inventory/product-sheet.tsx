@@ -19,9 +19,10 @@ interface ProductSheetProps {
   onOpenChange: (open: boolean) => void;
   product: ProductWithCategoryAndBarcodes | null;
   categories: Category[];
+  initialData?: Partial<ProductWithCategoryAndBarcodes>;
 }
 
-export function ProductSheet({ isOpen, onOpenChange, product, categories }: ProductSheetProps) {
+export function ProductSheet({ isOpen, onOpenChange, product, categories, initialData }: ProductSheetProps) {
   const { t } = useTranslation();
   const title = product ? t("inventory.editTitle") : t("inventory.addProduct");
   const description = product ? t("inventory.editDescription") : t("inventory.addDescription");
@@ -34,8 +35,13 @@ export function ProductSheet({ isOpen, onOpenChange, product, categories }: Prod
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-80px)]">
-            <div className="py-4 pr-4">
-                <ProductForm product={product} categories={categories} onFinished={() => onOpenChange(false)} />
+            <div className="py-4 pr-6">
+                <ProductForm 
+                  product={product} 
+                  categories={categories} 
+                  onFinished={() => onOpenChange(false)}
+                  initialData={initialData}
+                />
             </div>
         </ScrollArea>
       </SheetContent>
