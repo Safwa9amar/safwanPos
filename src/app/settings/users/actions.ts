@@ -10,10 +10,32 @@ const UserFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  role: z.enum(["ADMIN", "CASHIER"]),
+  role: z.enum(["ADMIN", "CASHIER", "PHONE_REPAIR"]),
   password: z.string().optional(),
   adminId: z.string().min(1),
 });
+
+export async function getUsers(adminId: string) {
+    if (!adminId) {
+        return { error: "User not authenticated." };
+    }
+    try {
+        // Fetch the admin user and all users they have created.
+        const users = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { id: adminId }, // The admin themself
+                    { createdById: adminId } // Users created by the admin
+                ]
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        return { users };
+    } catch (error) {
+        console.error("Failed to fetch users:", error);
+        return { error: "Failed to load users." };
+    }
+}
 
 
 export async function upsertUser(formData: FormData) {
@@ -43,7 +65,7 @@ export async function upsertUser(formData: FormData) {
             return { error: "User not found or you do not have permission to edit this user." };
         }
 
-        const updateData: { name: string; email: string; role: 'ADMIN' | 'CASHIER'; password?: string } = { name, email, role };
+        const updateData: { name: string; email: string; role: 'ADMIN' | 'CASHIER' | 'PHONE_REPAIR'; password?: string } = { name, email, role };
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
         }
