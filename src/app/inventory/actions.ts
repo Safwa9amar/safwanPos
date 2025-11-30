@@ -263,7 +263,10 @@ export async function upsertCategory(formData: FormData) {
     try {
         const existingCategory = await prisma.category.findFirst({
             where: { 
-                name, 
+                name: {
+                    equals: name,
+                    mode: 'insensitive'
+                }, 
                 userId,
                 NOT: { id: id || undefined }
             }
@@ -278,14 +281,15 @@ export async function upsertCategory(formData: FormData) {
             if (!categoryToUpdate) return { message: "Category not found or access denied." };
         }
 
-        await prisma.category.upsert({
+        const category = await prisma.category.upsert({
             where: { id: id || '' },
             create: { name, userId },
             update: { name }
         });
         revalidatePath('/inventory/categories');
         revalidatePath('/inventory');
-        return { success: true };
+        revalidatePath('/product-discovery');
+        return { success: true, category };
     } catch (error) {
         console.error(error);
         return { message: "Failed to save category." };

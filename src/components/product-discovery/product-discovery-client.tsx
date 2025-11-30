@@ -12,8 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, PackagePlus, Search, Telescope } from 'lucide-react';
 import { findProducts, ProductSearchOutput } from '@/ai/flows/product-search-flow';
 import { ProductSheet } from '../inventory/product-sheet';
-import { Category, Product } from '@prisma/client';
+import { Category } from '@prisma/client';
 import { ProductWithCategoryAndBarcodes } from '@/types';
+import { upsertCategory } from '@/app/inventory/actions';
+import { useAuth } from '@/context/auth-context';
 
 const searchSchema = z.object({
   query: z.string().min(3, 'Please enter at least 3 characters.'),
@@ -23,6 +25,7 @@ type SearchFormValues = z.infer<typeof searchSchema>;
 
 export function ProductDiscoveryClient({ categories }: { categories: Category[] }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ProductSearchOutput['products']>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -57,10 +60,32 @@ export function ProductDiscoveryClient({ categories }: { categories: Category[] 
     }
   };
 
-  const handleAddToInventory = (product: ProductSearchOutput['products'][0]) => {
+  const handleAddToInventory = async (product: ProductSearchOutput['products'][0]) => {
+    if (!user) return toast({ variant: 'destructive', title: 'Authentication Error'});
+    
+    let categoryId: string | undefined = categories.find(c => c.name.toLowerCase() === product.category.toLowerCase())?.id;
+
+    // If category does not exist, create it
+    if (!categoryId && product.category) {
+        toast({ title: 'Creating new category...', description: `Adding "${product.category}" to your categories.`});
+        const formData = new FormData();
+        formData.append('name', product.category);
+        formData.append('userId', user.id);
+        const result = await upsertCategory(formData);
+
+        if (result.success && result.category) {
+            categoryId = result.category.id;
+            // You might want to refresh the categories list in the parent component here
+            // For now, we just use the new ID
+        } else {
+            toast({ variant: 'destructive', title: 'Failed to create category', description: result.message });
+        }
+    }
+
     setProductInitialData({
         name: product.name,
         image: product.imageUrl,
+        categoryId: categoryId || null,
     });
     setIsSheetOpen(true);
   };
