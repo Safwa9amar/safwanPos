@@ -74,7 +74,7 @@ export function DirectPurchaseForm({ products, items, setItems }: DirectPurchase
                         <CommandInput placeholder={t('po.searchProducts')} />
                         <CommandList>
                             <CommandEmpty>{t('po.noProductsFound')}</CommandEmpty>
-                            <CommandGroup>
+                            <CommandGroup >
                                 {products.map((product) => (
                                     <CommandItem
                                         key={product.id}

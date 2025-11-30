@@ -26,7 +26,7 @@ export function SupplierSheet({ isOpen, onOpenChange, supplier }: SupplierDialog
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg bg-background/80 backdrop-blur-sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
