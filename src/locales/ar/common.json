@@ -10,5 +10,6 @@
     "pos.cancelButton": "إلغاء",
     "inventory.save": "حفظ",
     "inventory.saving": "جاري الحفظ...",
-    "history.close": "إغلاق"
+    "history.close": "إغلاق",
+    "date.select_a_date": "اختر تاريخًا"
 }

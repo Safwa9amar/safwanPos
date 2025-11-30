@@ -44,6 +44,8 @@
     "inventory.sort.priceDesc": "السعر (مرتفع-منخفض)",
     "inventory.sort.stockAsc": "المخزون (منخفض-مرتفع)",
     "inventory.sort.stockDesc": "المخزون (مرتفع-منخفض)",
+    "inventory.productionDate": "تاريخ الإنتاج",
+    "inventory.expiryDate": "تاريخ انتهاء الصلاحية",
     "units.EACH": "قطعة",
     "units.KG": "كجم",
     "units.G": "جم",

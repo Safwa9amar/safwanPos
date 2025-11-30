@@ -10,5 +10,6 @@
     "pos.cancelButton": "Cancel",
     "inventory.save": "Save",
     "inventory.saving": "Saving...",
-    "history.close": "Close"
+    "history.close": "Close",
+    "date.select_a_date": "Select a date"
 }
