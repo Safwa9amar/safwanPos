@@ -30,7 +30,7 @@ interface SaleDetailDialogProps {
 }
 
 export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialogProps) {
-  const { t, language } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatCurrency } = useCurrency();
 
   if (!sale) return null;
@@ -47,70 +47,43 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
 
   const handlePrint = () => {
     const doc = new jsPDF();
-    const isArabic = language === 'ar';
+    const printT = (key: string) => i18n.getFixedT('en')(key);
+
 
     // Add Cairo font for Arabic support
     doc.addFileToVFS('Cairo-Regular-normal.ttf', cairoFont);
     doc.addFont('Cairo-Regular-normal.ttf', 'Cairo', 'normal');
 
-    if (isArabic) {
-        doc.setFont('Cairo');
-        doc.setR2L(true);
-    }
-
     // --- Header ---
     doc.setFontSize(22);
     doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text(t('receipt.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    doc.text(printT('receipt.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
 
     // --- Details ---
     doc.setFontSize(10);
-    const saleIdText = `${t('receipt.saleId')}: #${sale.id.substring(0,8)}`;
-    const dateText = `${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`;
-    const customer = `${t('history.customer')}: ${sale.customer?.name || t('history.walkInCustomer')}`;
+    const saleIdText = `${printT('receipt.saleId')}: #${sale.id.substring(0,8)}`;
+    const dateText = `${printT('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`;
+    const customer = `${printT('history.customer')}: ${sale.customer?.name || printT('history.walkInCustomer')}`;
     
-    if (isArabic) {
-        doc.text(saleIdText, doc.internal.pageSize.getWidth() - 15, 40, { align: 'right' });
-        doc.text(dateText, doc.internal.pageSize.getWidth() - 15, 45, { align: 'right' });
-        doc.text(customer, doc.internal.pageSize.getWidth() - 15, 50, { align: 'right' });
-    } else {
-        doc.text(saleIdText, 15, 40);
-        doc.text(dateText, 15, 45);
-        doc.text(customer, 15, 50);
-    }
+    doc.text(saleIdText, 15, 40);
+    doc.text(dateText, 15, 45);
+    doc.text(customer, 15, 50);
 
     // --- Items Table ---
     const tableData = sale.items.map(item => [
-        isArabic ? item.product.name.split('').reverse().join('') : item.product.name,
+        item.product.name,
         item.quantity,
         formatCurrency(item.price),
         formatCurrency(item.price * item.quantity)
     ]);
-    const head = [[t('po.item'), t('po.quantity'), t('inventory.price'), t('pos.total')]];
+    const head = [[printT('po.item'), printT('po.quantity'), printT('inventory.price'), printT('pos.total')]];
     
     autoTable(doc, {
         startY: 60,
         head: head,
         body: tableData,
         theme: 'striped',
-        headStyles: {
-            font: isArabic ? 'Cairo' : 'helvetica',
-            halign: isArabic ? 'right' : 'left'
-        },
-        bodyStyles: {
-            font: isArabic ? 'Cairo' : 'helvetica',
-            halign: isArabic ? 'right' : 'left'
-        },
-        didDrawPage: (data) => {
-            if (isArabic) {
-                data.table.body.forEach(row => {
-                    row.cells[1].styles.halign = 'left';
-                    row.cells[2].styles.halign = 'left';
-                    row.cells[3].styles.halign = 'left';
-                });
-            }
-        }
     });
 
     // --- Totals ---
@@ -121,23 +94,17 @@ export function SaleDetailDialog({ isOpen, onOpenChange, sale }: SaleDetailDialo
     const addLeftAlignedText = (text: string, y: number) => doc.text(text, 15, y);
 
     const totals = [
-        { label: t('pos.total'), value: formatCurrency(sale.totalAmount), bold: true, size: 16 },
-        { label: t('pos.amountPaid'), value: formatCurrency(sale.amountPaid) },
-        { label: t('customers.balance'), value: formatCurrency(sale.totalAmount - sale.amountPaid), bold: true },
+        { label: printT('pos.total'), value: formatCurrency(sale.totalAmount), bold: true, size: 16 },
+        { label: printT('pos.amountPaid'), value: formatCurrency(sale.amountPaid) },
+        { label: printT('customers.balance'), value: formatCurrency(sale.totalAmount - sale.amountPaid), bold: true },
     ];
     
     let currentY = finalY;
     totals.forEach(item => {
         doc.setFontSize(item.size || 12);
         doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
-        if (isArabic) {
-            doc.setFont('Cairo', item.bold ? 'bold' : 'normal');
-            addRightAlignedText(item.label, currentY);
-            addLeftAlignedText(item.value, currentY);
-        } else {
-            addLeftAlignedText(item.label, currentY);
-            addRightAlignedText(item.value, currentY);
-        }
+        addLeftAlignedText(item.label, currentY);
+        addRightAlignedText(item.value, currentY);
         currentY += (item.size || 12) / 2 + 4;
     });
 
