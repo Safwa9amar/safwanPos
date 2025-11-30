@@ -9,12 +9,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { createPurchaseOrder } from "@/app/suppliers/actions";
 import { PurchaseOrderForm } from "./purchase-order-form";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 interface PurchaseOrderSheetProps {
     isOpen: boolean;
@@ -26,8 +24,15 @@ interface PurchaseOrderSheetProps {
 export type POItem = {
     productId: string;
     name: string;
-    quantity: number;
-    costPrice: number;
+    quantity: number | string;
+    costPrice: number | string;
+};
+
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - tzOffset);
+  return localDate.toISOString().split('T')[0];
 };
 
 export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products }: PurchaseOrderSheetProps) {
@@ -54,7 +59,7 @@ export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products 
         const result = await createPurchaseOrder(
             user.id,
             supplierId,
-            items.map(i => ({ productId: i.productId, quantity: i.quantity, costPrice: i.costPrice })),
+            items.map(i => ({ productId: i.productId, quantity: Number(i.quantity), costPrice: Number(i.costPrice) })),
             expectedDate
         );
         setIsSaving(false);
@@ -89,30 +94,15 @@ export function PurchaseOrderSheet({ isOpen, onOpenChange, supplierId, products 
                     <SheetTitle>{t('po.title')}</SheetTitle>
                     <SheetDescription>{t('po.description')}</SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
-                    <div className="mb-4">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-[280px] justify-start text-left font-normal",
-                                    !expectedDate && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {expectedDate ? format(expectedDate, "PPP") : <span>{t('po.expectedDelivery')}</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                mode="single"
-                                selected={expectedDate}
-                                onSelect={setExpectedDate}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="expectedDate">{t('po.expectedDelivery')}</Label>
+                        <Input
+                            id="expectedDate"
+                            type="date"
+                            value={expectedDate ? formatDateForInput(expectedDate) : ''}
+                            onChange={(e) => setExpectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+                         />
                     </div>
                     <PurchaseOrderForm
                         products={products}

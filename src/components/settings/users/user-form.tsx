@@ -10,15 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { upsertUser } from "@/app/settings/users/actions";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/context/auth-context";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Calendar } from "../ui/calendar";
 
 const UserFormSchema = z.object({
   id: z.string().optional(),
@@ -52,6 +48,13 @@ const UserFormSchema = z.object({
 
 
 type UserFormValues = z.infer<typeof UserFormSchema>;
+
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - tzOffset);
+  return localDate.toISOString().split('T')[0];
+};
 
 export function UserForm({ user, onFinished }: { user: User | null, onFinished: () => void }) {
   const { t } = useTranslation();
@@ -173,30 +176,14 @@ export function UserForm({ user, onFinished }: { user: User | null, onFinished: 
                 </Select>
             </div>
              <div className="space-y-2">
-              <Label>Trial Ends At</Label>
-              <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch('trialEndsAt') && "text-muted-foreground"
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {watch('trialEndsAt') ? format(watch('trialEndsAt')!, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={watch('trialEndsAt') || undefined}
-                        onSelect={(date) => setValue('trialEndsAt', date)}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
-          </div>
+                <Label htmlFor="trialEndsAt">Trial Ends At</Label>
+                <Input
+                    id="trialEndsAt"
+                    type="date"
+                    defaultValue={formatDateForInput(watch('trialEndsAt'))}
+                    onChange={(e) => setValue('trialEndsAt', e.target.value ? new Date(e.target.value) : null)}
+                />
+            </div>
         </div>
 
 

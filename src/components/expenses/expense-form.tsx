@@ -10,24 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { upsertExpense } from "@/app/expenses/actions";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 
 const ExpenseSchema = z.object({
   id: z.string().optional(),
   description: z.string().min(1, "Description is required"),
   amount: z.coerce.number().positive("Amount must be a positive number"),
-  expenseDate: z.date(),
+  expenseDate: z.coerce.date(),
   categoryId: z.string().min(1, "Category is required"),
 });
 
 type ExpenseFormValues = z.infer<typeof ExpenseSchema>;
+
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - tzOffset);
+  return localDate.toISOString().split('T')[0];
+};
 
 export function ExpenseForm({ expense, categories, onFinished }: { expense: Expense | null, categories: ExpenseCategory[], onFinished: () => void }) {
   const { t } = useTranslation();
@@ -115,28 +118,12 @@ export function ExpenseForm({ expense, categories, onFinished }: { expense: Expe
 
       <div className="space-y-2">
         <Label htmlFor="expenseDate">{t('expenses.date')}</Label>
-         <Popover>
-            <PopoverTrigger asChild>
-            <Button
-                variant={"outline"}
-                className={cn(
-                "w-full justify-start text-left font-normal",
-                !watch('expenseDate') && "text-muted-foreground"
-                )}
-            >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {watch('expenseDate') ? format(watch('expenseDate'), "PPP") : <span>{t('history.pickDate')}</span>}
-            </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-            <Calendar
-                mode="single"
-                selected={watch('expenseDate')}
-                onSelect={(date) => setValue('expenseDate', date || new Date())}
-                initialFocus
-            />
-            </PopoverContent>
-        </Popover>
+         <Input
+            id="expenseDate"
+            type="date"
+            defaultValue={formatDateForInput(watch('expenseDate'))}
+            onChange={(e) => setValue('expenseDate', e.target.valueAsDate || new Date())}
+          />
         {formState.errors.expenseDate && <p className="text-sm text-destructive">{formState.errors.expenseDate.message}</p>}
       </div>
 

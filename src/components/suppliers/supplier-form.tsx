@@ -10,15 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { upsertSupplier } from "@/app/suppliers/actions";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "../ui/textarea";
 import { useAuth } from "@/context/auth-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Calendar } from "../ui/calendar";
 
 const SupplierSchema = z.object({
   id: z.string().optional(),
@@ -34,8 +30,8 @@ const SupplierSchema = z.object({
   communicationChannel: z.string().optional(),
   status: z.nativeEnum(SupplierStatus),
   logoUrl: z.string().url().optional().or(z.literal('')),
-  contractStartDate: z.date().optional().nullable(),
-  contractEndDate: z.date().optional().nullable(),
+  contractStartDate: z.coerce.date().optional().nullable(),
+  contractEndDate: z.coerce.date().optional().nullable(),
   monthlySupplyQuota: z.preprocess(
     (val) => (val === "" || val === null ? undefined : val),
     z.coerce.number().optional()
@@ -48,6 +44,13 @@ const SupplierSchema = z.object({
 });
 
 type SupplierFormValues = z.infer<typeof SupplierSchema>;
+
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - tzOffset);
+  return localDate.toISOString().split('T')[0];
+};
 
 export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | null, onFinished: () => void }) {
   const { t } = useTranslation("translation");
@@ -188,54 +191,22 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
       </div>
       <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-              <Label>Contract Start Date</Label>
-              <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch('contractStartDate') && "text-muted-foreground"
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {watch('contractStartDate') ? format(watch('contractStartDate')!, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={watch('contractStartDate') || undefined}
-                        onSelect={(date) => setValue('contractStartDate', date)}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
+              <Label htmlFor="contractStartDate">Contract Start Date</Label>
+              <Input
+                id="contractStartDate"
+                type="date"
+                defaultValue={formatDateForInput(watch('contractStartDate'))}
+                onChange={(e) => setValue('contractStartDate', e.target.value ? new Date(e.target.value) : null)}
+              />
           </div>
            <div className="space-y-2">
-              <Label>Contract End Date</Label>
-              <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch('contractEndDate') && "text-muted-foreground"
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {watch('contractEndDate') ? format(watch('contractEndDate')!, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={watch('contractEndDate') || undefined}
-                        onSelect={(date) => setValue('contractEndDate', date)}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
+              <Label htmlFor="contractEndDate">Contract End Date</Label>
+              <Input
+                id="contractEndDate"
+                type="date"
+                defaultValue={formatDateForInput(watch('contractEndDate'))}
+                onChange={(e) => setValue('contractEndDate', e.target.value ? new Date(e.target.value) : null)}
+              />
           </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -276,5 +247,3 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
     </form>
   );
 }
-
-    
