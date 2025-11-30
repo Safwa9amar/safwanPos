@@ -36,8 +36,14 @@ const SupplierSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.date().optional().nullable(),
   contractEndDate: z.date().optional().nullable(),
-  monthlySupplyQuota: z.coerce.number().optional(),
-  qualityRating: z.coerce.number().min(1).max(5).optional(),
+  monthlySupplyQuota: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().optional()
+  ),
+  qualityRating: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().min(1).max(5).optional()
+  ),
   notes: z.string().optional(),
 });
 
@@ -54,6 +60,8 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
         ...supplier,
         contractStartDate: supplier.contractStartDate ? new Date(supplier.contractStartDate) : null,
         contractEndDate: supplier.contractEndDate ? new Date(supplier.contractEndDate) : null,
+        monthlySupplyQuota: supplier.monthlySupplyQuota ?? undefined,
+        qualityRating: supplier.qualityRating ?? undefined,
     } : {
         name: "",
         contactName: "",
@@ -246,7 +254,7 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
       </div>
       <div className="space-y-2">
         <Label htmlFor="notes">Notes & Remarks</Label>
-        <Textarea id="notes" {...register("notes")} />
+        <Textarea id="notes" {...form.register("notes")} />
         {formState.errors.notes && <p className="text-sm text-destructive">{formState.errors.notes.message}</p>}
       </div>
       <div className="space-y-2">
