@@ -123,7 +123,7 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {supplier && <input type="hidden" {...form.register("id")} />}
       <div className="space-y-2">
         <Label htmlFor="name">{t("suppliers.name")}</Label>

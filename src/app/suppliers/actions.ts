@@ -22,14 +22,8 @@ const SupplierSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
-  monthlySupplyQuota: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().optional()
-  ),
-  qualityRating: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().min(1).max(5).optional()
-  ),
+  monthlySupplyQuota: z.coerce.number().optional(),
+  qualityRating: z.coerce.number().min(1).max(5).optional(),
   notes: z.string().optional(),
 });
 
@@ -83,8 +77,12 @@ export async function getSupplierById(id: string, userId: string) {
 export async function upsertSupplier(formData: FormData) {
   const values = Object.fromEntries(formData.entries());
 
-  if (values.contractStartDate === 'null') values.contractStartDate = null;
-  if (values.contractEndDate === 'null') values.contractEndDate = null;
+  // Server-side data cleanup before validation
+  if (values.contractStartDate === 'null' || values.contractStartDate === '') values.contractStartDate = null;
+  if (values.contractEndDate === 'null' || values.contractEndDate === '') values.contractEndDate = null;
+  if (values.monthlySupplyQuota === '') delete values.monthlySupplyQuota;
+  if (values.qualityRating === '') delete values.qualityRating;
+
 
   const validatedFields = SupplierSchema.safeParse(values);
 
