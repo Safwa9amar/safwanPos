@@ -12,6 +12,7 @@ import {
 import { ProductForm } from "./product-form";
 import { useTranslation } from "@/hooks/use-translation";
 import { ProductWithCategoryAndBarcodes } from "@/types";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface ProductSheetProps {
   isOpen: boolean;
@@ -32,9 +33,11 @@ export function ProductSheet({ isOpen, onOpenChange, product, categories }: Prod
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
-        <div className="py-4">
-          <ProductForm product={product} categories={categories} onFinished={() => onOpenChange(false)} />
-        </div>
+        <ScrollArea className="h-[calc(100vh-80px)]">
+            <div className="py-4 pr-6">
+                <ProductForm product={product} categories={categories} onFinished={() => onOpenChange(false)} />
+            </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );
