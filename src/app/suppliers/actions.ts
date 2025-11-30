@@ -190,6 +190,9 @@ export async function createPurchaseOrder(
                             receivedQuantity: 0,
                         }))
                     }
+                },
+                 include: {
+                  items: true
                 }
             });
             
@@ -201,6 +204,18 @@ export async function createPurchaseOrder(
                     }
                 }
             });
+            
+            // Add to price history
+            for (const [index, item] of items.entries()) {
+               await tx.purchasePriceHistory.create({
+                  data: {
+                    productId: item.productId,
+                    price: item.costPrice,
+                    userId,
+                    purchaseOrderItemId: po.items[index].id,
+                  }
+                });
+            }
 
             return po;
         });
@@ -220,7 +235,8 @@ export async function deletePurchaseOrder(purchaseOrderId: string, userId: strin
     try {
         return await prisma.$transaction(async (tx) => {
             const po = await tx.purchaseOrder.findFirst({
-                where: { id: purchaseOrderId, userId }
+                where: { id: purchaseOrderId, userId },
+                include: { items: true }
             });
 
             if (!po) {
@@ -230,6 +246,15 @@ export async function deletePurchaseOrder(purchaseOrderId: string, userId: strin
             if (po.status !== 'PENDING') {
                 throw new Error("Only PENDING purchase orders can be deleted.");
             }
+            
+            // Delete associated price history
+            await tx.purchasePriceHistory.deleteMany({
+              where: {
+                purchaseOrderItemId: {
+                  in: po.items.map(item => item.id)
+                }
+              }
+            });
 
             await tx.supplier.update({
                 where: { id: po.supplierId },
@@ -476,7 +501,3 @@ export async function deleteSupplierCredit(creditId: string, userId: string) {
         return { error: error.message || "Failed to delete credit." };
     }
 }
-
-    
-
-    

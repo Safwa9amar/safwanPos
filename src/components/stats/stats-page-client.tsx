@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useTranslation } from "@/hooks/use-translation";
+import { useTranslation } from "react-i18next";
 import { BarChart as BarChartIcon, ShoppingCart, DollarSign, TrendingUp, Loader2, Truck, FileText } from "lucide-react";
 import {
   Bar,
@@ -89,8 +89,9 @@ export function StatsPageClient() {
     totalSuppliers,
     totalPurchaseOrders,
     totalPOCost,
-    topSuppliers,
   } = stats;
+  
+  const topSuppliers = stats.topSuppliers || [];
   
   const salesChartConfig = {
     total: {

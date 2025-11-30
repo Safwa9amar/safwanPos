@@ -39,6 +39,15 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
           },
         }
       : baseWhere;
+      
+    const purchasePriceHistoryWhereClause = dateRange
+      ? {
+          ...baseWhere,
+          purchaseDate: {
+              gte: dateRange.from,
+              lte: dateRange.to,
+          }
+      } : baseWhere;
 
     // --- Sales & Profit Calculations ---
     const sales = await prisma.sale.findMany({
@@ -47,8 +56,12 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
             items: {
                 include: {
                     product: {
-                        select: {
-                            costPrice: true
+                        include: {
+                            priceHistory: {
+                                where: { purchaseDate: { lte: new Date() } }, // Use current date
+                                orderBy: { purchaseDate: 'desc' },
+                                take: 1,
+                            }
                         }
                     }
                 }
@@ -61,7 +74,8 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
     for (const sale of sales) {
         totalRevenue += sale.totalAmount;
         for (const item of sale.items) {
-            totalCostOfGoods += item.quantity * (item.product.costPrice || 0);
+            const costPrice = item.product.priceHistory[0]?.price || 0;
+            totalCostOfGoods += item.quantity * costPrice;
         }
     }
     

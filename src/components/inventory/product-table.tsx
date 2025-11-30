@@ -105,9 +105,8 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
             <TableHead>{t("inventory.productName")}</TableHead>
             <TableHead>{t("inventory.category")}</TableHead>
             <TableHead>{t("inventory.barcode")}</TableHead>
-            <TableHead>تاريخ انتهاء الصلاحية</TableHead>
+            <TableHead>{t("inventory.expiryDate")}</TableHead>
             <TableHead className="text-right">{t("inventory.price")}</TableHead>
-            <TableHead className="text-right">{t("inventory.costPrice")}</TableHead>
             <TableHead className="text-right">{t("inventory.stock")}</TableHead>
             <TableHead className="w-[80px] text-right">{t("inventory.actions")}</TableHead>
           </TableRow>
@@ -141,7 +140,6 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
                 {getExpiryBadge(product.expiryDate)}
               </TableCell>
               <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(product.costPrice)}</TableCell>
               <TableCell className="text-right">{product.stock} {t(`units.${product.unit}`)}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

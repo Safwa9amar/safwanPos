@@ -1,5 +1,5 @@
 
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry, PurchasePriceHistory } from '@prisma/client';
 
 export type Product = PrismaProduct;
 export type Category = PrismaCategory;
@@ -14,6 +14,7 @@ export interface ProductWithCategory extends PrismaProduct {
 
 export interface ProductWithCategoryAndBarcodes extends ProductWithCategory {
     barcodes: Barcode[];
+    priceHistory: PurchasePriceHistory[];
 }
 
 export type CartItem = {

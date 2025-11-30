@@ -15,15 +15,16 @@ import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 import { ProductWithCategoryAndBarcodes } from "@/types";
+import { useEffect } from "react";
 
 const units = ["EACH", "KG", "G", "L", "ML"] as const;
 
+// Main schema for form validation, without costPrice for the product itself
 const ProductSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   barcodes: z.array(z.object({ value: z.string().min(1, "Barcode cannot be empty") })).min(1, "At least one barcode is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
-  costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().min(0, "Stock cannot be negative"),
   categoryId: z.string().optional().nullable(),
   unit: z.enum(units),
@@ -62,7 +63,6 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
             name: product.name || "",
             barcodes: product.barcodes?.map(b => ({ value: b.code })) || [{ value: "" }],
             price: product.price || 0,
-            costPrice: product.costPrice || 0,
             stock: product.stock || 0,
             categoryId: product.categoryId || "__none__",
             unit: (product.unit as ProductFormValues['unit']) || "EACH",
@@ -77,9 +77,8 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
             image: initialData.image || "",
             barcodes: [{ value: "" }],
             price: 0,
-            costPrice: 0,
             stock: 0,
-            categoryId: "__none__",
+            categoryId: initialData.categoryId || "__none__",
             unit: "EACH",
             productionDate: null,
             expiryDate: null,
@@ -90,7 +89,6 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
         name: "",
         barcodes: [{ value: "" }],
         price: 0,
-        costPrice: 0,
         stock: 0,
         categoryId: "__none__",
         unit: "EACH",
@@ -100,10 +98,29 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
     }
   }
 
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(ProductSchema),
-    defaultValues: getDefaultValues(),
+  const form = useForm<ProductFormValues & { costPrice: number }>({
+    resolver: zodResolver(ProductSchema.extend({ costPrice: z.coerce.number().min(0, "Cost price cannot be negative") })),
+    defaultValues: { ...getDefaultValues(), costPrice: 0 },
   });
+  
+  useEffect(() => {
+    // If we're pre-filling from initialData (AI discovery), reset the form with those values.
+    if(initialData){
+      form.reset({
+        name: initialData.name || "",
+        image: initialData.image || "",
+        barcodes: [{ value: "" }],
+        price: 0,
+        costPrice: 0,
+        stock: 0,
+        categoryId: initialData.categoryId || "__none__",
+        unit: "EACH",
+        productionDate: null,
+        expiryDate: null,
+      })
+    }
+  }, [initialData, form.reset]);
+
 
   const { control, formState, register, handleSubmit, setValue, watch } = form;
 
@@ -112,19 +129,22 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
     name: "barcodes"
   });
 
-  const onSubmit = async (data: ProductFormValues) => {
+  const onSubmit = async (data: ProductFormValues & { costPrice: number }) => {
     if (!user) {
         toast({ variant: "destructive", title: "Authentication Error" });
         return;
     }
     const formData = new FormData();
-    const { barcodes, ...restOfData } = data;
+    const { barcodes, costPrice, ...restOfData } = data;
     
     // Append barcodes as an array
     barcodes.forEach((barcode, index) => {
         formData.append(`barcodes[]`, barcode.value);
     });
     
+    // Append the costPrice separately as it's not part of the main product model
+    formData.append('costPrice', String(costPrice));
+
     // Append the rest of the data
     Object.entries(restOfData).forEach(([key, value]) => {
         if (key === 'categoryId' && value === '__none__') {
@@ -147,7 +167,7 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
     } else if (result.errors) {
         Object.entries(result.errors).forEach(([field, messages]) => {
             if(messages){
-                form.setError(field as keyof ProductFormValues, { type: 'manual', message: messages.join(', ') });
+                form.setError(field as keyof (ProductFormValues & { costPrice: number }), { type: 'manual', message: messages.join(', ') });
             }
         })
     } else {
@@ -192,7 +212,9 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
           {formState.errors.price && <p className="text-sm text-destructive">{formState.errors.price.message}</p>}
         </div>
         <div className="space-y-2">
-            <Label htmlFor="costPrice">{t("inventory.costPrice")}</Label>
+            <Label htmlFor="costPrice">
+              {product ? "Latest " : ""}{t("inventory.costPrice")}
+            </Label>
             <Input id="costPrice" type="number" step="0.01" {...register("costPrice")} />
             {formState.errors.costPrice && <p className="text-sm text-destructive">{formState.errors.costPrice.message}</p>}
         </div>
@@ -243,7 +265,7 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="productionDate">تاريخ الإنتاج</Label>
+          <Label htmlFor="productionDate">{t("inventory.productionDate")}</Label>
            <Input 
              id="productionDate"
              type="date"
@@ -252,7 +274,7 @@ export function ProductForm({ product, categories, onFinished, initialData }: Pr
            />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="expiryDate">تاريخ انتهاء الصلاحية</Label>
+          <Label htmlFor="expiryDate">{t("inventory.expiryDate")}</Label>
           <Input 
              id="expiryDate"
              type="date"

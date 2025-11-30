@@ -10,7 +10,6 @@ const ProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   barcodes: z.array(z.string().min(1, "Barcode cannot be empty")).min(1, "At least one barcode is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
-  costPrice: z.coerce.number().min(0, "Cost price cannot be negative"),
   stock: z.coerce.number().min(0, "Stock cannot be negative for items sold by EACH. For weighted items, this can be a decimal."),
   categoryId: z.string().optional().nullable(),
   unit: z.enum(["EACH", "KG", "G", "L", "ML"]),
@@ -39,7 +38,6 @@ export async function addProduct(formData: FormData) {
   const values = {
     name: formData.get('name'),
     price: formData.get('price'),
-    costPrice: formData.get('costPrice'),
     stock: formData.get('stock'),
     categoryId: formData.get('categoryId'),
     unit: formData.get('unit'),
@@ -49,6 +47,10 @@ export async function addProduct(formData: FormData) {
     productionDate: formData.get('productionDate'),
     expiryDate: formData.get('expiryDate'),
   };
+  
+  // This costPrice is for the initial price history entry.
+  const costPrice = parseFloat(formData.get('costPrice') as string);
+
 
   if (values.categoryId === 'null' || values.categoryId === '') {
     values.categoryId = null;
@@ -64,7 +66,7 @@ export async function addProduct(formData: FormData) {
     };
   }
   
-  const { userId, name, barcodes, price, stock, costPrice, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
+  const { userId, name, barcodes, price, stock, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
   if (!userId) return { message: "Authentication error." };
 
   try {
@@ -81,25 +83,36 @@ export async function addProduct(formData: FormData) {
         }
     }
 
-    await prisma.product.create({
-      data: {
-        name, 
-        price, 
-        stock, 
-        costPrice,
-        unit,
-        image: image || null,
-        productionDate,
-        expiryDate,
-        user: { connect: { id: userId } },
-        ...(categoryId && { category: { connect: { id: categoryId } } }),
-        barcodes: {
-          create: barcodes.map(code => ({
-            code,
-            userId,
-          }))
+    await prisma.$transaction(async (tx) => {
+        const newProduct = await tx.product.create({
+          data: {
+            name, 
+            price, 
+            stock, 
+            unit,
+            image: image || null,
+            productionDate,
+            expiryDate,
+            user: { connect: { id: userId } },
+            ...(categoryId && { category: { connect: { id: categoryId } } }),
+            barcodes: {
+              create: barcodes.map(code => ({
+                code,
+                userId,
+              }))
+            }
+          },
+        });
+
+        if (!isNaN(costPrice) && costPrice >= 0) {
+            await tx.purchasePriceHistory.create({
+                data: {
+                    productId: newProduct.id,
+                    price: costPrice,
+                    userId: userId,
+                }
+            });
         }
-      },
     });
 
     revalidatePath("/inventory");
@@ -118,7 +131,6 @@ export async function updateProduct(formData: FormData) {
         id: formData.get('id'),
         name: formData.get('name'),
         price: formData.get('price'),
-        costPrice: formData.get('costPrice'),
         stock: formData.get('stock'),
         categoryId: formData.get('categoryId'),
         unit: formData.get('unit'),
@@ -128,6 +140,10 @@ export async function updateProduct(formData: FormData) {
         productionDate: formData.get('productionDate'),
         expiryDate: formData.get('expiryDate'),
     };
+    
+    // This costPrice is for updating the price history if it has changed.
+    const costPrice = parseFloat(formData.get('costPrice') as string);
+
 
     if (values.categoryId === 'null' || values.categoryId === '') {
       values.categoryId = null;
@@ -135,7 +151,9 @@ export async function updateProduct(formData: FormData) {
     if (!values.productionDate) values.productionDate = null;
     if (!values.expiryDate) values.expiryDate = null;
 
-    const validatedFields = ProductSchema.safeParse(values);
+    // We remove costPrice from the Zod schema for the main product, so we need a separate validation here.
+    const ProductUpdateSchema = ProductSchema.omit({ costPrice: true });
+    const validatedFields = ProductUpdateSchema.safeParse(values);
 
     if (!validatedFields.success) {
         return {
@@ -143,13 +161,17 @@ export async function updateProduct(formData: FormData) {
         };
     }
     
-    const { id, userId, name, barcodes, price, stock, costPrice, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
+    const { id, userId, name, barcodes, price, stock, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
 
     if (!id) return { message: "Product ID is missing." };
     if (!userId) return { message: "Authentication error." };
 
     try {
-        const productToUpdate = await prisma.product.findFirst({ where: { id, userId }});
+        const productToUpdate = await prisma.product.findFirst({ 
+            where: { id, userId },
+            include: { priceHistory: { orderBy: { purchaseDate: 'desc'}, take: 1 }}
+        });
+
         if (!productToUpdate) {
             return { message: "Product not found or access denied." };
         }
@@ -178,7 +200,6 @@ export async function updateProduct(formData: FormData) {
                     name, 
                     price, 
                     stock, 
-                    costPrice,
                     categoryId: categoryId || null,
                     unit,
                     image: image || null,
@@ -198,6 +219,18 @@ export async function updateProduct(formData: FormData) {
                     userId,
                 }))
             });
+
+            // Check if cost price has changed and add a new history entry
+            const latestCost = productToUpdate.priceHistory[0]?.price;
+            if (!isNaN(costPrice) && costPrice >= 0 && latestCost !== costPrice) {
+                 await tx.purchasePriceHistory.create({
+                    data: {
+                        productId: id,
+                        price: costPrice,
+                        userId: userId,
+                    }
+                });
+            }
         })
 
         revalidatePath("/inventory");
@@ -343,7 +376,7 @@ export async function importProducts(userId: string, products: any[]) {
             continue;
         }
 
-        const { barcode, ...productData } = validated.data;
+        const { barcode, costPrice, ...productData } = validated.data;
         try {
              const product = await prisma.product.upsert({
                 where: {
@@ -355,7 +388,6 @@ export async function importProducts(userId: string, products: any[]) {
                 update: {
                     name: productData.name,
                     price: productData.price,
-                    costPrice: productData.costPrice,
                     stock: productData.stock,
                     unit: productData.unit,
                     image: productData.image,
@@ -373,6 +405,17 @@ export async function importProducts(userId: string, products: any[]) {
             const hasBarcode = await prisma.barcode.count({ where: { code: barcode, productId: product.id }});
             if (hasBarcode === 0) {
                 await prisma.barcode.create({ data: { code: barcode, productId: product.id, userId }});
+            }
+
+            // Add to price history
+            if (costPrice >= 0) {
+                await prisma.purchasePriceHistory.create({
+                    data: {
+                        productId: product.id,
+                        price: costPrice,
+                        userId: userId,
+                    }
+                });
             }
 
             processed++;
@@ -427,7 +470,3 @@ export async function importCategories(userId: string, categories: any[]) {
     
     return { success: true, processed, errors };
 }
-
-    
-
-    

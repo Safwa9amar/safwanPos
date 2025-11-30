@@ -60,7 +60,7 @@ export async function createDirectPurchase(
         const totalCost = items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0);
 
         await prisma.$transaction(async (tx) => {
-            await tx.directPurchase.create({
+            const purchase = await tx.directPurchase.create({
                 data: {
                     userId,
                     storeName,
@@ -73,17 +73,28 @@ export async function createDirectPurchase(
                             costPrice: item.costPrice,
                         }))
                     }
+                },
+                include: {
+                  items: true
                 }
             });
 
-            // Update product stock and optionally cost/sale price
-            for (const item of items) {
-                const updateData: { stock: { increment: number }, costPrice?: number, price?: number } = {
+            for (const [index, item] of items.entries()) {
+                const updateData: { stock: { increment: number }, price?: number } = {
                     stock: { increment: item.quantity }
                 };
 
+                // Add to price history
+                await tx.purchasePriceHistory.create({
+                  data: {
+                    productId: item.productId,
+                    price: item.costPrice,
+                    userId,
+                    directPurchaseItemId: purchase.items[index].id,
+                  }
+                });
+
                 if (item.updateProduct) {
-                    updateData.costPrice = item.costPrice;
                     // Auto-update selling price with a 20% markup
                     updateData.price = item.costPrice * 1.20;
                 }
@@ -116,6 +127,15 @@ export async function deleteDirectPurchase(purchaseId: string, userId: string) {
             if (!purchase) {
                 throw new Error("Purchase not found or access denied.");
             }
+            
+            // Delete associated price history entries
+            await tx.purchasePriceHistory.deleteMany({
+              where: {
+                directPurchaseItemId: {
+                  in: purchase.items.map(item => item.id)
+                }
+              }
+            });
 
             // Decrement stock for each item in the purchase
             for (const item of purchase.items) {
