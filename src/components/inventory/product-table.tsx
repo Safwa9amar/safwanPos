@@ -30,6 +30,7 @@ import Image from "next/image";
 import { useCurrency } from "@/hooks/use-currency";
 import { BarcodeLabelDialog } from "./barcode-label-dialog";
 import { useAuth } from "@/context/auth-context";
+import { format, differenceInDays } from "date-fns";
 
 export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategoryAndBarcodes[], onEdit: (product: ProductWithCategoryAndBarcodes) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
   const { t } = useTranslation("translation");
@@ -82,6 +83,19 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
     );
   }
 
+  const getExpiryBadge = (expiryDate: Date | null) => {
+    if (!expiryDate) return null;
+    const daysUntilExpiry = differenceInDays(new Date(expiryDate), new Date());
+
+    if (daysUntilExpiry < 0) {
+      return <Badge variant="destructive">Expired</Badge>;
+    }
+    if (daysUntilExpiry <= 30) {
+      return <Badge variant="destructive" className="bg-yellow-500 text-white">Expires in {daysUntilExpiry} days</Badge>;
+    }
+    return <span>{format(new Date(expiryDate), "PP")}</span>;
+  };
+
   return (
     <>
       <Table>
@@ -91,6 +105,7 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
             <TableHead>{t("inventory.productName")}</TableHead>
             <TableHead>{t("inventory.category")}</TableHead>
             <TableHead>{t("inventory.barcode")}</TableHead>
+            <TableHead>تاريخ انتهاء الصلاحية</TableHead>
             <TableHead className="text-right">{t("inventory.price")}</TableHead>
             <TableHead className="text-right">{t("inventory.costPrice")}</TableHead>
             <TableHead className="text-right">{t("inventory.stock")}</TableHead>
@@ -121,6 +136,9 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
                 <div className="flex flex-col gap-1">
                   {product.barcodes.map(b => <Badge key={b.id} variant="outline">{b.code}</Badge>)}
                 </div>
+              </TableCell>
+              <TableCell>
+                {getExpiryBadge(product.expiryDate)}
               </TableCell>
               <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
               <TableCell className="text-right">{formatCurrency(product.costPrice)}</TableCell>

@@ -10,11 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { addProduct, updateProduct } from "@/app/inventory/actions";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 import { ProductWithCategoryAndBarcodes } from "@/types";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const units = ["EACH", "KG", "G", "L", "ML"] as const;
 
@@ -28,6 +32,8 @@ const ProductSchema = z.object({
   categoryId: z.string().optional().nullable(),
   unit: z.enum(units),
   image: z.string().url("Must be a valid URL").optional().or(z.literal('')),
+  productionDate: z.date().optional().nullable(),
+  expiryDate: z.date().optional().nullable(),
 });
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
@@ -49,6 +55,8 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
       categoryId: product?.categoryId || "__none__",
       unit: (product?.unit as ProductFormValues['unit']) || "EACH",
       image: product?.image || "",
+      productionDate: product?.productionDate ? new Date(product.productionDate) : null,
+      expiryDate: product?.expiryDate ? new Date(product.expiryDate) : null,
     },
   });
 
@@ -77,7 +85,7 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
         if (key === 'categoryId' && value === '__none__') {
             formData.append(key, 'null');
         } else if (value !== undefined && value !== null) {
-            formData.append(key, String(value));
+            formData.append(key, value instanceof Date ? value.toISOString() : String(value));
         }
     });
     formData.append('userId', user.id);
@@ -187,6 +195,59 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
             <Input id="image" {...register("image")} placeholder="https://example.com/image.png"/>
             {formState.errors.image && <p className="text-sm text-destructive">{formState.errors.image.message}</p>}
         </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>تاريخ الإنتاج</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !watch('productionDate') && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {watch('productionDate') ? format(watch('productionDate')!, "PPP") : <span>اختر تاريخًا</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={watch('productionDate') || undefined}
+                onSelect={(date) => setValue('productionDate', date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="space-y-2">
+          <Label>تاريخ انتهاء الصلاحية</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !watch('expiryDate') && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {watch('expiryDate') ? format(watch('expiryDate')!, "PPP") : <span>اختر تاريخًا</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={watch('expiryDate') || undefined}
+                onSelect={(date) => setValue('expiryDate', date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

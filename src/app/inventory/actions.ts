@@ -16,6 +16,8 @@ const ProductSchema = z.object({
   unit: z.enum(["EACH", "KG", "G", "L", "ML"]),
   image: z.string().url().optional().or(z.literal('')),
   userId: z.string().min(1),
+  productionDate: z.coerce.date().optional().nullable(),
+  expiryDate: z.coerce.date().optional().nullable(),
 });
 
 export async function getProducts(userId: string) {
@@ -44,11 +46,15 @@ export async function addProduct(formData: FormData) {
     image: formData.get('image'),
     userId: formData.get('userId'),
     barcodes: formData.getAll('barcodes[]'),
+    productionDate: formData.get('productionDate'),
+    expiryDate: formData.get('expiryDate'),
   };
 
   if (values.categoryId === 'null' || values.categoryId === '') {
     values.categoryId = null;
   }
+  if (!values.productionDate) values.productionDate = null;
+  if (!values.expiryDate) values.expiryDate = null;
   
   const validatedFields = ProductSchema.safeParse(values);
 
@@ -58,7 +64,7 @@ export async function addProduct(formData: FormData) {
     };
   }
   
-  const { userId, name, barcodes, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
+  const { userId, name, barcodes, price, stock, costPrice, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
   if (!userId) return { message: "Authentication error." };
 
   try {
@@ -83,6 +89,8 @@ export async function addProduct(formData: FormData) {
         costPrice,
         unit,
         image: image || null,
+        productionDate,
+        expiryDate,
         user: { connect: { id: userId } },
         ...(categoryId && { category: { connect: { id: categoryId } } }),
         barcodes: {
@@ -117,11 +125,15 @@ export async function updateProduct(formData: FormData) {
         image: formData.get('image'),
         userId: formData.get('userId'),
         barcodes: formData.getAll('barcodes[]'),
+        productionDate: formData.get('productionDate'),
+        expiryDate: formData.get('expiryDate'),
     };
 
     if (values.categoryId === 'null' || values.categoryId === '') {
       values.categoryId = null;
     }
+    if (!values.productionDate) values.productionDate = null;
+    if (!values.expiryDate) values.expiryDate = null;
 
     const validatedFields = ProductSchema.safeParse(values);
 
@@ -131,7 +143,7 @@ export async function updateProduct(formData: FormData) {
         };
     }
     
-    const { id, userId, name, barcodes, price, stock, costPrice, categoryId, unit, image } = validatedFields.data;
+    const { id, userId, name, barcodes, price, stock, costPrice, categoryId, unit, image, productionDate, expiryDate } = validatedFields.data;
 
     if (!id) return { message: "Product ID is missing." };
     if (!userId) return { message: "Authentication error." };
@@ -169,7 +181,9 @@ export async function updateProduct(formData: FormData) {
                     costPrice,
                     categoryId: categoryId || null,
                     unit,
-                    image: image || null
+                    image: image || null,
+                    productionDate,
+                    expiryDate
                 },
             });
             // Delete old barcodes
