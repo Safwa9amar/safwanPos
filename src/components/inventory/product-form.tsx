@@ -32,11 +32,20 @@ const ProductSchema = z.object({
   categoryId: z.string().optional().nullable(),
   unit: z.enum(units),
   image: z.string().url("Must be a valid URL").optional().or(z.literal('')),
-  productionDate: z.date().optional().nullable(),
-  expiryDate: z.date().optional().nullable(),
+  productionDate: z.coerce.date().optional().nullable(),
+  expiryDate: z.coerce.date().optional().nullable(),
 });
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
+
+// Helper to format Date to 'yyyy-MM-dd' for input[type=date]
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  // Adjust for timezone offset before formatting
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - tzOffset);
+  return localDate.toISOString().split('T')[0];
+};
 
 export function ProductForm({ product, categories, onFinished }: { product: ProductWithCategoryAndBarcodes | null, categories: Category[], onFinished: () => void }) {
   const { t } = useTranslation("translation");
@@ -198,54 +207,22 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>تاريخ الإنتاج</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !watch('productionDate') && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {watch('productionDate') ? format(watch('productionDate')!, "PPP") : <span>اختر تاريخًا</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={watch('productionDate') || undefined}
-                onSelect={(date) => setValue('productionDate', date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="productionDate">تاريخ الإنتاج</Label>
+           <Input 
+             id="productionDate"
+             type="date"
+             defaultValue={formatDateForInput(watch('productionDate'))}
+             onChange={(e) => setValue('productionDate', e.target.value ? new Date(e.target.value) : null)}
+           />
         </div>
         <div className="space-y-2">
-          <Label>تاريخ انتهاء الصلاحية</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !watch('expiryDate') && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {watch('expiryDate') ? format(watch('expiryDate')!, "PPP") : <span>اختر تاريخًا</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={watch('expiryDate') || undefined}
-                onSelect={(date) => setValue('expiryDate', date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="expiryDate">تاريخ انتهاء الصلاحية</Label>
+          <Input 
+             id="expiryDate"
+             type="date"
+             defaultValue={formatDateForInput(watch('expiryDate'))}
+             onChange={(e) => setValue('expiryDate', e.target.value ? new Date(e.target.value) : null)}
+           />
         </div>
       </div>
 
@@ -256,3 +233,5 @@ export function ProductForm({ product, categories, onFinished }: { product: Prod
     </form>
   );
 }
+
+    
