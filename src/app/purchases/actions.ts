@@ -33,13 +33,14 @@ const PurchaseSchema = z.object({
     productId: z.string().min(1),
     quantity: z.coerce.number().positive(),
     costPrice: z.coerce.number().min(0),
+    updateProduct: z.boolean(),
   })).min(1, "Purchase must have at least one item."),
   userId: z.string().min(1),
 });
 
 export async function createDirectPurchase(
     userId: string,
-    items: { productId: string; quantity: number; costPrice: number }[],
+    items: { productId: string; quantity: number; costPrice: number, updateProduct: boolean }[],
     storeName?: string,
     notes?: string,
 ) {
@@ -75,11 +76,21 @@ export async function createDirectPurchase(
                 }
             });
 
-            // Update product stock
+            // Update product stock and optionally cost/sale price
             for (const item of items) {
+                const updateData: { stock: { increment: number }, costPrice?: number, price?: number } = {
+                    stock: { increment: item.quantity }
+                };
+
+                if (item.updateProduct) {
+                    updateData.costPrice = item.costPrice;
+                    // Auto-update selling price with a 20% markup
+                    updateData.price = item.costPrice * 1.20;
+                }
+
                 await tx.product.update({
                     where: { id: item.productId },
-                    data: { stock: { increment: item.quantity } }
+                    data: updateData
                 });
             }
         });

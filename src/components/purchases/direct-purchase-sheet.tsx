@@ -45,7 +45,7 @@ export function DirectPurchaseSheet({ isOpen, onOpenChange, products }: DirectPu
         setIsSaving(true);
         const result = await createDirectPurchase(
             user.id,
-            items.map(i => ({ productId: i.productId, quantity: Number(i.quantity), costPrice: Number(i.costPrice) })),
+            items.map(i => ({ productId: i.productId, quantity: Number(i.quantity), costPrice: Number(i.costPrice), updateProduct: i.updateProduct })),
             storeName,
             notes,
         );

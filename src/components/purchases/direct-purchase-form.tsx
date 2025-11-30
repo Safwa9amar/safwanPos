@@ -11,12 +11,15 @@ import { ChevronsUpDown, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/hooks/use-currency";
+import { Label } from "../ui/label";
+import { Checkbox } from "../ui/checkbox";
 
 export type POItem = {
     productId: string;
     name: string;
     quantity: number | string;
     costPrice: number | string;
+    updateProduct: boolean;
 };
 
 interface DirectPurchaseFormProps {
@@ -37,19 +40,22 @@ export function DirectPurchaseForm({ products, items, setItems }: DirectPurchase
                 productId: product.id,
                 name: product.name,
                 quantity: 1,
-                costPrice: product.costPrice || 0
+                costPrice: product.costPrice || 0,
+                updateProduct: false
             }]);
         }
         setOpen(false);
     };
 
-    const handleUpdateItem = (productId: string, field: 'quantity' | 'costPrice', value: string) => {
-        const numValue = parseFloat(value);
-        if (isNaN(numValue) && value !== '') return;
+    const handleUpdateItem = (productId: string, field: 'quantity' | 'costPrice' | 'updateProduct', value: string | boolean) => {
+        if (typeof value === 'string') {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue) && value !== '') return;
+        }
 
         setItems(prev => prev.map(item =>
             item.productId === productId
-                ? { ...item, [field]: value === '' ? '' : Math.max(0, numValue) }
+                ? { ...item, [field]: typeof value === 'string' ? (value === '' ? '' : Math.max(0, parseFloat(value))) : value }
                 : item
         ));
     };
@@ -101,7 +107,7 @@ export function DirectPurchaseForm({ products, items, setItems }: DirectPurchase
                         <TableRow>
                             <TableHead>{t('po.item')}</TableHead>
                             <TableHead className="w-24">{t('po.quantity')}</TableHead>
-                            <TableHead className="w-32">{t('po.costPrice')}</TableHead>
+                            <TableHead className="w-48">{t('po.costPrice')}</TableHead>
                             <TableHead className="w-32 text-right">{t('po.total')}</TableHead>
                             <TableHead className="w-12"></TableHead>
                         </TableRow>
@@ -119,6 +125,7 @@ export function DirectPurchaseForm({ products, items, setItems }: DirectPurchase
                                     />
                                 </TableCell>
                                 <TableCell>
+                                    <div className="flex flex-col gap-2">
                                      <Input
                                         type="number"
                                         step="0.01"
@@ -126,6 +133,17 @@ export function DirectPurchaseForm({ products, items, setItems }: DirectPurchase
                                         onChange={e => handleUpdateItem(item.productId, 'costPrice', e.target.value)}
                                         className="h-8"
                                     />
+                                     <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id={`update-${item.productId}`} 
+                                            checked={item.updateProduct}
+                                            onCheckedChange={(checked) => handleUpdateItem(item.productId, 'updateProduct', !!checked)}
+                                        />
+                                        <Label htmlFor={`update-${item.productId}`} className="text-xs text-muted-foreground">
+                                           Update product cost/sale price
+                                        </Label>
+                                    </div>
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     {formatCurrency(Number(item.quantity) * Number(item.costPrice))}
