@@ -61,6 +61,12 @@ const SheetContent = React.forwardRef<
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
+      onPointerDownOutside={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest('[data-radix-collection-item]')) {
+          event.preventDefault();
+        }
+      }}
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
