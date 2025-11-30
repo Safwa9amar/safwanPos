@@ -49,7 +49,7 @@ const productIdeasPrompt = ai.definePrompt({
     prompt: `You are a product sourcing expert for a small retail store. Your task is to find ideas for products based on a user's query.
 
     **CRITICAL INSTRUCTIONS:**
-    - Brainstorm 5-10 real, common products that match the user's query.
+    - Brainstorm 5-20 real, common products that match the user's query.
     - Provide a concise, one-sentence description for each product.
     - Suggest a relevant, single-word category for each product (e.g., "Electronics", "Groceries", "Apparel").
     - Return the data in the specified JSON format.

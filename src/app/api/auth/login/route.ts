@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const { email, password } = validated.data;
+    const { email, password, rememberMe } = validated.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -54,11 +55,13 @@ export async function POST(req: NextRequest) {
       { expiresIn: '7d' }
     );
 
-    cookies().set('token', token, {
+    cookies().set({
+      name: 'token',
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 7 } : {}), // 7 days if rememberMe is true
     });
 
     const { password: _, ...userWithoutPassword } = user;

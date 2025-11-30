@@ -26,12 +26,14 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAuth } from "@/context/auth-context";
 import { getNavigationPreference } from "@/context/navigation-context";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
+  rememberMe: z.boolean().optional(),
 });
 
 const registerSchema = z
@@ -62,7 +64,7 @@ export default function LoginPageClient() {
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
   const registerForm = useForm<RegisterFormValues>({
@@ -188,6 +190,12 @@ export default function LoginPageClient() {
                       </p>
                     )}
                   </div>
+                   <div className="flex items-center space-x-2">
+                        <Checkbox id="rememberMe" {...loginForm.register("rememberMe")} />
+                        <Label htmlFor="rememberMe" className="text-sm font-normal">
+                           Remember me
+                        </Label>
+                    </div>
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={loading}>
