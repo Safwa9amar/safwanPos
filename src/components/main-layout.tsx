@@ -35,6 +35,7 @@ import { differenceInDays, formatDistanceToNow } from "date-fns";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "./breadcrumbs";
+import { ThemeToggle } from "./theme-toggle";
 
 const SidebarLabel = ({ children }: { children: React.ReactNode }) => (
     <p className="px-4 pt-4 pb-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">
@@ -242,7 +243,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 sticky top-0 z-30">
           <SidebarTrigger/>
           <Breadcrumbs />
-          <div className="flex-1 flex items-center justify-end">
+          <div className="flex-1 flex items-center justify-end gap-2">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="w-auto justify-start gap-2 p-1 h-auto rounded-full">
