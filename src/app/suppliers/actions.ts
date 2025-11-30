@@ -22,14 +22,8 @@ const SupplierSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
-  monthlySupplyQuota: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().optional()
-  ),
-  qualityRating: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().min(1).max(5).optional()
-  ),
+  monthlySupplyQuota: z.coerce.number().optional(),
+  qualityRating: z.coerce.number().min(1).max(5).optional(),
   notes: z.string().optional(),
 });
 
