@@ -320,3 +320,5 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
 }
 
     
+
+    
