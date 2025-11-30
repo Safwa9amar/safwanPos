@@ -11,7 +11,8 @@ model Supplier {
   paymentTerms         String?
   deliverySchedule     String?
   communicationChannel String?
-  status               String          @default("ACTIVE") // ACTIVE, INACTIVE
+  status               SupplierStatus  @default(ACTIVE) // ACTIVE, INACTIVE
+  website              String?
   logoUrl              String?
   contractStartDate    DateTime?
   contractEndDate      DateTime?
@@ -27,6 +28,11 @@ model Supplier {
   credits              SupplierCredit[]
 }
 
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+
+}
 model SupplierPayment {
     id          String   @id @default(cuid())
     paymentDate DateTime @default(now())

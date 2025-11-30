@@ -11,6 +11,7 @@ import { NavigationProvider } from "@/context/navigation-context";
 import { Background } from "@/components/background";
 import { SoundProvider } from "@/context/sound-context";
 import type { Metadata } from 'next';
+import { ProductExpirationNotifier } from "@/components/product-expiration-notifier";
 
 export const metadata: Metadata = {
   title: 'SafwanPOS',
@@ -33,6 +34,7 @@ export default function RootLayout({
                     <CurrencyProvider>
                         <AuthProvider>
                           <SoundProvider>
+                            <ProductExpirationNotifier />
                             <Background />
                             {children}
                             <Toaster />
