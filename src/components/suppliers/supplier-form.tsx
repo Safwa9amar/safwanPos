@@ -50,12 +50,25 @@ export function SupplierForm({ supplier, onFinished }: { supplier: Supplier | nu
   
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(SupplierSchema),
-    defaultValues: {
+    defaultValues: supplier ? {
         ...supplier,
-        contractStartDate: supplier?.contractStartDate ? new Date(supplier.contractStartDate) : null,
-        contractEndDate: supplier?.contractEndDate ? new Date(supplier.contractEndDate) : null,
-        status: supplier?.status || "ACTIVE",
-    } as SupplierFormValues,
+        contractStartDate: supplier.contractStartDate ? new Date(supplier.contractStartDate) : null,
+        contractEndDate: supplier.contractEndDate ? new Date(supplier.contractEndDate) : null,
+    } : {
+        name: "",
+        contactName: "",
+        email: "",
+        phone: "",
+        address: "",
+        taxId: "",
+        category: "",
+        paymentTerms: "",
+        deliverySchedule: "",
+        communicationChannel: "",
+        status: "ACTIVE",
+        logoUrl: "",
+        notes: "",
+    },
   });
 
   const { formState, register, handleSubmit, setValue, watch } = form;
