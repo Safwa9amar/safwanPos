@@ -5,11 +5,16 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 
 export type Theme = 'light' | 'dark' | 'dark-purple';
 
+// Define a default background image URL
+const DEFAULT_BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1554189097-9497412497a4?q=80&w=2940&auto=format&fit=crop";
+
+
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   backgroundImage: string | null;
   setBackgroundImage: (url: string) => void;
+  defaultBackgroundImage: string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -45,7 +50,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const storedBackgroundImage = localStorage.getItem('backgroundImage');
     if (storedBackgroundImage) {
         setBackgroundImage(storedBackgroundImage);
+    } else {
+        setBackgroundImage(DEFAULT_BACKGROUND_IMAGE);
     }
+
 
   }, []);
 
@@ -60,6 +68,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           localStorage.setItem('backgroundImage', url);
       } else {
           localStorage.removeItem('backgroundImage');
+          setBackgroundImage(DEFAULT_BACKGROUND_IMAGE); // Fallback to default when URL is cleared
       }
   };
 
@@ -75,6 +84,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setTheme: handleSetTheme,
     backgroundImage,
     setBackgroundImage: handleSetBackgroundImage,
+    defaultBackgroundImage: DEFAULT_BACKGROUND_IMAGE
   };
   
   if (!isMounted) {

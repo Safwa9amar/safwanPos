@@ -5,7 +5,9 @@ import { useTheme } from "@/context/theme-context";
 import { cn } from "@/lib/utils";
 
 export function Background() {
-  const { backgroundImage } = useTheme();
+  const { backgroundImage, defaultBackgroundImage } = useTheme();
+
+  const finalBackgroundImage = backgroundImage || defaultBackgroundImage;
 
   return (
     <div
@@ -13,7 +15,7 @@ export function Background() {
         "fixed inset-0 -z-10 transition-all"
       )}
       style={{
-        backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none',
+        backgroundImage: finalBackgroundImage ? `url('${finalBackgroundImage}')` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
