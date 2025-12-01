@@ -11,7 +11,8 @@ export async function completeSale(
   items: CartItem[], 
   paymentType: PaymentType, 
   customerId?: string, 
-  amountPaid?: number
+  amountPaid?: number,
+  discount?: number,
 ) {
   if (!userId) {
     return { success: false, error: 'User not authenticated' };
@@ -24,12 +25,12 @@ export async function completeSale(
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     // Validate amountPaid for non-credit sales
-    if (paymentType !== 'CREDIT' && (amountPaid === undefined || amountPaid < totalAmount)) {
+    if (paymentType !== 'CREDIT' && (amountPaid === undefined || amountPaid < totalAmount - (discount || 0))) {
       // Allow for cash/card sales to be slightly less if that's a feature, but for now let's be strict
       // return { success: false, error: 'Amount paid is less than total amount for non-credit sale.' };
     }
     
-    const finalAmountPaid = amountPaid === undefined ? totalAmount : amountPaid;
+    const finalAmountPaid = amountPaid === undefined ? totalAmount - (discount || 0) : amountPaid;
 
     const productIds = items.map(item => item.productId);
     const products = await prisma.product.findMany({
@@ -54,6 +55,7 @@ export async function completeSale(
         data: {
           userId,
           totalAmount,
+          discount: discount || 0,
           paymentType,
           customerId: paymentType === 'CREDIT' ? customerId : null,
           amountPaid: finalAmountPaid,
@@ -62,6 +64,7 @@ export async function completeSale(
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
+              discount: 0, // Item-specific discounts would be stored here if implemented
             })),
           },
         },
@@ -86,7 +89,7 @@ export async function completeSale(
             throw new Error("Customer not found or access denied.");
         }
 
-        const debt = totalAmount - finalAmountPaid;
+        const debt = (totalAmount - (discount || 0)) - finalAmountPaid;
         if (debt > 0) {
           await tx.customer.update({
             where: { id: customerId },
@@ -115,7 +118,7 @@ export async function completeSale(
           }
         },
         user: {
-          select: { name: true }
+          select: { name: true, companyProfile: true }
         },
         customer: {
           select: { name: true, phone: true }

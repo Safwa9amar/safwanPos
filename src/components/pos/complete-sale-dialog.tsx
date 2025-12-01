@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { CreditCard, Loader2, Banknote, User } from 'lucide-react';
+import { CreditCard, Loader2, Banknote, User, Percent } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useCurrency } from '@/hooks/use-currency';
 import { Customer } from '@prisma/client';
@@ -23,11 +23,12 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList, CommandGroup } from '../ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Separator } from '../ui/separator';
 
 type PaymentType = "CASH" | "CARD" | "CREDIT";
 
 interface CompleteSaleDialogProps {
-    onConfirm: (paymentType: PaymentType, customerId?: string, amountPaid?: number) => void;
+    onConfirm: (paymentType: PaymentType, customerId?: string, amountPaid?: number, discount?: number) => void;
     cart: ReturnType<typeof useMultiCart>;
     isCompleting: boolean;
     customers: Customer[];
@@ -42,17 +43,21 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [paymentType, setPaymentType] = useState<PaymentType>('CASH');
   const [amountPaid, setAmountPaid] = useState<number | string>('');
+  const [discount, setDiscount] = useState<number | string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  const discountValue = Number(discount) || 0;
+  const totalAfterDiscount = activeCart.totalAmount - discountValue;
 
   const handleConfirm = () => {
     const paidAmountNumber = typeof amountPaid === 'string' ? parseFloat(amountPaid) : amountPaid;
     
-    // For cash/card, if no amount is entered, assume full payment
+    // For cash/card, if no amount is entered, assume full payment after discount
     const finalAmountPaid = (paymentType === 'CASH' || paymentType === 'CARD') && (paidAmountNumber === undefined || isNaN(paidAmountNumber))
-        ? activeCart.totalAmount
+        ? totalAfterDiscount
         : paidAmountNumber;
 
-    onConfirm(paymentType, selectedCustomer?.id, finalAmountPaid || undefined);
+    onConfirm(paymentType, selectedCustomer?.id, finalAmountPaid || undefined, discountValue);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -61,11 +66,12 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
         setPaymentType('CASH');
         setAmountPaid('');
         setSelectedCustomer(null);
+        setDiscount('');
     }
     setOpen(isOpen);
   }
 
-  const debt = selectedCustomer ? activeCart.totalAmount - (Number(amountPaid) || 0) : 0;
+  const debt = selectedCustomer ? totalAfterDiscount - (Number(amountPaid) || 0) : 0;
   const newBalance = selectedCustomer ? selectedCustomer.balance + debt : 0;
 
   return (
@@ -79,9 +85,27 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('pos.confirmSaleTitle')}</DialogTitle>
-          <div className="flex justify-between items-center text-3xl pt-4">
-              <span className="text-muted-foreground">{t('pos.total')}</span>
-              <span className="font-bold text-primary">{formatCurrency(activeCart.totalAmount)}</span>
+          <div className="space-y-2 pt-4">
+              <div className="flex justify-between items-center text-lg">
+                <span className="text-muted-foreground">{t('pos.subtotal')}</span>
+                <span className="font-semibold">{formatCurrency(activeCart.totalAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center text-lg">
+                <span className="text-muted-foreground flex items-center gap-2"><Percent className="h-4 w-4"/> {t('receipt.discount')}</span>
+                 <Input 
+                    id="discount" 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={discount} 
+                    onChange={e => setDiscount(e.target.value)}
+                    className="h-9 max-w-[120px] text-right"
+                />
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center text-3xl">
+                <span className="text-muted-foreground">{t('pos.total')}</span>
+                <span className="font-bold text-primary">{formatCurrency(totalAfterDiscount)}</span>
+              </div>
           </div>
         </DialogHeader>
         
@@ -93,7 +117,7 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
             </TabsList>
             <TabsContent value="CASH" className="space-y-4 pt-4">
                 <Label htmlFor="cash-paid">{t('pos.amountPaid')}</Label>
-                <Input id="cash-paid" type="number" placeholder={formatCurrency(activeCart.totalAmount)} value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
+                <Input id="cash-paid" type="number" placeholder={formatCurrency(totalAfterDiscount)} value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
             </TabsContent>
             <TabsContent value="CARD" className="pt-4">
                  <p className="text-sm text-muted-foreground">{t('pos.cardFullAmount')}</p>
@@ -167,5 +191,3 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
     </Dialog>
   );
 }
-
-    

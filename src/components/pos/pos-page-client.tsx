@@ -102,7 +102,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
   }
 
 
-  const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number) => {
+  const handleCompleteSale = async (paymentType: "CASH" | "CARD" | "CREDIT", customerId?: string, amountPaid?: number, discount?: number) => {
     if (!user) return toast({ variant: "destructive", title: "Authentication Error" });
 
     if (cart.activeCart.items.length === 0) {
@@ -117,7 +117,7 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
 
     setIsCompleting(true);
     try {
-      const result = await completeSale(user.id, cart.activeCart.items, paymentType, customerId, amountPaid);
+      const result = await completeSale(user.id, cart.activeCart.items, paymentType, customerId, amountPaid, discount);
       if (result.success && result.sale) {
         // @ts-ignore
         setLastSale(result.sale);
@@ -318,7 +318,3 @@ export function PosPageClient({ initialProducts, categories, customers }: { init
     </div>
   );
 }
-
-    
-
-    

@@ -12,7 +12,6 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useRef } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { cairoFont } from '@/lib/cairo-font';
 
 type ReceiptProps = {
   sale: Sale;
@@ -24,30 +23,44 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
   const { formatCurrency } = useCurrency();
   const receiptRef = useRef(null);
 
+  const companyProfile = sale.user?.companyProfile;
+
   const handlePrint = () => {
     const doc = new jsPDF();
-    const isArabic = i18n.language === 'ar';
-
-    // Switch to English for PDF generation
     const printT = (key: string) => i18n.getFixedT('en')(key);
 
     // --- Header ---
-    doc.setFontSize(22);
-    doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    if (companyProfile?.logoUrl) {
+        // This is a simplified approach. For reliable image printing,
+        // you might need to fetch the image and convert it to a data URI.
+        // doc.addImage(companyProfile.logoUrl, 'PNG', 15, 10, 30, 30);
+    }
+    doc.setFontSize(18);
+    doc.text(companyProfile?.name || 'SafwanPOS', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text(printT('receipt.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    doc.text(companyProfile?.invoiceTitle || printT('receipt.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    
+    // --- Company Info ---
+    let companyInfoY = 40;
+    doc.setFontSize(9);
+    if(companyProfile?.address) { doc.text(companyProfile.address, 15, companyInfoY); companyInfoY += 5; }
+    if(companyProfile?.phone) { doc.text(`Phone: ${companyProfile.phone}`, 15, companyInfoY); }
+    if(companyProfile?.email) { doc.text(`Email: ${companyProfile.email}`, 15, companyInfoY + 5); }
+    if(companyProfile?.website) { doc.text(`Website: ${companyProfile.website}`, 15, companyInfoY + 10); companyInfoY += 5; }
+
 
     // --- Details ---
+    let detailsY = companyInfoY + 15;
     doc.setFontSize(10);
     const saleIdText = `${printT('receipt.saleId')}: #${sale.id.substring(0,8)}`;
     const dateText = `${printT('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`;
-    doc.text(saleIdText, 15, 40);
-    doc.text(dateText, 15, 45);
+    doc.text(saleIdText, 15, detailsY);
+    doc.text(dateText, 15, detailsY + 5);
     
     const soldBy = `${printT('users.name')}: ${sale.user?.name || 'N/A'}`;
     const customer = `${printT('history.customer')}: ${sale.customer?.name || printT('history.walkInCustomer')}`;
-    doc.text(soldBy, 15, 50);
-    doc.text(customer, 15, 55);
+    doc.text(soldBy, 15, detailsY + 10);
+    doc.text(customer, 15, detailsY + 15);
 
 
     // --- Items Table ---
@@ -61,7 +74,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     const head = [[printT('po.item'), printT('po.quantity'), printT('inventory.price'), printT('pos.total')]];
     
     autoTable(doc, {
-        startY: 65,
+        startY: detailsY + 25,
         head: head,
         body: tableData,
         theme: 'striped',
@@ -77,14 +90,16 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     }
     const addLeftAlignedText = (text: string, y: number) => doc.text(text, 15, y);
 
+    let currentY = finalY;
+
     const totals = [
         { label: printT('pos.subtotal'), value: formatCurrency(sale.totalAmount) },
+        { label: printT('receipt.discount'), value: `-${formatCurrency(sale.discount)}` },
+        { label: printT('pos.total'), value: formatCurrency(sale.totalAmount - sale.discount), bold: true, size: 16 },
         { label: printT('pos.amountPaid'), value: formatCurrency(sale.amountPaid) },
-        { label: printT('customers.balance'), value: formatCurrency(sale.totalAmount - sale.amountPaid), bold: true },
-        { label: printT('pos.total'), value: formatCurrency(sale.totalAmount), bold: true, size: 16 }
+        { label: printT('customers.balance'), value: formatCurrency((sale.totalAmount - sale.discount) - sale.amountPaid), bold: true },
     ];
     
-    let currentY = finalY;
     totals.forEach(item => {
         doc.setFontSize(item.size || 12);
         doc.setFont('helvetica', item.bold ? 'bold' : 'normal');
@@ -96,7 +111,19 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     // --- Footer ---
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(printT('receipt.thankYou'), doc.internal.pageSize.getWidth() / 2, currentY + 10, { align: 'center' });
+    if (companyProfile?.invoiceFooter) {
+        doc.text(companyProfile.invoiceFooter, doc.internal.pageSize.getWidth() / 2, currentY + 10, { align: 'center', maxWidth: 180 });
+        currentY += 15;
+    }
+    if (companyProfile?.taxId1Label && companyProfile.taxId1Value) {
+        doc.text(`${companyProfile.taxId1Label}: ${companyProfile.taxId1Value}`, doc.internal.pageSize.getWidth() / 2, currentY + 5, { align: 'center' });
+        currentY += 5;
+    }
+     if (companyProfile?.taxId2Label && companyProfile.taxId2Value) {
+        doc.text(`${companyProfile.taxId2Label}: ${companyProfile.taxId2Value}`, doc.internal.pageSize.getWidth() / 2, currentY + 5, { align: 'center' });
+        currentY += 5;
+    }
+
 
     // --- Print ---
     doc.autoPrint();
@@ -114,13 +141,25 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
          <Card className="shadow-none border-none">
             <CardHeader className="text-center p-4">
                 <div className="flex justify-center mb-4">
-                    <Icons.logo className="h-12 w-12 text-primary" />
+                    {companyProfile?.logoUrl ? (
+                        <img src={companyProfile.logoUrl} alt={companyProfile.name || 'Logo'} className="h-20" />
+                    ) : (
+                        <Icons.logo className="h-12 w-12 text-primary" />
+                    )}
                 </div>
-                <CardTitle>SafwanPOS</CardTitle>
-                <CardDescription>{t('receipt.title')}</CardDescription>
+                <CardTitle>{companyProfile?.name || 'SafwanPOS'}</CardTitle>
+                <CardDescription>{companyProfile?.invoiceTitle || t('receipt.title')}</CardDescription>
             </CardHeader>
             <CardContent className="p-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                <div className="text-center text-xs text-muted-foreground mb-2 space-y-1">
+                    {companyProfile?.address && <p>{companyProfile.address}</p>}
+                    <div className="flex justify-center gap-4">
+                        {companyProfile?.phone && <p>Tel: {companyProfile.phone}</p>}
+                        {companyProfile?.email && <p>Email: {companyProfile.email}</p>}
+                    </div>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-xs text-muted-foreground my-2">
                     <span>{t('receipt.saleId')}: #{sale.id.substring(0,8)}</span>
                     <span>{t('receipt.date')}: {new Date(sale.saleDate).toLocaleString()}</span>
                 </div>
@@ -148,25 +187,33 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                         <span>{t('pos.subtotal')}</span>
                         <span>{formatCurrency(sale.totalAmount)}</span>
                     </div>
+                     <div className="flex justify-between text-destructive">
+                        <span>{t('receipt.discount')}</span>
+                        <span>-{formatCurrency(sale.discount)}</span>
+                    </div>
+                     <div className="flex justify-between font-bold text-lg">
+                        <span>{t('pos.total')}</span>
+                        <span>{formatCurrency(sale.totalAmount - sale.discount)}</span>
+                    </div>
+                     <Separator className="my-2"/>
                      <div className="flex justify-between">
                         <span>{t('pos.amountPaid')}</span>
                         <span>{formatCurrency(sale.amountPaid)}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-base mt-2">
                         <span>{t('customers.balance')}</span>
-                        <span>{formatCurrency(sale.totalAmount - sale.amountPaid)}</span>
-                    </div>
-                </div>
-                 <div className="my-4 space-y-1 text-sm">
-                    <div className="flex justify-between font-bold text-lg">
-                        <span>{t('pos.total')}</span>
-                        <span>{formatCurrency(sale.totalAmount)}</span>
+                        <span>{formatCurrency((sale.totalAmount - sale.discount) - sale.amountPaid)}</span>
                     </div>
                 </div>
                 <Separator />
-                <p className="text-center text-xs text-muted-foreground mt-6">
-                    {t('receipt.thankYou')}
-                </p>
+                <div className="text-center text-xs text-muted-foreground mt-6 space-y-1">
+                    {companyProfile?.invoiceFooter && <p>{companyProfile.invoiceFooter}</p>}
+                    <div className="flex justify-center gap-4">
+                        {companyProfile?.taxId1Label && companyProfile.taxId1Value && <p>{companyProfile.taxId1Label}: {companyProfile.taxId1Value}</p>}
+                        {companyProfile?.taxId2Label && companyProfile.taxId2Value && <p>{companyProfile.taxId2Label}: {companyProfile.taxId2Value}</p>}
+                    </div>
+                    <p className="pt-4">{t('receipt.thankYou')}</p>
+                </div>
             </CardContent>
         </Card>
       </div>

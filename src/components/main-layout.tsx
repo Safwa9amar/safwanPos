@@ -269,10 +269,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   <span>{t('sidebar.settings')}</span>
                 </DropdownMenuItem>
                 {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push('/settings/users')}>
-                    <Contact className="mr-2 h-4 w-4" />
-                    <span>{t('sidebar.staff_accounts')}</span>
-                  </DropdownMenuItem>
+                    <>
+                    <DropdownMenuItem onClick={() => router.push('/settings/users')}>
+                        <Contact className="mr-2 h-4 w-4" />
+                        <span>{t('sidebar.staff_accounts')}</span>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => router.push('/settings/invoice')}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Invoice Settings</span>
+                    </DropdownMenuItem>
+                    </>
                 )}
                 <DropdownMenuItem onClick={() => router.push('/billing')}>
                   <CreditCard className="mr-2 h-4 w-4" />

@@ -1,5 +1,5 @@
 
-import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry, PurchasePriceHistory } from '@prisma/client';
+import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry, PurchasePriceHistory, CompanyProfile } from '@prisma/client';
 
 export type Product = PrismaProduct;
 export type Category = PrismaCategory;
@@ -24,6 +24,7 @@ export type CartItem = {
   quantity: number;
   stock: number;
   unit: 'EACH' | 'KG' | 'G' | 'L' | 'ML';
+  discount?: number;
 };
 
 export interface SaleItem extends PrismaSaleItem {
@@ -40,7 +41,7 @@ export interface SaleWithItemsAndCustomer extends PrismaSale {
 
 export interface Sale extends PrismaSale {
     items: SaleItem[];
-    user: { name: string | null };
+    user: { name: string | null; companyProfile: CompanyProfile | null; };
     customer: { name: string | null; phone: string | null } | null;
 }
 

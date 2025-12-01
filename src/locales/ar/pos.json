@@ -1,3 +1,4 @@
+
 {
     "pos.currentSale": "البيع الحالي",
     "pos.cartEmpty": "عربة التسوق فارغة",
@@ -36,6 +37,7 @@
     "receipt.title": "إيصال البيع",
     "receipt.saleId": "معرف البيع",
     "receipt.date": "التاريخ",
+    "receipt.discount": "خصم",
     "receipt.thankYou": "شكرا لك على شرائك!",
     "cart.outOfStockTitle": "نفد من المخزون",
     "cart.cannotAddMore": "لا يمكن إضافة المزيد من {{productName}}.",

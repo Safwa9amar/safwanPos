@@ -1,3 +1,4 @@
+
 {
     "pos.currentSale": "Current Sale",
     "pos.cartEmpty": "Your cart is empty",
@@ -36,6 +37,7 @@
     "receipt.title": "Sale Receipt",
     "receipt.saleId": "Sale ID",
     "receipt.date": "Date",
+    "receipt.discount": "Discount",
     "receipt.thankYou": "Thank you for your purchase!",
     "cart.outOfStockTitle": "Out of stock",
     "cart.cannotAddMore": "Cannot add more {{productName}}.",
