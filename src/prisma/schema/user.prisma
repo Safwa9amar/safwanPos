@@ -1,0 +1,66 @@
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      UserRole @default(CASHIER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  emailVerified             DateTime?
+  emailVerificationToken    String?   @unique
+  passwordResetToken        String?   @unique
+  passwordResetTokenExpires DateTime?
+
+  sales    Sale[]
+  products Product[]
+  barcodes Barcode[]
+  customers Customer[]
+  payments  Payment[]
+
+  companyProfile CompanyProfile?
+
+  // For multi-tenancy: links staff to the admin who created them
+  createdById String?
+  createdBy   User?   @relation("AdminCreatesStaff", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdUsers User[] @relation("AdminCreatesStaff")
+
+  // For subscriptions
+  subscriptionStatus      SubscriptionStatus @default(TRIAL)
+  trialEndsAt             DateTime?          @default(dbgenerated("DATE_ADD(NOW(), INTERVAL 14 DAY)"))
+  stripeCustomerId        String?            @unique
+  stripeSubscriptionId    String?            @unique
+  stripeSubscriptionEndAt DateTime?
+
+  // Supplier relations
+  suppliers         Supplier[]
+  purchaseOrders    PurchaseOrder[]
+  purchasePriceHistories PurchasePriceHistory[]
+  supplierPayments  SupplierPayment[]
+  supplierCredits   SupplierCredit[]
+  directPurchases   DirectPurchase[]
+
+  // Expense relations
+  expenses          Expense[]
+  expenseCategories ExpenseCategory[]
+
+  // Capital Entry relations
+  capitalEntries    CapitalEntry[]
+
+  // AI Report relations
+  reports Report[]
+
+  // Repair Job relations
+  repairJobs RepairJob[]
+}
+
+model Barcode {
+  id        String  @id @default(cuid())
+  code      String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete-DISABLED: Cascade)
+  userId    String
+
+  @@unique([code, userId])
+}
