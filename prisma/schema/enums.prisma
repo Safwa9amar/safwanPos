@@ -1,0 +1,54 @@
+// /prisma/schema/enums.prisma
+
+/// The role of the user in the system.
+enum UserRole {
+  ADMIN
+  CASHIER
+  PHONE_REPAIR
+}
+
+/// The subscription status of a user.
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  INACTIVE
+  CANCELED
+}
+
+/// The unit of measure for a product.
+enum Unit {
+  EACH
+  KG
+  G
+  L
+  ML
+}
+
+/// The status of a purchase order.
+enum POStatus {
+  PENDING
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+/// The status of a supplier.
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// The payment type for a sale.
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
+}
+
+/// The status of a repair job.
+enum RepairJobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  COLLECTED
+}

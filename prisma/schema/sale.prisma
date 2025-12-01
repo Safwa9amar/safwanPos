@@ -1,0 +1,37 @@
+// /prisma/schema/sale.prisma
+
+model Sale {
+  id           String      @id @default(cuid())
+  saleDate     DateTime    @default(now())
+  totalAmount  Float
+  discount     Float       @default(0)
+  amountPaid   Float
+  paymentType  PaymentType
+
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  
+  items        SaleItem[]
+
+  @@index([userId])
+  @@index([customerId])
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  quantity  Float
+  price     Float
+  discount  Float    @default(0)
+  
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@index([productId])
+}

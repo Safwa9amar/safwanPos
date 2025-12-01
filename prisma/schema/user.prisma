@@ -1,69 +1,52 @@
-/// User, authentication, and session-related models
+// /prisma/schema/user.prisma
 
 model User {
-  id                        String    @id @default(cuid())
-  name                      String?
-  email                     String    @unique
-  emailVerified             DateTime?
-  password                  String
-  role                      UserRole  @default(ADMIN)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-  subscriptionStatus        SubscriptionStatus?
-  trialEndsAt               DateTime?
-  emailVerificationToken    String?   @unique
-  passwordResetToken        String?   @unique
+  id                      String      @id @default(cuid())
+  name                    String?
+  email                   String      @unique
+  password                String
+  emailVerified           DateTime?
+  emailVerificationToken  String?     @unique
+  passwordResetToken      String?     @unique
   passwordResetTokenExpires DateTime?
-  createdById               String?
-  createdBy                 User?     @relation("UserCreations", fields: [createdById], references: [id], onDelete: SetNull)
-  createdUsers              User[]    @relation("UserCreations")
-  companyProfile CompanyProfile?
+  role                    UserRole    @default(CASHIER)
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  
+  // Tenancy: The admin who created this user. Null for the root admin.
+  createdById             String?
+  createdBy               User?       @relation("AdminCreatedUsers", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers            User[]      @relation("AdminCreatedUsers")
 
-  sales         Sale[]
-  reports       Report[]
-  barcodes      Barcode[]
-  categories    Category[]
-  products      Product[]
-  customers     Customer[]
-  payments      Payment[]
-  expenseCategories ExpenseCategory[]
-  expenses      Expense[]
-  capitalEntries CapitalEntry[]
-  repairJobs    RepairJob[]
-  suppliers     Supplier[]
-  purchaseOrders PurchaseOrder[]
-  supplierPayments SupplierPayment[]
-  supplierCredits  SupplierCredit[]
-  directPurchases  DirectPurchase[]
+  // Subscription Details
+  subscriptionStatus      SubscriptionStatus @default(TRIAL)
+  trialEndsAt             DateTime?
 
-  @@index([createdById])
+  // Relationships
+  companyProfile          CompanyProfile?
+  sales                   Sale[]
+  capitalEntries          CapitalEntry[]
+  expenses                Expense[]
+  expenseCategories       ExpenseCategory[]
+  products                Product[]
+  barcodes                Barcode[]
+  categories              Category[]
+  customers               Customer[]
+  payments                Payment[]
+  suppliers               Supplier[]
+  purchaseOrders          PurchaseOrder[]
+  supplierPayments        SupplierPayment[]
+  supplierCredits         SupplierCredit[]
+  directPurchases         DirectPurchase[]
+  purchasePriceHistory    PurchasePriceHistory[]
+  repairJobs              RepairJob[]
+  reports                 Report[]
 }
 
-model Report {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
-enum UserRole {
-  ADMIN
-  CASHIER
-  PHONE_REPAIR
-}
-
-enum SubscriptionStatus {
-  TRIAL
-  ACTIVE
-  INACTIVE
-  CANCELED
-}
 model CompanyProfile {
-  id String @id @default(cuid())
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name          String?
   logoUrl       String?
@@ -71,16 +54,15 @@ model CompanyProfile {
   phone         String?
   email         String?
   website       String?
+
   taxId1Label   String?
   taxId1Value   String?
   taxId2Label   String?
   taxId2Value   String?
+
   invoiceTitle  String?
   invoiceFooter String?
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

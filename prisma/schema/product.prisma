@@ -1,0 +1,82 @@
+// /prisma/schema/product.prisma
+
+model Product {
+  id              String    @id @default(cuid())
+  name            String
+  price           Float
+  stock           Float     @default(0)
+  unit            Unit      @default(EACH)
+  image           String?
+  productionDate  DateTime?
+  expiryDate      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  barcodes        Barcode[]
+  saleItems       SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  directPurchaseItems DirectPurchaseItem[]
+  priceHistory    PurchasePriceHistory[]
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  products    Product[]
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Barcode {
+  id        String   @id @default(cuid())
+  code      String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([code, userId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model PurchasePriceHistory {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  price       Float
+  purchaseDate DateTime @default(now())
+
+  // Optional link to the specific purchase that triggered this price update
+  purchaseOrderItemId String? @unique
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id], onDelete: SetNull)
+
+  directPurchaseItemId String? @unique
+  directPurchaseItem   DirectPurchaseItem? @relation(fields: [directPurchaseItemId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([userId])
+}

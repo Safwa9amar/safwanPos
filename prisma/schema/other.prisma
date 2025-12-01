@@ -1,0 +1,76 @@
+// /prisma/schema/other.prisma
+
+model Expense {
+  id            String    @id @default(cuid())
+  description   String
+  amount        Float
+  expenseDate   DateTime  @default(now())
+
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expenses  Expense[]
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model RepairJob {
+  id              String          @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  deviceModel     String
+  imei            String?
+  reportedProblem String
+  notes           String?
+  status          RepairJobStatus @default(PENDING)
+  estimatedCost   Float?
+  finalCost       Float?
+  boxNumber       Int?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  details   String
+  amount    Float
+  entryDate DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

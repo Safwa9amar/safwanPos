@@ -68,7 +68,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
         item.product.name,
         item.quantity,
         formatCurrency(item.price),
-        formatCurrency(item.quantity * item.price)
+        formatCurrency(item.price * item.quantity)
     ]);
     
     const head = [[printT('po.item'), printT('po.quantity'), printT('inventory.price'), printT('pos.total')]];

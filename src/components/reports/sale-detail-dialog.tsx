@@ -21,7 +21,6 @@ import { Printer } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { cairoFont } from '@/lib/cairo-font';
 
 interface SaleDetailDialogProps {
     isOpen: boolean;
