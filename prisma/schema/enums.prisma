@@ -1,0 +1,38 @@
+enum UserRole {
+  ADMIN
+  CASHIER
+  PHONE_REPAIR
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  INACTIVE
+  CANCELED
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
+}
+
+enum ProductUnit {
+  EACH
+  KG
+  G
+  L
+  ML
+}
+
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}

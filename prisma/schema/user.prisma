@@ -1,0 +1,62 @@
+model User {
+  id                      String    @id @default(cuid())
+  name                    String?
+  email                   String    @unique
+  emailVerified           DateTime?
+  emailVerificationToken  String?   @unique
+  password                String
+  passwordResetToken        String?   @unique
+  passwordResetTokenExpires DateTime?
+  role                    UserRole  @default(CASHIER)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  subscriptionStatus      SubscriptionStatus @default(TRIAL)
+  trialEndsAt             DateTime?
+
+  // Self-referencing relation for user tenancy
+  createdById       String?
+  createdBy         User?       @relation("CreatedUsers", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  createdUsers      User[]      @relation("CreatedUsers")
+
+  // Relations to other models
+  companyProfile  CompanyProfile?
+  sales           Sale[]
+  reports         Report[]
+  products        Product[]
+  categories      Category[]
+  barcodes        Barcode[]
+  purchaseOrders  PurchaseOrder[]
+  directPurchases DirectPurchase[]
+  purchasePriceHistory PurchasePriceHistory[]
+  customers       Customer[]
+  payments        Payment[]
+  suppliers       Supplier[]
+  supplierPayments SupplierPayment[]
+  supplierCredits  SupplierCredit[]
+  expenses        Expense[]
+  expenseCategories ExpenseCategory[]
+  capitalEntries  CapitalEntry[]
+  repairJobs      RepairJob[]
+}
+
+model CompanyProfile {
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String?
+  logoUrl       String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  taxId1Label   String?
+  taxId1Value   String?
+  taxId2Label   String?
+  taxId2Value   String?
+  invoiceTitle  String?
+  invoiceFooter String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

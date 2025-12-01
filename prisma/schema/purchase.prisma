@@ -1,0 +1,76 @@
+model PurchasePriceHistory {
+  id                  String  @id @default(cuid())
+  product             Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId           String
+  price               Float
+  purchaseDate        DateTime @default(now())
+  
+  purchaseOrderItemId String? @unique
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id], onDelete: SetNull)
+  
+  directPurchaseItemId String? @unique
+  directPurchaseItem   DirectPurchaseItem? @relation(fields: [directPurchaseItemId], references: [id], onDelete: SetNull)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([productId])
+  @@index([userId])
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(cuid())
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+  supplierId           String
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime?
+  status               PurchaseOrderStatus @default(PENDING)
+  totalCost            Float
+  items                PurchaseOrderItem[]
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([supplierId])
+}
+
+model PurchaseOrderItem {
+  id                 String  @id @default(cuid())
+  purchaseOrder      PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId    String
+  product            Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId          String
+  quantity           Int
+  receivedQuantity   Int
+  costPrice          Float
+  priceHistory       PurchasePriceHistory?
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+model DirectPurchase {
+  id           String @id @default(cuid())
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName    String?
+  notes        String?
+  totalCost    Float
+  purchaseDate DateTime             @default(now())
+  items        DirectPurchaseItem[]
+}
+
+model DirectPurchaseItem {
+  id                 String  @id @default(cuid())
+  directPurchase     DirectPurchase @relation(fields: [directPurchaseId], references: [id], onDelete: Cascade)
+  directPurchaseId   String
+  product            Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId          String
+  quantity           Float
+  costPrice          Float
+  priceHistory       PurchasePriceHistory?
+
+  @@index([directPurchaseId])
+  @@index([productId])
+}

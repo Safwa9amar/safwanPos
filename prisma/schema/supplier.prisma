@@ -1,0 +1,60 @@
+model Supplier {
+  id                    String        @id @default(cuid())
+  name                  String
+  contactName           String?
+  email                 String?
+  phone                 String
+  address               String?
+  taxId                 String?
+  balance               Float         @default(0)
+  category              String?
+  paymentTerms          String?
+  deliverySchedule      String?
+  communicationChannel  String?
+  status                SupplierStatus @default(ACTIVE)
+  logoUrl               String?
+  contractStartDate     DateTime?
+  contractEndDate       DateTime?
+  monthlySupplyQuota    Float?
+  qualityRating         Int?
+  notes                 String?
+
+  purchaseOrders PurchaseOrder[]
+  payments       SupplierPayment[]
+  credits        SupplierCredit[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SupplierPayment {
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount      Float
+  paymentDate DateTime @default(now())
+  notes       String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict) // No cascade, keep payment history
+
+  @@index([supplierId])
+  @@index([userId])
+}
+
+model SupplierCredit {
+  id             String   @id @default(cuid())
+  supplierId     String
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount         Float
+  reason         String
+  adjustmentDate DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict) // No cascade
+
+  @@index([supplierId])
+  @@index([userId])
+}

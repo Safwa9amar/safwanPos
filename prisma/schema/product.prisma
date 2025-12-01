@@ -1,0 +1,55 @@
+model Product {
+  id           String  @id @default(cuid())
+  name         String
+  price        Float
+  stock        Float
+  unit         ProductUnit @default(EACH)
+  image        String?
+  productionDate DateTime?
+  expiryDate   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  saleItems    SaleItem[]
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId   String?
+  
+  barcodes     Barcode[]
+  purchaseOrderItems PurchaseOrderItem[]
+  directPurchaseItems DirectPurchaseItem[]
+  priceHistory PurchasePriceHistory[]
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Barcode {
+  id        String  @id @default(cuid())
+  code      String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([code, userId])
+  @@index([productId])
+  @@index([userId])
+}

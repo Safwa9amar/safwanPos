@@ -1,0 +1,39 @@
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  expenseDate DateTime
+  
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model ExpenseCategory {
+  id      String    @id @default(cuid())
+  name    String
+  
+  expenses Expense[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details   String
+  amount    Float
+  entryDate DateTime @default(now())
+
+  @@index([userId])
+}

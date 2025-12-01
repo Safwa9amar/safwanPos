@@ -1,0 +1,32 @@
+model Sale {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  totalAmount Float
+  discount    Float       @default(0)
+  paymentType PaymentType
+  saleDate    DateTime    @default(now())
+  
+  items       SaleItem[]
+  
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  amountPaid  Float
+  
+  @@index([userId])
+  @@index([customerId])
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Float
+  price     Float
+  discount  Float @default(0)
+  
+  @@index([saleId])
+  @@index([productId])
+}
