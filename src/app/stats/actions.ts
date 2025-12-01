@@ -40,15 +40,6 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
         }
       : baseWhere;
       
-    const purchasePriceHistoryWhereClause = dateRange
-      ? {
-          ...baseWhere,
-          purchaseDate: {
-              gte: dateRange.from,
-              lte: dateRange.to,
-          }
-      } : baseWhere;
-
     // --- Sales & Profit Calculations ---
     const sales = await prisma.sale.findMany({
         where: saleWhereClause,
@@ -58,7 +49,7 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
                     product: {
                         include: {
                             priceHistory: {
-                                where: { purchaseDate: { lte: new Date() } }, // Use current date
+                                where: { purchaseDate: { lte: new Date() } }, // Use current date for context
                                 orderBy: { purchaseDate: 'desc' },
                                 take: 1,
                             }
@@ -74,7 +65,17 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
     for (const sale of sales) {
         totalRevenue += sale.totalAmount;
         for (const item of sale.items) {
-            const costPrice = item.product.priceHistory[0]?.price || 0;
+            // Find the most recent cost price *before or on the day of the sale*
+            const relevantCostHistory = await prisma.purchasePriceHistory.findFirst({
+                where: {
+                    productId: item.productId,
+                    purchaseDate: { lte: sale.saleDate }
+                },
+                orderBy: {
+                    purchaseDate: 'desc'
+                }
+            });
+            const costPrice = relevantCostHistory?.price || 0;
             totalCostOfGoods += item.quantity * costPrice;
         }
     }
@@ -91,7 +92,7 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
     
     const totalSales = sales.length;
 
-    const totalItemsSold = await prisma.saleItem.aggregate({
+    const totalItemsSoldResult = await prisma.saleItem.aggregate({
         _sum: {
             quantity: true,
         },
@@ -99,6 +100,7 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
             sale: saleWhereClause
         }
     });
+    const totalItemsSold = totalItemsSoldResult._sum.quantity || 0;
     
     // --- Chart & Top Product Data ---
     const dailySales = sales.reduce((acc, sale) => {
@@ -181,7 +183,7 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
     return {
       totalRevenue: totalRevenue,
       totalSales: totalSales,
-      totalItemsSold: totalItemsSold._sum.quantity || 0,
+      totalItemsSold: totalItemsSold,
       totalProfit,
       salesChartData: salesChartData,
       topProducts: topProducts,
