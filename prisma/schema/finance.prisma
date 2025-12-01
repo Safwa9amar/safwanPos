@@ -1,0 +1,45 @@
+import { User } from "./user.prisma"
+
+/// Represents a general business expense.
+model Expense {
+  id          String          @id @default(cuid())
+  description String
+  amount      Float
+  expenseDate DateTime
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+/// Represents a category for expenses.
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String
+  expenses Expense[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+/// Represents income from sources other than sales (e.g., capital injection).
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details   String
+  amount    Float
+  entryDate DateTime @default(now())
+
+  @@index([userId])
+}

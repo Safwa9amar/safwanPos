@@ -1,71 +1,89 @@
-// /prisma/schema/purchase.prisma
+import { User } from "./user.prisma"
+import { Product } from "./product.prisma"
+import { Supplier } from "./supplier.prisma"
+import { PurchaseOrderStatus } from "./enums.prisma"
 
-// For formal orders from a specific supplier
-model PurchaseOrder {
-  id                    String      @id @default(cuid())
-  orderDate             DateTime    @default(now())
-  expectedDeliveryDate  DateTime?
-  status                POStatus    @default(PENDING)
-  totalCost             Float
+/// Tracks the historical cost price of a product.
+model PurchasePriceHistory {
+  id                  String  @id @default(cuid())
+  product             Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId           String
+  price               Float
+  purchaseDate        DateTime @default(now())
 
-  userId                String
-  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Link to the specific purchase that set this price
+  purchaseOrderItemId String? @unique
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id], onDelete: SetNull)
+  
+  directPurchaseItemId String? @unique
+  directPurchaseItem   DirectPurchaseItem? @relation(fields: [directPurchaseItemId], references: [id], onDelete: SetNull)
 
-  supplierId            String
-  supplier              Supplier    @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  items                 PurchaseOrderItem[]
-
+  @@index([productId])
   @@index([userId])
-  @@index([supplierId])
 }
 
+/// Represents a formal purchase order sent to a supplier.
+model PurchaseOrder {
+  id                   String              @id @default(cuid())
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+  supplierId           String
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime?
+  totalCost            Float
+  status               PurchaseOrderStatus @default(PENDING)
+  items                PurchaseOrderItem[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@index([userId])
+}
+
+/// An item within a formal PurchaseOrder.
 model PurchaseOrderItem {
-  id                  String    @id @default(cuid())
-  quantity            Float
-  costPrice           Float
-  receivedQuantity    Float     @default(0)
-  
-  purchaseOrderId     String
-  purchaseOrder       PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-
-  productId           String
-  product             Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
-
-  priceHistoryEntry   PurchasePriceHistory?
+  id                 String  @id @default(cuid())
+  purchaseOrder      PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId    String
+  product            Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId          String
+  quantity           Int
+  costPrice          Float
+  receivedQuantity   Int     @default(0)
+  priceHistoryEntry  PurchasePriceHistory?
 
   @@index([purchaseOrderId])
   @@index([productId])
 }
 
-// For informal, direct purchases from stores
+/// Represents an informal, direct purchase from a store.
 model DirectPurchase {
-  id            String    @id @default(cuid())
-  purchaseDate  DateTime  @default(now())
-  storeName     String?
-  notes         String?
-  totalCost     Float
-
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items         DirectPurchaseItem[]
+  id           String               @id @default(cuid())
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName    String?
+  notes        String?
+  totalCost    Float
+  purchaseDate DateTime             @default(now())
+  items        DirectPurchaseItem[]
 
   @@index([userId])
 }
 
+/// An item within a DirectPurchase.
 model DirectPurchaseItem {
-  id              String    @id @default(cuid())
-  quantity        Float
-  costPrice       Float
+  id                 String  @id @default(cuid())
+  directPurchase     DirectPurchase @relation(fields: [directPurchaseId], references: [id], onDelete: Cascade)
+  directPurchaseId   String
+  product            Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId          String
+  quantity           Float
+  costPrice          Float
+  priceHistoryEntry  PurchasePriceHistory?
 
-  purchaseId      String
-  purchase        DirectPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-
-  productId       String
-  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  priceHistoryEntry PurchasePriceHistory?
-
-  @@index([purchaseId])
+  @@index([directPurchaseId])
   @@index([productId])
 }

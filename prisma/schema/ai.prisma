@@ -1,0 +1,13 @@
+import { User } from "./user.prisma"
+
+/// Stores AI-generated business reports.
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

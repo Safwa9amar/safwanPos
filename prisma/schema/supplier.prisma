@@ -1,67 +1,73 @@
-// /prisma/schema/supplier.prisma
+import { User } from "./user.prisma"
+import { PurchaseOrder } from "./purchase.prisma"
+import { SupplierStatus } from "./enums.prisma"
 
+/// Represents a supplier of products.
 model Supplier {
-  id                      String      @id @default(cuid())
-  name                    String
-  contactName             String?
-  email                   String?
-  phone                   String?
-  address                 String?
-  taxId                   String?
-  balance                 Float       @default(0)
-  status                  SupplierStatus @default(ACTIVE)
-  logoUrl                 String?
-  category                String?
-  paymentTerms            String?
-  deliverySchedule        String?
-  communicationChannel    String?
-  contractStartDate       DateTime?
-  contractEndDate         DateTime?
-  monthlySupplyQuota      Float?
-  qualityRating           Int?
-  notes                   String?
+  id                   String    @id @default(cuid())
+  name                 String
+  contactName          String?
+  email                String?   @unique
+  phone                String?
+  address              String?
+  balance              Float     @default(0) // Positive means we owe the supplier money
   
-  createdAt               DateTime    @default(now())
-  updatedAt               DateTime    @updatedAt
+  logoUrl              String?
+  taxId                String?
+  category             String?
+  paymentTerms         String?
+  deliverySchedule     String?
+  communicationChannel String?
+  status               SupplierStatus @default(ACTIVE)
+  notes                String?   @db.Text
+  
+  contractStartDate    DateTime?
+  contractEndDate      DateTime?
+  monthlySupplyQuota   Float?
+  qualityRating        Int?
 
-  userId                  String
-  user                    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+  payments       SupplierPayment[]
+  credits        SupplierCredit[]
 
-  purchaseOrders          PurchaseOrder[]
-  payments                SupplierPayment[]
-  credits                 SupplierCredit[]
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
 
+/// Represents a payment made to a supplier.
 model SupplierPayment {
-  id            String   @id @default(cuid())
-  paymentDate   DateTime @default(now())
-  amount        Float
-  notes         String?
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount      Float
+  paymentDate DateTime @default(now())
+  notes       String?
 
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id]) // No cascade, keep payment history
 
-  supplierId    String
-  supplier      Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
   @@index([supplierId])
+  @@index([userId])
 }
 
+
+/// Represents a credit or debit adjustment for a supplier.
 model SupplierCredit {
-  id              String   @id @default(cuid())
-  adjustmentDate  DateTime @default(now())
-  amount          Float
-  reason          String
-
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-
-  supplierId      String
-  supplier        Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  supplierId     String
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount         Float // Can be positive (we owe more) or negative (they owe us)
+  reason         String
+  adjustmentDate DateTime @default(now())
   
-  @@index([userId])
+  userId String
+  user   User   @relation(fields: [userId], references: [id]) // No cascade
+
   @@index([supplierId])
+  @@index([userId])
 }
