@@ -1,0 +1,410 @@
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Enums ---
+enum UserRole {
+  ADMIN
+  CASHIER
+  PHONE_REPAIR
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  CREDIT
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProductUnit {
+  EACH
+  KG
+  G
+  L
+  ML
+}
+
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  INACTIVE
+  CANCELED
+}
+
+// --- User & Company Models ---
+model User {
+  id                        String    @id @default(cuid())
+  name                      String?
+  email                     String    @unique
+  password                  String
+  role                      UserRole  @default(CASHIER)
+  emailVerified             DateTime?
+  emailVerificationToken    String?   @unique
+  passwordResetToken        String?   @unique
+  passwordResetTokenExpires DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  createdById       String?
+  createdBy         User?       @relation("CreatedUsers", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  createdUsers      User[]      @relation("CreatedUsers")
+
+  subscriptionStatus  SubscriptionStatus @default(TRIAL)
+  trialEndsAt         DateTime?
+
+  sales                 Sale[]
+  products              Product[]
+  categories            Category[]
+  barcodes              Barcode[]
+  customers             Customer[]
+  payments              Payment[]
+  suppliers             Supplier[]
+  purchaseOrders        PurchaseOrder[]
+  purchasePriceHistories PurchasePriceHistory[]
+  directPurchases       DirectPurchase[]
+  supplierPayments      SupplierPayment[]
+  supplierCredits       SupplierCredit[]
+  expenses              Expense[]
+  expenseCategories     ExpenseCategory[]
+  capitalEntries        CapitalEntry[]
+  reports               Report[]
+  repairJobs            RepairJob[]
+  companyProfile        CompanyProfile?
+}
+
+model CompanyProfile {
+  id            String  @id @default(cuid())
+  name          String?
+  logoUrl       String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  taxId1Label   String?
+  taxId1Value   String?
+  taxId2Label   String?
+  taxId2Value   String?
+  invoiceTitle  String?
+  invoiceFooter String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- Product & Category Models ---
+model Product {
+  id              String    @id @default(cuid())
+  name            String
+  price           Float
+  costPrice       Float?
+  stock           Float
+  unit            ProductUnit @default(EACH)
+  image           String?
+  productionDate  DateTime?
+  expiryDate      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  barcodes     Barcode[]
+  saleItems    SaleItem[]
+  
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  purchaseOrderItems   PurchaseOrderItem[]
+  directPurchaseItems  DirectPurchaseItem[]
+  priceHistory         PurchasePriceHistory[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  products  Product[]
+
+  @@unique([name, userId])
+}
+
+model Barcode {
+  id        String  @id @default(cuid())
+  code      String
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id]) // No cascade delete, handled by product
+
+  @@unique([code, userId])
+}
+
+// --- Sales & Customer Models ---
+model Sale {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  totalAmount  Float
+  discount     Float       @default(0)
+  amountPaid   Float
+  paymentType  PaymentType
+  saleDate     DateTime    @default(now())
+
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  
+  items        SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Float
+  price     Float
+  discount  Float    @default(0)
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  sales    Sale[]
+  payments Payment[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount      Float
+  paymentDate DateTime @default(now())
+  notes       String?
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict) 
+}
+
+// --- Purchasing & Supplier Models ---
+model Supplier {
+  id                   String  @id @default(cuid())
+  name                 String
+  contactName          String?
+  email                String?
+  phone                String?
+  address              String?
+  taxId                String?
+  category             String?
+  paymentTerms         String?
+  deliverySchedule     String?
+  communicationChannel String?
+  status               SupplierStatus @default(ACTIVE)
+  logoUrl              String?
+  contractStartDate    DateTime?
+  contractEndDate      DateTime?
+  monthlySupplyQuota   Float?
+  qualityRating        Int?
+  notes                String?
+  balance              Float    @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  purchaseOrders PurchaseOrder[]
+  payments       SupplierPayment[]
+  credits        SupplierCredit[]
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(cuid())
+  supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime?
+  totalCost            Float
+  status               PurchaseOrderStatus @default(PENDING)
+  notes                String?
+
+  items PurchaseOrderItem[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseOrderItem {
+  id                 String  @id @default(cuid())
+  purchaseOrderId    String
+  purchaseOrder      PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity           Int
+  costPrice          Float
+  receivedQuantity   Int     @default(0)
+
+  priceHistory PurchasePriceHistory?
+}
+
+model DirectPurchase {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName    String?
+  notes        String?
+  totalCost    Float
+  purchaseDate DateTime    @default(now())
+
+  items DirectPurchaseItem[]
+}
+
+model DirectPurchaseItem {
+  id                 String  @id @default(cuid())
+  directPurchaseId   String
+  directPurchase     DirectPurchase @relation(fields: [directPurchaseId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity           Float
+  costPrice          Float
+
+  priceHistory PurchasePriceHistory?
+}
+
+model PurchasePriceHistory {
+  id                   String    @id @default(cuid())
+  productId            String
+  product              Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price                Float
+  purchaseDate         DateTime  @default(now())
+
+  purchaseOrderItemId  String?   @unique
+  purchaseOrderItem    PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id], onDelete: SetNull)
+  
+  directPurchaseItemId String?   @unique
+  directPurchaseItem   DirectPurchaseItem? @relation(fields: [directPurchaseItemId], references: [id], onDelete: SetNull)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+model SupplierPayment {
+  id           String   @id @default(cuid())
+  supplierId   String
+  supplier     Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount       Float
+  paymentDate  DateTime @default(now())
+  notes        String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+model SupplierCredit {
+  id             String   @id @default(cuid())
+  supplierId     String
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount         Float
+  adjustmentDate DateTime @default(now())
+  reason         String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+
+// --- Finance Models ---
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  expenseDate DateTime
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expenses  Expense[]
+
+  @@unique([name, userId])
+}
+
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details   String
+  amount    Float
+  entryDate DateTime @default(now())
+}
+
+
+// --- Other Models ---
+model RepairJob {
+  id              String    @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  deviceModel     String
+  imei            String?
+  reportedProblem String
+  notes           String?
+  status          String
+  estimatedCost   Float?
+  finalCost       Float?
+  boxNumber       Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
