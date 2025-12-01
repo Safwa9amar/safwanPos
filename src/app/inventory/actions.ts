@@ -358,7 +358,7 @@ export async function importProducts(userId: string, products: any[]) {
 
     const ProductImportSchema = z.object({
         name: z.string(),
-        barcode: z.string(), // Keep barcode for primary import key
+        barcode: z.string(),
         price: z.coerce.number(),
         costPrice: z.coerce.number().optional().default(0),
         stock: z.coerce.number(),
@@ -372,51 +372,55 @@ export async function importProducts(userId: string, products: any[]) {
     for (const [index, p] of products.entries()) {
         const validated = ProductImportSchema.safeParse(p);
         if (!validated.success) {
-            errors.push({ row: index + 1, error: validated.error.flatten().fieldErrors.toString() });
+            errors.push({ row: index + 1, error: JSON.stringify(validated.error.flatten().fieldErrors) });
             continue;
         }
 
         const { barcode, costPrice, ...productData } = validated.data;
         try {
-             const product = await prisma.product.upsert({
-                where: {
-                    // This assumes the first barcode is the "main" one for upserting
-                    // A more complex import might require a different unique key
-                    // For now, we find a product if it has this barcode
-                    id: (await prisma.barcode.findFirst({where: {code: barcode, userId}}))?.productId || ''
-                },
-                update: {
-                    name: productData.name,
-                    price: productData.price,
-                    stock: productData.stock,
-                    unit: productData.unit,
-                    image: productData.image,
-                },
-                create: {
-                    ...productData,
-                    userId: userId,
-                    barcodes: {
-                        create: { code: barcode, userId }
-                    }
-                },
-            });
-
-             // Ensure barcode exists if product was updated but didn't have it
-            const hasBarcode = await prisma.barcode.count({ where: { code: barcode, productId: product.id }});
-            if (hasBarcode === 0) {
-                await prisma.barcode.create({ data: { code: barcode, productId: product.id, userId }});
-            }
-
-            // Add to price history
-            if (costPrice >= 0) {
-                await prisma.purchasePriceHistory.create({
-                    data: {
-                        productId: product.id,
-                        price: costPrice,
-                        userId: userId,
-                    }
+            await prisma.$transaction(async (tx) => {
+                const existingBarcode = await tx.barcode.findUnique({
+                    where: { code_userId: { code: barcode, userId } },
+                    include: { product: true }
                 });
-            }
+
+                let product;
+                if (existingBarcode && existingBarcode.product) {
+                    // Update existing product
+                    product = await tx.product.update({
+                        where: { id: existingBarcode.productId },
+                        data: {
+                            name: productData.name,
+                            price: productData.price,
+                            stock: { increment: productData.stock }, // Increment stock for existing products
+                            unit: productData.unit,
+                            image: productData.image,
+                        },
+                    });
+                } else {
+                    // Create new product
+                    product = await tx.product.create({
+                        data: {
+                            ...productData,
+                            userId: userId,
+                            barcodes: {
+                                create: { code: barcode, userId }
+                            }
+                        },
+                    });
+                }
+
+                // Add to price history
+                if (costPrice >= 0) {
+                    await tx.purchasePriceHistory.create({
+                        data: {
+                            productId: product.id,
+                            price: costPrice,
+                            userId: userId,
+                        }
+                    });
+                }
+            });
 
             processed++;
         } catch (e: any) {
@@ -429,6 +433,7 @@ export async function importProducts(userId: string, products: any[]) {
     
     return { success: true, processed, errors };
 }
+
 
 export async function importCategories(userId: string, categories: any[]) {
     if (!userId) {
@@ -470,3 +475,6 @@ export async function importCategories(userId: string, categories: any[]) {
     
     return { success: true, processed, errors };
 }
+
+
+    

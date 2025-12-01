@@ -17,6 +17,7 @@ model User {
   createdById               String?
   createdBy                 User?     @relation("UserCreations", fields: [createdById], references: [id], onDelete: SetNull)
   createdUsers              User[]    @relation("UserCreations")
+  companyProfile CompanyProfile?
 
   sales         Sale[]
   reports       Report[]
@@ -60,4 +61,26 @@ enum SubscriptionStatus {
   ACTIVE
   INACTIVE
   CANCELED
+}
+model CompanyProfile {
+  id String @id @default(cuid())
+
+  name          String?
+  logoUrl       String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  taxId1Label   String?
+  taxId1Value   String?
+  taxId2Label   String?
+  taxId2Value   String?
+  invoiceTitle  String?
+  invoiceFooter String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
