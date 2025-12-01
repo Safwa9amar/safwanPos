@@ -16,6 +16,7 @@ import { UserRole } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useCurrency } from '@/hooks/use-currency';
+import { Button } from '../ui/button';
 
 type LinkItem = {
   href: string;
@@ -150,7 +151,12 @@ export function HomePageClient({ todayStats }: { todayStats?: TodayStats }) {
       
       {todayStats && (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Today's Snapshot</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold tracking-tight">Today's Snapshot</h2>
+              <Button asChild variant="link">
+                <Link href="/stats">Show more</Link>
+              </Button>
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
