@@ -2,7 +2,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { startOfDay, subDays, endOfDay, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { startOfDay, subDays, endOfDay, startOfWeek, startOfMonth, startOfYear, endOfMonth, endOfYear } from "date-fns";
 
 type DateRange = { from: Date; to: Date };
 
@@ -46,22 +46,15 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
         include: {
             items: {
                 include: {
-                    product: {
-                        include: {
-                            priceHistory: {
-                                where: { purchaseDate: { lte: new Date() } }, // Use current date for context
-                                orderBy: { purchaseDate: 'desc' },
-                                take: 1,
-                            }
-                        }
-                    }
+                    product: true
                 }
             }
         }
     });
 
     let totalRevenue = 0;
-    let totalCostOfGoods = 0;
+    let grossProfit = 0;
+
     for (const sale of sales) {
         totalRevenue += sale.totalAmount;
         for (const item of sale.items) {
@@ -75,8 +68,9 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
                     purchaseDate: 'desc'
                 }
             });
-            const costPrice = relevantCostHistory?.price || 0;
-            totalCostOfGoods += item.quantity * costPrice;
+            const costPrice = relevantCostHistory?.price || 0; // Use 0 if no cost history found
+            const itemProfit = (item.price - costPrice) * item.quantity;
+            grossProfit += itemProfit;
         }
     }
     
@@ -88,7 +82,7 @@ export async function getStatsData(userId: string, dateRange?: DateRange) {
     });
     const totalExpenses = totalExpensesResult._sum.amount || 0;
 
-    const totalProfit = totalRevenue - totalCostOfGoods - totalExpenses;
+    const totalProfit = grossProfit - totalExpenses;
     
     const totalSales = sales.length;
 
