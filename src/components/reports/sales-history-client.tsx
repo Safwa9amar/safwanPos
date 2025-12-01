@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { SaleWithItemsAndCustomer } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Search, Eye, Download } from "lucide-react";
+import { CalendarIcon, Search, Eye, Download, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCurrency } from "@/hooks/use-currency";
@@ -16,13 +16,17 @@ import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
-import { getSalesHistory } from "@/app/reports/actions";
+import { getSalesHistory, deleteSale } from "@/app/reports/actions";
 import { SaleDetailDialog } from "./sale-detail-dialog";
 import { useAuth } from "@/context/auth-context";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "../ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithItemsAndCustomer[] }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [sales, setSales] = useState<SaleWithItemsAndCustomer[]>(initialSales);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +36,9 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
   });
   const [selectedSale, setSelectedSale] = useState<SaleWithItemsAndCustomer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState<SaleWithItemsAndCustomer | null>(null);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -43,14 +50,13 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
         });
         if (fetchedSales) setSales(fetchedSales);
         if (error) {
-          // You might want to use toast here
-          console.error(error);
+          toast({ variant: 'destructive', title: 'Error', description: error });
         }
         setIsLoading(false);
       };
       fetchSales();
     }
-  }, [date, user]);
+  }, [date, user, toast]);
 
   const filteredSales = useMemo(() => {
     return sales.filter(sale => {
@@ -67,6 +73,25 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
     setSelectedSale(sale);
     setIsDetailOpen(true);
   };
+  
+  const handleDeleteClick = (sale: SaleWithItemsAndCustomer) => {
+    setSaleToDelete(sale);
+    setIsAlertOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+      if (!saleToDelete || !user) return;
+      setIsDeleting(true);
+      const result = await deleteSale(saleToDelete.id, user.id);
+      setIsDeleting(false);
+      if (result.success) {
+          toast({ title: "Sale Deleted", description: `Sale #${saleToDelete.id.substring(0, 8)} has been deleted.` });
+          setSales(prev => prev.filter(s => s.id !== saleToDelete.id));
+          setIsAlertOpen(false);
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
+  }
   
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -160,9 +185,31 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
                   </TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(sale.totalAmount)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleViewDetails(sale)}>
-                        <Eye className="h-4 w-4"/>
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4"/>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetails(sale)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        {user?.role === 'ADMIN' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteClick(sale)}
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Sale
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -182,6 +229,23 @@ export function SalesHistoryClient({ initialSales }: { initialSales: SaleWithIte
           isOpen={isDetailOpen}
           onOpenChange={setIsDetailOpen}
       />
+
+       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to delete this sale?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete sale #{saleToDelete?.id.substring(0,8)}. This action will restore product stock levels and reverse any customer balance changes. This cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? t('inventory.saving') : t('inventory.delete')}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

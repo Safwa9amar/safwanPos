@@ -49,7 +49,6 @@ export async function getBusinessReport(userId: string, language: string) {
                 productName: item.product.name,
                 quantitySold: item.quantity,
                 pricePerItem: item.price,
-                costPerItem: item.product.costPrice,
                 currentStock: item.product.stock,
             })),
         }));
@@ -161,5 +160,59 @@ export async function deleteReport(reportId: string, userId: string) {
     } catch (error: any) {
         console.error("Failed to delete report:", error);
         return { error: "Failed to delete report." };
+    }
+}
+
+
+export async function deleteSale(saleId: string, userId: string) {
+    if (!userId) return { error: "User not authenticated" };
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.role !== 'ADMIN') {
+            return { error: "You are not authorized to perform this action." };
+        }
+
+        const sale = await prisma.sale.findFirst({
+            where: { id: saleId, userId: userId },
+            include: { items: true, customer: true }
+        });
+
+        if (!sale) {
+            return { error: "Sale not found or you do not have permission to delete it." };
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Restore product stock
+            for (const item of sale.items) {
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { increment: item.quantity } }
+                });
+            }
+
+            // If it was a credit sale, reverse the customer balance change
+            if (sale.paymentType === 'CREDIT' && sale.customerId) {
+                const debt = sale.totalAmount - sale.amountPaid;
+                await tx.customer.update({
+                    where: { id: sale.customerId },
+                    data: { balance: { decrement: debt } }
+                });
+            }
+            
+            // Delete the sale itself
+            await tx.sale.delete({ where: { id: saleId } });
+        });
+
+        revalidatePath('/reports/history');
+        revalidatePath('/inventory');
+        revalidatePath('/stats');
+        if (sale.customerId) revalidatePath(`/customers/${sale.customerId}`);
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Error deleting sale:", error);
+        return { error: "Failed to delete sale. " + error.message };
     }
 }
