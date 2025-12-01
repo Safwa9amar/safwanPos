@@ -1,4 +1,4 @@
-import { User } from "./user.prisma"
+
 
 /// Represents a general business expense.
 model Expense {

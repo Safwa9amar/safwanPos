@@ -1,4 +1,3 @@
-import { User } from "./user.prisma"
 
 /// Stores AI-generated business reports.
 model Report {

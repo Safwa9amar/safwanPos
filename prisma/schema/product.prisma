@@ -1,7 +1,3 @@
-import { User } from "./user.prisma"
-import { ProductUnit } from "./enums.prisma"
-import { SaleItem } from "./sale.prisma"
-import { PurchaseOrderItem, DirectPurchaseItem, PurchasePriceHistory } from "./purchase.prisma"
 
 /// Represents a product in the inventory.
 model Product {

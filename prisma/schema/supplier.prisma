@@ -1,6 +1,3 @@
-import { User } from "./user.prisma"
-import { PurchaseOrder } from "./purchase.prisma"
-import { SupplierStatus } from "./enums.prisma"
 
 /// Represents a supplier of products.
 model Supplier {

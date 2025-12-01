@@ -1,7 +1,4 @@
-import { User } from "./user.prisma"
-import { Product } from "./product.prisma"
-import { Supplier } from "./supplier.prisma"
-import { PurchaseOrderStatus } from "./enums.prisma"
+
 
 /// Tracks the historical cost price of a product.
 model PurchasePriceHistory {

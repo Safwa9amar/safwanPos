@@ -1,5 +1,4 @@
-import { User } from "./user.prisma"
-import { Sale } from "./sale.prisma"
+
 
 /// Represents a customer of the business.
 model Customer {

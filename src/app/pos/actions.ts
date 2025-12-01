@@ -23,14 +23,15 @@ export async function completeSale(
   
   try {
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const finalAmount = totalAmount - (discount || 0);
 
     // Validate amountPaid for non-credit sales
-    if (paymentType !== 'CREDIT' && (amountPaid === undefined || amountPaid < totalAmount - (discount || 0))) {
+    if (paymentType !== 'CREDIT' && (amountPaid === undefined || amountPaid < finalAmount)) {
       // Allow for cash/card sales to be slightly less if that's a feature, but for now let's be strict
       // return { success: false, error: 'Amount paid is less than total amount for non-credit sale.' };
     }
     
-    const finalAmountPaid = amountPaid === undefined ? totalAmount - (discount || 0) : amountPaid;
+    const finalAmountPaid = amountPaid === undefined ? finalAmount : amountPaid;
 
     const productIds = items.map(item => item.productId);
     const products = await prisma.product.findMany({
@@ -64,7 +65,7 @@ export async function completeSale(
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
-              discount: 0, // Item-specific discounts would be stored here if implemented
+              discount: item.discount || 0,
             })),
           },
         },
@@ -89,7 +90,7 @@ export async function completeSale(
             throw new Error("Customer not found or access denied.");
         }
 
-        const debt = (totalAmount - (discount || 0)) - finalAmountPaid;
+        const debt = finalAmount - finalAmountPaid;
         if (debt > 0) {
           await tx.customer.update({
             where: { id: customerId },

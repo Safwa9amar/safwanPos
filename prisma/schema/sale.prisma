@@ -1,40 +1,34 @@
-import { User } from "./user.prisma"
-import { Product } from "./product.prisma"
-import { Customer } from "./customer.prisma"
-import { PaymentType } from "./enums.prisma"
 
-/// Represents a completed sale transaction.
+import "./enums.prisma"
+import "./product.prisma"
+import "./customer.prisma"
+import "./user.prisma"
+
 model Sale {
   id          String      @id @default(cuid())
-  saleDate    DateTime    @default(now())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
   totalAmount Float
-  paymentType PaymentType
-  items       SaleItem[]
-  
   discount    Float       @default(0)
+  paymentType PaymentType
+  saleDate    DateTime    @default(now())
+  items       SaleItem[]
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
   amountPaid  Float
-
-  customer   Customer? @relation(fields: [customerId], references: [id])
-  customerId String?
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([customerId])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
-/// Represents an individual item within a sale.
 model SaleItem {
-  id        String  @id @default(cuid())
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
   saleId    String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   productId String
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Float
-  price     Float // Price at the time of sale
-  discount  Float   @default(0)
-
-  @@index([saleId])
-  @@index([productId])
+  price     Float
+  discount  Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

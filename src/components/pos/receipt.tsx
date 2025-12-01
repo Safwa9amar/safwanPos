@@ -24,6 +24,8 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
   const receiptRef = useRef(null);
 
   const companyProfile = sale.user?.companyProfile;
+  const finalTotal = sale.totalAmount - sale.discount;
+  const balance = finalTotal - sale.amountPaid;
 
   const handlePrint = () => {
     const doc = new jsPDF();
@@ -95,9 +97,9 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
     const totals = [
         { label: printT('pos.subtotal'), value: formatCurrency(sale.totalAmount) },
         { label: printT('receipt.discount'), value: `-${formatCurrency(sale.discount)}` },
-        { label: printT('pos.total'), value: formatCurrency(sale.totalAmount - sale.discount), bold: true, size: 16 },
+        { label: printT('pos.total'), value: formatCurrency(finalTotal), bold: true, size: 16 },
         { label: printT('pos.amountPaid'), value: formatCurrency(sale.amountPaid) },
-        { label: printT('customers.balance'), value: formatCurrency((sale.totalAmount - sale.discount) - sale.amountPaid), bold: true },
+        { label: printT('customers.balance'), value: formatCurrency(balance), bold: true },
     ];
     
     totals.forEach(item => {
@@ -193,7 +195,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                     </div>
                      <div className="flex justify-between font-bold text-lg">
                         <span>{t('pos.total')}</span>
-                        <span>{formatCurrency(sale.totalAmount - sale.discount)}</span>
+                        <span>{formatCurrency(finalTotal)}</span>
                     </div>
                      <Separator className="my-2"/>
                      <div className="flex justify-between">
@@ -202,7 +204,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                     </div>
                     <div className="flex justify-between font-semibold text-base mt-2">
                         <span>{t('customers.balance')}</span>
-                        <span>{formatCurrency((sale.totalAmount - sale.discount) - sale.amountPaid)}</span>
+                        <span>{formatCurrency(balance)}</span>
                     </div>
                 </div>
                 <Separator />

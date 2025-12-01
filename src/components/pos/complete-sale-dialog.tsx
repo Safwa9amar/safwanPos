@@ -53,7 +53,7 @@ export function CompleteSaleDialog({ onConfirm, cart, isCompleting, customers }:
     const paidAmountNumber = typeof amountPaid === 'string' ? parseFloat(amountPaid) : amountPaid;
     
     // For cash/card, if no amount is entered, assume full payment after discount
-    const finalAmountPaid = (paymentType === 'CASH' || paymentType === 'CARD') && (paidAmountNumber === undefined || isNaN(paidAmountNumber))
+    const finalAmountPaid = (paymentType === 'CASH' || paymentType === 'CARD') && (paidAmountNumber === undefined || isNaN(paidAmountNumber) || paidAmountNumber === 0)
         ? totalAfterDiscount
         : paidAmountNumber;
 

@@ -1,12 +1,3 @@
-import { UserRole, SubscriptionStatus } from "./enums.prisma"
-import { Product, Category, Barcode } from "./product.prisma"
-import { Sale } from "./sale.prisma"
-import { Customer, Payment } from "./customer.prisma"
-import { Supplier, SupplierPayment, SupplierCredit } from "./supplier.prisma"
-import { PurchaseOrder, DirectPurchase, PurchasePriceHistory } from "./purchase.prisma"
-import { Expense, ExpenseCategory, CapitalEntry } from "./finance.prisma"
-import { RepairJob, Report } from "./other.prisma"
-
 /// Represents a user account in the system.
 model User {
   id        String   @id @default(cuid())
