@@ -1,4 +1,3 @@
-
 import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { InvoiceSettingsClient } from "@/components/settings/invoice/invoice-settings-client";

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { CompanyProfile } from "@prisma/client";

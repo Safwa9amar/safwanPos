@@ -1,8 +1,4 @@
 
-import "./enums.prisma"
-import "./product.prisma"
-import "./customer.prisma"
-import "./user.prisma"
 
 model Sale {
   id          String      @id @default(cuid())

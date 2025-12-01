@@ -1,4 +1,3 @@
-
 import { Sale as PrismaSale, SaleItem as PrismaSaleItem, Supplier as PrismaSupplier, PurchaseOrder as PrismaPurchaseOrder, PurchaseOrderItem as PrismaPurchaseOrderItem, Product as PrismaProduct, Category as PrismaCategory, Customer as PrismaCustomer, Payment as PrismaPayment, User as PrismaUser, Report as PrismaReport, Barcode as PrismaBarcode, SupplierPayment, SupplierCredit, DirectPurchase as PrismaDirectPurchase, DirectPurchaseItem as PrismaDirectPurchaseItem, CapitalEntry as PrismaCapitalEntry, PurchasePriceHistory, CompanyProfile } from '@prisma/client';
 
 export type Product = PrismaProduct;
