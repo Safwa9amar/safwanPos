@@ -71,10 +71,16 @@ export async function upsertExpense(formData: FormData) {
 export async function deleteExpense(expenseId: string, userId: string) {
     if (!userId) return { error: "User not authenticated" };
     try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.role !== 'ADMIN') {
+            return { error: "You are not authorized to perform this action." };
+        }
+
         const existingExpense = await prisma.expense.findFirst({ where: { id: expenseId, userId }});
         if (!existingExpense) {
             return { error: "Expense not found or access denied."};
         }
+
         await prisma.expense.delete({ where: { id: expenseId }});
         revalidatePath('/expenses');
         return { success: true };

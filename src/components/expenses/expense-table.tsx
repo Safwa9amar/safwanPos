@@ -16,6 +16,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -105,10 +106,15 @@ export function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
                       <Pencil className="mr-2 h-4 w-4" />
                       {t("inventory.edit")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDeleteClick(expense)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {t("inventory.delete")}
-                    </DropdownMenuItem>
+                    {user?.role === 'ADMIN' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleDeleteClick(expense)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {t("inventory.delete")}
+                            </DropdownMenuItem>
+                        </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
