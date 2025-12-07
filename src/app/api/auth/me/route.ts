@@ -6,7 +6,8 @@ import prisma from '@/lib/prisma';
 import { User } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = cookies();
+  const token = cookieStore.get('token')?.value;
 
   if (!token) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });

@@ -1,0 +1,14 @@
+// This is your main Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
