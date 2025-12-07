@@ -1,0 +1,49 @@
+import { User } from "./user.prisma"
+import { IncomeCategory } from "./finance.prisma"
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  expenseDate DateTime
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses  Expense[]
+
+  @@unique([name, userId])
+}
+
+
+model CapitalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details   String
+  amount    Float
+  entryDate DateTime
+  category   IncomeCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model IncomeCategory {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries   CapitalEntry[]
+
+  @@unique([name, userId])
+}
