@@ -4,7 +4,9 @@
     "income.description": "تسجيل رأس المال أو أي دخل آخر غير متعلق بالمبيعات.",
     "income.add": "إضافة دخل",
     "income.addTitle": "إضافة إدخال دخل جديد",
+    "income.editTitle": "تعديل إدخال الدخل",
     "income.addDescription": "املأ تفاصيل إدخال الدخل.",
+    "income.editDescription": "تحديث تفاصيل هذا الإدخال.",
     "income.noEntries": "لم يتم تسجيل أي إدخالات دخل. أضف واحدة للبدء.",
     "income.details": "التفاصيل",
     "income.amount": "المبلغ",
@@ -14,5 +16,17 @@
     "income.deleteConfirmTitle": "حذف إدخال الدخل؟",
     "income.deleteConfirmDescription": "سيؤدي هذا إلى حذف سجل هذا الإدخال نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
     "income.saveSuccess": "تم حفظ إدخال الدخل.",
-    "income.saveFailed": "فشل حفظ إدخال الدخل."
+    "income.saveFailed": "فشل حفظ إدخال الدخل.",
+    "income.category": "الفئة",
+    "income.manageCategories": "إدارة الفئات",
+    "income.categoriesDescription": "إضافة أو تعديل أو حذف فئات الدخل.",
+    "income.addCategory": "إضافة فئة",
+    "income.editCategory": "تعديل الفئة",
+    "income.categoryName": "اسم الفئة",
+    "income.categoryFormDescription": "أدخل اسمًا للفئة.",
+    "income.deleteCategoryConfirmTitle": "حذف الفئة؟",
+    "income.deleteCategoryConfirmDescription": "سيؤدي هذا إلى إزالة الفئة. إدخالات الدخل الحالية مع هذه الفئة ستمنع الحذف. لا يمكن التراجع عن هذا الإجراء.",
+    "income.noCategories": "لم يتم العثور على فئات. يرجى إضافة واحدة أولاً.",
+    "income.selectCategory": "اختر فئة",
+    "income.entries": "الإدخالات"
 }

@@ -3,7 +3,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { MainLayout } from "@/components/main-layout";
 import { getUserIdFromRequest } from "@/lib/server-auth";
 import { redirect } from "next/navigation";
-import { getCapitalEntries } from "./actions";
+import { getIncomeEntries, getIncomeCategories } from "./actions";
 import { IncomePageClient } from "@/components/income/income-page-client";
 
 
@@ -13,7 +13,12 @@ export default async function IncomePage() {
     redirect('/login');
   }
 
-  const { entries, error } = await getCapitalEntries(userId);
+  const [entriesResult, categoriesResult] = await Promise.all([
+    getIncomeEntries(userId),
+    getIncomeCategories(userId),
+  ]);
+
+  const error = entriesResult.error || categoriesResult.error;
 
   return (
     <AuthGuard>
@@ -21,7 +26,10 @@ export default async function IncomePage() {
         {error ? (
           <div className="p-4 text-destructive">{error}</div>
         ) : (
-          <IncomePageClient initialEntries={entries || []} />
+          <IncomePageClient 
+            initialEntries={entriesResult.entries || []} 
+            initialCategories={categoriesResult.categories || []}
+          />
         )}
       </MainLayout>
     </AuthGuard>
