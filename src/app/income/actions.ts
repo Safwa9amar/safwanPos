@@ -23,7 +23,7 @@ export async function getIncomeEntries(userId: string) {
     const entries = await prisma.capitalEntry.findMany({
       where: { userId },
       orderBy: { entryDate: "desc" },
-      include: { category: true },
+      include: { IncomeCategory: true },
     });
     return { entries };
   } catch (error) {
@@ -45,7 +45,9 @@ export async function upsertIncomeEntry(formData: FormData) {
     };
   }
 
-  const { id, ...data } = validatedFields.data;
+  const { id, categoryId, ...data } = validatedFields.data;
+  const dataToSave = { ...data, IncomeCategoryId: categoryId };
+
 
   try {
     if (id) {
@@ -56,8 +58,8 @@ export async function upsertIncomeEntry(formData: FormData) {
     }
     await prisma.capitalEntry.upsert({
       where: { id: id || "" },
-      update: data,
-      create: data,
+      update: dataToSave,
+      create: dataToSave,
     });
     revalidatePath("/income");
     return { success: true };

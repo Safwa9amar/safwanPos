@@ -33,7 +33,19 @@ model CapitalEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   details   String
   amount    Float
-  entryDate DateTime @default(now())
+  entryDate DateTime
+  IncomeCategory   IncomeCategory @relation(fields: [IncomeCategoryId], references: [id])
+  IncomeCategoryId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-  @@index([userId])
+model IncomeCategory {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries   CapitalEntry[]
+
+  @@unique([name, userId])
 }
