@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PurchaseOrder as POType, PurchaseOrderItem as POItemType, Product, SupplierPayment, SupplierCredit } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
@@ -13,8 +13,7 @@ import { useAuth } from '@/context/auth-context';
 import { Truck, HandCoins, DollarSign, Printer, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { ReceiveStockDialog } from './receive-stock-dialog';
 import { format } from 'date-fns';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { useReactToPrint } from 'react-to-print';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { deletePurchaseOrder } from '@/app/suppliers/actions';
@@ -36,7 +35,7 @@ interface PurchaseOrderListProps {
 }
 
 export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit }: PurchaseOrderListProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { user } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -45,50 +44,12 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedPo, setSelectedPo] = useState<PurchaseOrderWithItems | null>(null);
+    
+    const printRef = useRef(null);
+    const handlePrint = useReactToPrint({
+      content: () => printRef.current,
+    });
 
-    const handlePrint = (po: PurchaseOrderWithItems) => {
-        const doc = new jsPDF();
-        const printT = (key: string) => i18n.getFixedT('en')(key);
-        
-        doc.setFontSize(22);
-        doc.text("SafwanPOS", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-        doc.setFontSize(12);
-        doc.text(printT('po.title'), doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
-
-        doc.setFontSize(10);
-        const poIdText = `${printT('po.orderId')}: #${po.id.substring(0,8)}`;
-        const dateText = `${printT('po.orderDate')}: ${new Date(po.orderDate).toLocaleDateString()}`;
-        
-        doc.text(poIdText, 15, 40);
-        doc.text(dateText, 15, 45);
-
-        const tableData = po.items.map(item => [
-            item.product.name,
-            item.quantity,
-            formatCurrency(item.costPrice),
-            formatCurrency(item.quantity * item.costPrice)
-        ]);
-
-        const head = [[printT('po.item'), printT('po.quantity'), printT('po.costPrice'), printT('po.total')]];
-        
-        autoTable(doc, {
-            startY: 55,
-            head: head,
-            body: tableData,
-            theme: 'striped',
-        });
-        
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-
-        const totalText = `${printT('po.totalCost')}: ${formatCurrency(po.totalCost)}`;
-        doc.text(totalText, doc.internal.pageSize.getWidth() - 15, finalY, { align: 'right' });
-        
-
-        doc.autoPrint();
-        window.open(doc.output('bloburl'), '_blank');
-    };
 
     const handleDeleteClick = (po: PurchaseOrderWithItems) => {
         setSelectedPo(po);
@@ -147,7 +108,7 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
     return (
         <div className="space-y-4">
             {purchaseOrders.map((entry, index) => (
-                <Card key={index}>
+                <Card key={index} ref={printRef}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-3">
@@ -165,14 +126,14 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                                {entry.type === 'credit' && <span className="font-bold text-lg text-red-600">+{formatCurrency(entry.data.amount)}</span>}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 no-print">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
                                         {entry.type === 'purchase' && (
                                             <>
-                                                <DropdownMenuItem onSelect={() => handlePrint(entry.data)}>
+                                                <DropdownMenuItem onSelect={handlePrint}>
                                                     <Printer className="mr-2 h-4 w-4" /> {t('actions.print')}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem 
@@ -205,7 +166,7 @@ export function PurchaseOrderList({ purchaseOrders, onEditPayment, onEditCredit 
                         </CardContent>
                     )}
                     {entry.type === 'purchase' && (entry.data.status === 'PENDING' || entry.data.status === 'PARTIALLY_RECEIVED') && (
-                        <CardFooter>
+                        <CardFooter className="no-print">
                             <Button className="w-full" onClick={() => setReceivingOrder(entry.data)}>
                                 <Truck className="mr-2 h-4 w-4" />
                                 {t('po.receiveStock')}
