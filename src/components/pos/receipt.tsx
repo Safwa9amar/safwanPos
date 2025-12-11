@@ -10,7 +10,15 @@ import { useTranslation } from "react-i18next";
 import { Sale } from "@/types";
 import { useCurrency } from "@/hooks/use-currency";
 import { useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { cairoFont } from '@/lib/cairo-font';
+import type { UserOptions } from 'jspdf-autotable';
+
+// Augment jsPDF with the autoTable plugin
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: UserOptions) => jsPDF;
+}
 
 type ReceiptProps = {
   sale: Sale;
@@ -26,11 +34,91 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
   const finalTotal = sale.totalAmount - sale.discount;
   const balance = finalTotal - sale.amountPaid;
 
-  const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
-    documentTitle: `Receipt-Sale-${sale.id.substring(0,8)}`,
-    onAfterPrint: () => onDone()
-  });
+  const handlePrint = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    
+    // Add the Cairo font for Arabic support
+    doc.addFileToVFS('Cairo-Regular-normal.ttf', cairoFont);
+    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
+    doc.setFont('Cairo-Regular');
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageCenter = pageWidth / 2;
+    
+    let currentY = 15;
+
+    // --- Header ---
+    if (companyProfile?.logoUrl) {
+      doc.addImage(companyProfile.logoUrl, 'PNG', pageCenter - 15, currentY, 30, 30);
+      currentY += 35;
+    }
+    doc.setFontSize(16);
+    doc.text(companyProfile?.name || "SafwanPOS", pageCenter, currentY, { align: 'center' });
+    currentY += 8;
+    
+    doc.setFontSize(10);
+    doc.text(companyProfile?.invoiceTitle || t('receipt.title'), pageCenter, currentY, { align: 'center' });
+    currentY += 10;
+    
+    // --- Sale Info ---
+    doc.setFontSize(8);
+    doc.text(`${t('receipt.saleId')}: #${sale.id.substring(0,8)}`, 14, currentY);
+    doc.text(`${t('receipt.date')}: ${new Date(sale.saleDate).toLocaleString()}`, pageWidth - 14, currentY, { align: 'right' });
+    currentY += 5;
+    doc.text(`Sold by: ${sale.user?.name || 'N/A'}`, 14, currentY);
+    currentY += 5;
+    if (sale.customer) {
+      doc.text(`Customer: ${sale.customer.name}`, 14, currentY);
+      currentY += 5;
+    }
+    currentY += 5;
+
+    // --- Items Table ---
+    const tableColumn = ["Item", "Qty", "Price", "Total"];
+    const tableRows = sale.items.map(item => [
+        item.product.name,
+        item.quantity,
+        formatCurrency(item.price),
+        formatCurrency(item.price * item.quantity)
+    ]);
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: currentY,
+        theme: 'striped',
+        headStyles: { fillColor: [22, 163, 74] },
+        styles: { font: 'Cairo-Regular', fontStyle: 'normal' },
+    });
+    
+    currentY = doc.autoTable.previous.finalY + 10;
+
+    // --- Totals ---
+    const addTotalLine = (label: string, value: string, isBold = false) => {
+        doc.setFontSize(isBold ? 12 : 10);
+        doc.setFont('Cairo-Regular', isBold ? 'bold' : 'normal');
+        doc.text(label, 14, currentY);
+        doc.text(value, pageWidth - 14, currentY, { align: 'right' });
+        currentY += (isBold ? 8 : 6);
+    };
+
+    addTotalLine(t('pos.subtotal'), formatCurrency(sale.totalAmount));
+    if (sale.discount > 0) {
+      addTotalLine(t('receipt.discount'), `-${formatCurrency(sale.discount)}`);
+    }
+    addTotalLine(t('pos.total'), formatCurrency(finalTotal), true);
+    addTotalLine(t('pos.amountPaid'), formatCurrency(sale.amountPaid));
+    addTotalLine(t('customers.balance'), formatCurrency(balance), true);
+
+    currentY += 5;
+
+    // --- Footer ---
+    doc.setFontSize(8);
+    doc.text(companyProfile?.invoiceFooter || t('receipt.thankYou'), pageCenter, currentY, { align: 'center' });
+
+    doc.save(`Receipt-Sale-${sale.id.substring(0,8)}.pdf`);
+    onDone();
+  };
 
   return (
     <div className="flex flex-col items-center justify-center p-4 bg-muted/40 min-h-screen">
@@ -111,7 +199,7 @@ export function Receipt({ sale, onDone }: ReceiptProps) {
                     {companyProfile?.invoiceFooter && <p>{companyProfile.invoiceFooter}</p>}
                     <div className="flex justify-center gap-4">
                         {companyProfile?.taxId1Label && companyProfile.taxId1Value && <p>{companyProfile.taxId1Label}: {companyProfile.taxId1Value}</p>}
-                        {companyProfile?.taxId2Label && companyProfile.taxId2Value && <p>{companyProfile.taxId2Label}: {companyProfile.taxId2Value}</p>}
+                        {companyProfile?.taxId2Label && companyProfile.taxId2Value && <p>{companyFile.taxId2Label}: {companyFile.taxId2Value}</p>}
                     </div>
                     <p className="pt-4">{t('receipt.thankYou')}</p>
                 </div>
