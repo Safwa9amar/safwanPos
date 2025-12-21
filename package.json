@@ -1,4 +1,3 @@
-
 {
   "name": "nextn",
   "version": "0.1.0",
@@ -55,7 +54,7 @@
     "jspdf-autotable": "^3.8.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.475.0",
-    "next": "^15.0.5",
+    "next": "15.5.9",
     "nodemailer": "^6.9.14",
     "papaparse": "^5.4.1",
     "patch-package": "^8.0.0",
