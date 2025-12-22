@@ -6,19 +6,19 @@ type UserRole = "ADMIN" | "CASHIER" | "PHONE_REPAIR";
 type SubscriptionStatus = "TRIAL" | "ACTIVE" | "INACTIVE" | "CANCELED";
 
 const protectedRoutes: { path: string, roles: UserRole[] }[] = [
-    { path: '/inventory', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/product-discovery', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/pos', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/reports', roles: ['ADMIN'] },
-    { path: '/stats', roles: ['ADMIN'] },
-    { path: '/customers', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/suppliers', roles: ['ADMIN', 'CASHIER'] },
-    { path: '/purchases', roles: ['ADMIN', 'CASHIER'] },
+    { path: '/inventory', roles: ['ADMIN', 'CASHIER',"PHONE_REPAIR"] },
+    { path: '/product-discovery', roles: ['ADMIN', 'CASHIER', "PHONE_REPAIR"] },
+    { path: '/pos', roles: ['ADMIN', 'CASHIER', "PHONE_REPAIR"] },
+    { path: '/reports', roles: ['ADMIN', "PHONE_REPAIR"] },
+    { path: '/stats', roles: ['ADMIN', "PHONE_REPAIR"] },
+    { path: '/customers', roles: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
+    { path: '/suppliers', roles: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
+    { path: '/purchases', roles: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
     { path: '/repairs', roles: ['PHONE_REPAIR'] },
-    { path: '/expenses', roles: ['ADMIN'] },
-    { path: '/settings', roles: ['ADMIN'] },
+    { path: '/expenses', roles: ['ADMIN', "PHONE_REPAIR"] },
+    { path: '/settings', roles: ['ADMIN',"PHONE_REPAIR"] },
     { path: '/billing', roles: ['ADMIN', 'CASHIER', 'PHONE_REPAIR'] },
-    { path: '/income', roles: ['ADMIN'] },
+    { path: '/income', roles: ['ADMIN',  'PHONE_REPAIR'] },
 ];
 
 export async function middleware(request: NextRequest) {
