@@ -54,6 +54,8 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
 
     const totalCost = items.reduce((sum, item) => sum + (Number(item.costPrice) * Number(item.quantity)), 0);
 
+    const availableProducts = products.filter(p => !items.some(item => item.productId === p.id));
+
     return (
         <div className="space-y-4">
             <Popover open={open} onOpenChange={setOpen}>
@@ -69,7 +71,7 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
                         <CommandList>
                             <CommandEmpty>{t('po.noProductsFound')}</CommandEmpty>
                             <CommandGroup>
-                                {products.map((product) => (
+                                {availableProducts.map((product) => (
                                     <CommandItem
                                         key={product.id}
                                         value={product.name}
