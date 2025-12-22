@@ -31,8 +31,19 @@ import { useCurrency } from "@/hooks/use-currency";
 import { BarcodeLabelDialog } from "./barcode-label-dialog";
 import { useAuth } from "@/context/auth-context";
 import { format, differenceInDays } from "date-fns";
+import { Checkbox } from "../ui/checkbox";
 
-export function ProductTable({ products, onEdit, lastElementRef }: { products: ProductWithCategoryAndBarcodes[], onEdit: (product: ProductWithCategoryAndBarcodes) => void, lastElementRef?: (node: HTMLTableRowElement) => void }) {
+interface ProductTableProps {
+  products: ProductWithCategoryAndBarcodes[];
+  onEdit: (product: ProductWithCategoryAndBarcodes) => void;
+  lastElementRef?: (node: HTMLTableRowElement) => void;
+  selectedProductIds: string[];
+  onSelectChange: (productId: string, checked: boolean) => void;
+  onSelectAll: (checked: boolean) => void;
+}
+
+
+export function ProductTable({ products, onEdit, lastElementRef, selectedProductIds, onSelectChange, onSelectAll }: ProductTableProps) {
   const { t } = useTranslation("translation");
   const { toast } = useToast();
   const { user } = useAuth();
@@ -95,12 +106,21 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
     }
     return <span>{format(new Date(expiryDate), "PP")}</span>;
   };
+  
+  const areAllOnPageSelected = products.length > 0 && selectedProductIds.length === products.length;
 
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 px-4">
+              <Checkbox
+                checked={areAllOnPageSelected}
+                onCheckedChange={(checked) => onSelectAll(!!checked)}
+                aria-label="Select all"
+              />
+            </TableHead>
             <TableHead className="w-[80px]">Image</TableHead>
             <TableHead>{t("inventory.productName")}</TableHead>
             <TableHead>{t("inventory.category")}</TableHead>
@@ -113,7 +133,18 @@ export function ProductTable({ products, onEdit, lastElementRef }: { products: P
         </TableHeader>
         <TableBody>
           {products.map((product, index) => (
-            <TableRow key={product.id} ref={index === products.length - 1 ? lastElementRef : null}>
+            <TableRow 
+              key={product.id} 
+              ref={index === products.length - 1 ? lastElementRef : null}
+              data-state={selectedProductIds.includes(product.id) && "selected"}
+            >
+              <TableCell className="px-4">
+                <Checkbox
+                  checked={selectedProductIds.includes(product.id)}
+                  onCheckedChange={(checked) => onSelectChange(product.id, !!checked)}
+                  aria-label={`Select ${product.name}`}
+                />
+              </TableCell>
               <TableCell>
                 {product.image ? (
                    <Image src={product.image} alt={product.name} width={40} height={40} className="rounded-md object-cover" />

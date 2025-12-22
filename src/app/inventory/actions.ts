@@ -262,6 +262,39 @@ export async function deleteProduct(productId: string, userId: string) {
     }
 }
 
+export async function deleteMultipleProducts(productIds: string[], userId: string) {
+  if (!userId) return { error: "User not authenticated" };
+  if (productIds.length === 0) return { error: "No products selected" };
+
+  try {
+    const result = await prisma.product.deleteMany({
+      where: {
+        id: {
+          in: productIds,
+        },
+        userId,
+      },
+    });
+
+    if (result.count < productIds.length) {
+      // This could happen if some products are already deleted, or if they have relations that prevent deletion (like sales).
+      // A more robust solution might check relations first, but for now we'll send a generic message.
+       revalidatePath('/inventory');
+      return { success: true, count: result.count, error: `Could not delete ${productIds.length - result.count} products, they may be part of a past sale.` };
+    }
+    
+    revalidatePath('/inventory');
+    return { success: true, count: result.count };
+
+  } catch (error: any) {
+    if (error.code === 'P2003') {
+        return { error: "Could not delete some products because they are part of past sales." };
+    }
+    console.error(error);
+    return { error: 'Failed to delete products.' };
+  }
+}
+
 const CategorySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Category name is required"),

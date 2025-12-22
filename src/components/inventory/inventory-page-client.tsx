@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Folder, Search, Upload, Download } from "lucide-react";
+import { PlusCircle, Folder, Search, Upload, Download, Trash2 } from "lucide-react";
 import { ProductTable } from "./product-table";
 import { ProductSheet } from "./product-sheet";
 import { useTranslation } from "@/hooks/use-translation";
@@ -16,6 +16,10 @@ import { ProductWithCategoryAndBarcodes } from "@/types";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ImportDialog } from "./import-dialog";
+import { DeleteProductAlert } from "./delete-product-alert";
+import { deleteMultipleProducts } from "@/app/inventory/actions";
+import { useAuth } from "@/context/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock-asc' | 'stock-desc';
 
@@ -25,12 +29,18 @@ const SUBSEQUENT_INFINITE_LOAD = 25;
 export function InventoryPageClient({ initialProducts, categories }: { initialProducts: ProductWithCategoryAndBarcodes[], categories: Category[] }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithCategoryAndBarcodes | null>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [isMultiDeleteAlertOpen, setIsMultiDeleteAlertOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,6 +110,7 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
   useEffect(() => {
     setCurrentPage(1);
     setVisibleCount(INITIAL_INFINITE_LOAD);
+    setSelectedProductIds([]); // Clear selection on filter change
   }, [searchTerm, filterCategory, sortBy, itemsPerPage]);
 
   const paginatedProducts = useMemo(() => {
@@ -156,6 +167,42 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
     downloadFile(csvContent, "products.csv", "text/csv");
   };
 
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    setSelectedProductIds(prev =>
+      checked ? [...prev, productId] : prev.filter(id => id !== productId)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProductIds(paginatedProducts.map(p => p.id));
+    } else {
+      setSelectedProductIds([]);
+    }
+  };
+  
+  const handleConfirmMultiDelete = async () => {
+    if (!user || selectedProductIds.length === 0) return;
+    setIsDeleting(true);
+    const result = await deleteMultipleProducts(selectedProductIds, user.id);
+    setIsDeleting(false);
+
+    if (result.success) {
+      toast({
+        title: `Deleted ${result.count} products`,
+        description: `Successfully removed selected products.`,
+      });
+      setSelectedProductIds([]);
+    } else {
+       toast({
+        variant: "destructive",
+        title: t("inventory.deleteFailed"),
+        description: result.error,
+      });
+    }
+    setIsMultiDeleteAlertOpen(false);
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <Card className="shadow-lg">
@@ -165,6 +212,12 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
             <CardDescription>{t("inventory.description")}</CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            {selectedProductIds.length > 0 && (
+              <Button variant="destructive" onClick={() => setIsMultiDeleteAlertOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedProductIds.length})
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setIsImportOpen(true)} className="justify-center">
               <Upload className="mr-2 h-4 w-4" />
               Import
@@ -230,7 +283,14 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
                     </Select>
                 </div>
             </div>
-          <ProductTable products={paginatedProducts} onEdit={handleEditProduct} lastElementRef={lastElementRef}/>
+          <ProductTable 
+            products={paginatedProducts} 
+            onEdit={handleEditProduct} 
+            lastElementRef={lastElementRef}
+            selectedProductIds={selectedProductIds}
+            onSelectChange={handleSelectProduct}
+            onSelectAll={handleSelectAll}
+          />
           
            <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
                 <div className="text-sm text-muted-foreground">
@@ -286,6 +346,15 @@ export function InventoryPageClient({ initialProducts, categories }: { initialPr
         product={editingProduct}
         categories={categories}
       />
+      
+      <DeleteProductAlert
+        isOpen={isMultiDeleteAlertOpen}
+        onOpenChange={setIsMultiDeleteAlertOpen}
+        onConfirm={handleConfirmMultiDelete}
+        isDeleting={isDeleting}
+        itemCount={selectedProductIds.length}
+      />
+
     </div>
   );
 }

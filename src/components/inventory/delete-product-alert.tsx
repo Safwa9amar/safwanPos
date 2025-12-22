@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -17,6 +18,7 @@ interface DeleteProductAlertProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isDeleting: boolean;
+  itemCount?: number;
 }
 
 export function DeleteProductAlert({
@@ -24,15 +26,25 @@ export function DeleteProductAlert({
   onOpenChange,
   onConfirm,
   isDeleting,
+  itemCount = 1,
 }: DeleteProductAlertProps) {
   const { t } = useTranslation("translation");
+  
+  const title = itemCount > 1 
+    ? `Delete ${itemCount} products?` 
+    : t("inventory.deleteConfirmTitle");
+  
+  const description = itemCount > 1
+    ? `This will permanently delete the ${itemCount} selected products. This action cannot be undone.`
+    : t("inventory.deleteConfirmDescription");
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("inventory.deleteConfirmTitle")}</AlertDialogTitle>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("inventory.deleteConfirmDescription")}
+            {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
