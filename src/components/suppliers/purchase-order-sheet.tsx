@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Select } from "../ui/select";
 
 interface PurchaseOrderSheetProps {
     isOpen: boolean;

@@ -23,7 +23,6 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [open, setOpen] = useState(false);
-    
     const handleSelectProduct = (productId: string) => {
         const product = products.find(p => p.id === productId);
         if (product && !items.some(item => item.productId === productId)) {
@@ -31,7 +30,7 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
                 productId: product.id,
                 name: product.name,
                 quantity: 1,
-                costPrice: product.costPrice || 0
+                costPrice: 0 // Default to 0, let user input
             }]);
         }
         setOpen(false);
@@ -55,7 +54,6 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
     const totalCost = items.reduce((sum, item) => sum + (Number(item.costPrice) * Number(item.quantity)), 0);
 
     const availableProducts = products.filter(p => !items.some(item => item.productId === p.id));
-
     return (
         <div className="space-y-4">
             <Popover open={open} onOpenChange={setOpen}>
