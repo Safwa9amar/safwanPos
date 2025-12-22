@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -19,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingBag, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingCart, Folder, Wrench, PackagePlus } from "lucide-react";
+import { CreditCard, FileText, LogOut, Settings, Package, BarChart, Truck, Users, User, History, Landmark, Bot, HomeIcon, ShoppingBag, Banknote, Wallet, FileStack, Contact, LayoutGrid, ShoppingCart, Folder, Wrench, PackagePlus, Telescope } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -72,8 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   const trialStatus = getTrialStatus();
-  const isAdmin = user?.role === "ADMIN";
-  const isPhoneRepair = user?.role === "PHONE_REPAIR";
+  const userRole = user?.role;
 
   return (
     <SidebarProvider>
@@ -108,24 +108,28 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <SidebarSeparator className="my-4" />
 
             <SidebarLabel>Management</SidebarLabel>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip={t('sidebar.inventory_management')}>
-                <Link href="/inventory">
-                  <Package />
-                  {t('sidebar.inventory_management')}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
-                   <Link href="/customers">
-                      <Users />
-                      {t('sidebar.customers_management')}
+            {['ADMIN', 'CASHIER', 'PHONE_REPAIR'].includes(userRole || '') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip={t('sidebar.inventory_management')}>
+                  <Link href="/inventory">
+                    <Package />
+                    {t('sidebar.inventory_management')}
                   </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+            {['ADMIN', 'CASHIER', 'PHONE_REPAIR'].includes(userRole || '') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/customers')} tooltip={t('sidebar.customers_management')}>
+                     <Link href="/customers">
+                        <Users />
+                        {t('sidebar.customers_management')}
+                    </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             
-            {isPhoneRepair && (
+            {['PHONE_REPAIR'].includes(userRole || '') && (
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/repairs')} tooltip={t('sidebar.repairs')}>
                         <Link href="/repairs">
@@ -136,27 +140,30 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuItem>
             )}
 
-            <SidebarSeparator className="my-4" />
-            <SidebarLabel>{t('sidebar.purchases_management')}</SidebarLabel>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.suppliers')}>
-                    <Link href="/suppliers">
-                        <Truck />
-                        {t('sidebar.suppliers')}
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
-                    <Link href="/purchases">
-                        <PackagePlus />
-                        {t('sidebar.direct_purchases')}
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            {['ADMIN', 'CASHIER', 'PHONE_REPAIR'].includes(userRole || '') && (
+              <>
+                <SidebarSeparator className="my-4" />
+                <SidebarLabel>{t('sidebar.purchases_management')}</SidebarLabel>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/suppliers')} tooltip={t('sidebar.suppliers')}>
+                        <Link href="/suppliers">
+                            <Truck />
+                            {t('sidebar.suppliers')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/purchases')} tooltip={t('sidebar.direct_purchases')}>
+                        <Link href="/purchases">
+                            <PackagePlus />
+                            {t('sidebar.direct_purchases')}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
 
-
-            {isAdmin && (
+            {['ADMIN', 'PHONE_REPAIR'].includes(userRole || '') && (
               <>
                 <SidebarSeparator className="my-4" />
                 <SidebarLabel>{t('sidebar.financial_management')}</SidebarLabel>
@@ -179,11 +186,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </>
             )}
 
-
             <SidebarSeparator className="my-4" />
 
             <SidebarLabel>Analytics</SidebarLabel>
-             {isAdmin && (
+             {['ADMIN', 'PHONE_REPAIR'].includes(userRole || '') && (
                 <>
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname.startsWith('/stats')} tooltip={t('sidebar.stats')}>
@@ -211,16 +217,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuItem>
                 </>
             )}
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/product-discovery')} tooltip={t('home.links.product_discovery.title')}>
-                <Link href="/product-discovery">
-                  <Package />
-                  {t('home.links.product_discovery.title')}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-
+             {['ADMIN', 'CASHIER', 'PHONE_REPAIR'].includes(userRole || '') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/product-discovery')} tooltip={t('home.links.product_discovery.title')}>
+                  <Link href="/product-discovery">
+                    <Telescope />
+                    {t('home.links.product_discovery.title')}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+             )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
@@ -253,7 +259,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   <div className="flex flex-col text-sm text-left overflow-hidden">
                       <span className="font-medium truncate">{user?.name || user?.email}</span>
                   </div>
-                   {user?.subscriptionStatus === 'ACTIVE' && <Badge variant="secondary" className="ml-auto text-green-500">PRO</Badge>}
+                   {user?.subscriptionStatus === 'ACTIVE' && <Badge variant="secondary" className="text-green-500">PRO</Badge>}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 mt-2" align="end">
@@ -267,7 +273,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>{t('sidebar.settings')}</span>
                 </DropdownMenuItem>
-                {isAdmin && (
+                {userRole === 'ADMIN' && (
                     <>
                     <DropdownMenuItem onClick={() => router.push('/settings/users')}>
                         <Contact className="mr-2 h-4 w-4" />
