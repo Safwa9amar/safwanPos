@@ -44,9 +44,11 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
   return (
     <AuthGuard>
       <MainLayout>
-        <SupplierDetailPageClient initialSupplier={supplierRes.supplier} allProducts={productsRes.products as ProductWithCategoryAndBarcodes[] || []} />
+        <SupplierDetailPageClient 
+          initialSupplier={supplierRes.supplier} 
+          allProducts={productsRes.products as ProductWithCategoryAndBarcodes[] || []} 
+        />
       </MainLayout>
     </AuthGuard>
   );
 }
-

@@ -141,32 +141,33 @@ export async function deleteSupplier(supplierId: string, userId: string) {
 
 const PurchaseOrderSchema = z.object({
   supplierId: z.string().min(1),
-  expectedDeliveryDate: z.date().optional(),
+  expectedDeliveryDate: z.coerce.date().optional().nullable(),
   items: z.array(z.object({
     productId: z.string().min(1),
-    quantity: z.number().int().min(1),
-    costPrice: z.number().min(0),
+    quantity: z.coerce.number().int().min(1),
+    costPrice: z.coerce.number().min(0),
   })).min(1, "Order must have at least one item."),
+  notes: z.string().optional(),
   userId: z.string().min(1),
 });
 
-export async function createPurchaseOrder(
-    userId: string,
-    supplierId: string,
-    items: { productId: string; quantity: number; costPrice: number }[],
-    expectedDate: Date | undefined
-) {
-    const validation = PurchaseOrderSchema.safeParse({
-        userId,
-        supplierId,
-        items,
-        expectedDeliveryDate: expectedDate
-    });
+export async function createPurchaseOrder(formData: FormData) {
+    const values = {
+      userId: formData.get('userId') as string,
+      supplierId: formData.get('supplierId') as string,
+      expectedDeliveryDate: formData.get('expectedDeliveryDate') || null,
+      notes: formData.get('notes') as string,
+      items: JSON.parse(formData.get('items') as string),
+    };
+    
+    const validation = PurchaseOrderSchema.safeParse(values);
 
     if (!validation.success) {
         console.error(validation.error.flatten().fieldErrors);
         return { error: "Invalid purchase order data." };
     }
+    
+    const { userId, supplierId, items, expectedDeliveryDate, notes } = validation.data;
 
     try {
         const supplier = await prisma.supplier.findFirst({ where: { id: supplierId, userId } });
@@ -179,7 +180,8 @@ export async function createPurchaseOrder(
                 data: {
                     userId,
                     supplierId,
-                    expectedDeliveryDate: expectedDate,
+                    expectedDeliveryDate,
+                    notes,
                     totalCost,
                     status: 'PENDING',
                     items: {
@@ -222,6 +224,7 @@ export async function createPurchaseOrder(
 
 
         revalidatePath(`/suppliers/${supplierId}`);
+        revalidatePath(`/suppliers/new-purchase-order`);
         return { success: true, purchaseOrder };
     } catch (error) {
         console.error(error);

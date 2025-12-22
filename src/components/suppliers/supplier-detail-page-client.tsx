@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { FilePlus2, Pencil, DollarSign, HandCoins, Truck, Contact, Info, MoreVertical } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { SupplierSheet } from "./supplier-sheet";
-import { PurchaseOrderSheet } from "./purchase-order-sheet";
 import { PurchaseOrderList, PurchaseOrderWithItems } from "./purchase-order-list";
 import { ProductWithCategoryAndBarcodes } from "@/types";
 import { useCurrency } from "@/hooks/use-currency";
@@ -59,7 +58,6 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
   const [supplier, setSupplier] = useState<SupplierWithDetails>(initialSupplier);
   
   const [isSupplierSheetOpen, setIsSupplierSheetOpen] = useState(false);
-  const [isPOSheetOpen, setIsPOSheetOpen] = useState(false);
   
   const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
@@ -121,7 +119,7 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
                 </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0">
-                 <Button onClick={() => setIsPOSheetOpen(true)}>
+                 <Button onClick={() => router.push('/suppliers/new-purchase-order')}>
                     <FilePlus2 className="mr-2 h-4 w-4" />
                     {t('suppliers.createPurchaseOrder')}
                 </Button>
@@ -203,13 +201,6 @@ export function SupplierDetailPageClient({ initialSupplier, allProducts }: Suppl
         isOpen={isSupplierSheetOpen}
         onOpenChange={handleSheetChange(setIsSupplierSheetOpen)}
         supplier={supplier}
-      />
-      
-      <PurchaseOrderSheet 
-        isOpen={isPOSheetOpen}
-        onOpenChange={handleSheetChange(setIsPOSheetOpen)}
-        supplierId={supplier.id}
-        products={allProducts}
       />
 
       <SupplierPaymentSheet
