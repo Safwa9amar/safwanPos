@@ -27,7 +27,7 @@ model PurchaseOrder {
   status               PurchaseOrderStatus @default(PENDING)
   totalCost            Float
   items                PurchaseOrderItem[]
-  
+  notes String?
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
