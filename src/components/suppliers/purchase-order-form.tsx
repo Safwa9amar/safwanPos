@@ -4,14 +4,19 @@
 import { useState } from "react";
 import { Product } from "@prisma/client";
 import { useTranslation } from "react-i18next";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, PlusCircle, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { POItem } from "./purchase-order-sheet";
 import { useCurrency } from "@/hooks/use-currency";
+import { Button } from "../ui/button";
+import { Trash2 } from "lucide-react";
 
 interface PurchaseOrderFormProps {
     products: Product[];
@@ -22,18 +27,18 @@ interface PurchaseOrderFormProps {
 export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFormProps) {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
-    const [open, setOpen] = useState(false);
+    
     const handleSelectProduct = (productId: string) => {
+        if (!productId) return;
         const product = products.find(p => p.id === productId);
         if (product && !items.some(item => item.productId === productId)) {
             setItems(prev => [...prev, {
                 productId: product.id,
                 name: product.name,
                 quantity: 1,
-                costPrice: 0 // Default to 0, let user input
+                costPrice: 0, // Default cost price, can be edited
             }]);
         }
-        setOpen(false);
     };
 
     const handleUpdateItem = (productId: string, field: 'quantity' | 'costPrice', value: string) => {
@@ -52,37 +57,26 @@ export function PurchaseOrderForm({ products, items, setItems }: PurchaseOrderFo
     };
 
     const totalCost = items.reduce((sum, item) => sum + (Number(item.costPrice) * Number(item.quantity)), 0);
-
     const availableProducts = products.filter(p => !items.some(item => item.productId === p.id));
+
     return (
         <div className="space-y-4">
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
-                        {t('po.addProduct')}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                        <CommandInput placeholder={t('po.searchProducts')} />
-                        <CommandList>
-                            <CommandEmpty>{t('po.noProductsFound')}</CommandEmpty>
-                            <CommandGroup>
-                                {availableProducts.map((product) => (
-                                    <CommandItem
-                                        key={product.id}
-                                        value={product.name}
-                                        onSelect={() => handleSelectProduct(product.id)}
-                                    >
-                                        {product.name}
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        </CommandList>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+            <Select onValueChange={handleSelectProduct} value="">
+                <SelectTrigger>
+                    <SelectValue placeholder={t('po.addProduct')} />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableProducts.length > 0 ? (
+                        availableProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                                {product.name}
+                            </SelectItem>
+                        ))
+                    ) : (
+                        <SelectItem value="none" disabled>{t('po.noProductsFound')}</SelectItem>
+                    )}
+                </SelectContent>
+            </Select>
 
             {items.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12 border-dashed border-2 rounded-lg">
